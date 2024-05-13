@@ -9,6 +9,7 @@ import Data.BottomNavItem
 import Data.LoginState
 import DataStore.LanguageSettingsStore
 import DataStore.LoginDataStore
+import ViewModels.Identified
 import ViewModels.Setting
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -17,6 +18,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,51 +136,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val multiplePermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { it ->
-            val grantedPermissions = mutableListOf<String>()
-            val deniedPermissions = mutableListOf<String>()
-            it.entries.forEach {
-                val permissionName = it.key
-                val isGranted = it.value
-                // 处理每个权限是否被授予
-                if (isGranted) {
-                    grantedPermissions.add(permissionName)
-                } else {
-                    deniedPermissions.add(permissionName)
-                }
+    private val viewModel: Identified by viewModels()
 
-                when (it.key) {
-                    android.Manifest.permission.CAMERA -> {
-                        Log.d("camera", "CAMERA ${it.value}")
-                    }
-                    android.Manifest.permission.RECORD_AUDIO -> {
-                        Log.d("record_audio", "RECORD_AUDIO ${it.value}")
-                    }
-                    android.Manifest.permission.BLUETOOTH_ADVERTISE-> {
-                        Log.d("bluetooth", "BLUETOOTH_ADVERTISE ${it.value}")
-                    }
-                    android.Manifest.permission.BLUETOOTH_SCAN->{
-                        Log.d("bluetooth","BLUETOOTH_SCAN${it.value}")
-                    }
-                    android.Manifest.permission.BLUETOOTH_ADMIN->{
-                        Log.d("bluetooth","BLUETOOTH_ADMIN${it.value}")
-                    }
-                    android.Manifest.permission.BLUETOOTH_CONNECT->{
-                        Log.d("bluetooth","BLUETOOTH_CONNECT${it.value}")
-                    }
-                    android.Manifest.permission.ACCESS_BACKGROUND_LOCATION->{
-                        Log.d("location","ACCESS_BACKGROUND_LOCATION${it.value}")
-                    }
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION->{
-                        Log.d("location","ACCESS_COARSE_LOCATION${it.value}")
-                    }
-                    android.Manifest.permission.ACCESS_FINE_LOCATION->{
-                        Log.d("location","ACCESS_FINE_LOCATION${it.value}")
-                    }
-                }
-            }
+    private val multiplePermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val grantedPermissions = permissions.filterValues { it }
+            val deniedPermissions = permissions.filterValues { !it }
+
+            // 可以抽出一个函数来处理每个权限的日志输出
+            logPermissions(grantedPermissions, deniedPermissions)
+
+            // 将授权结果传递给 ViewModel 中更明确的函数，比如 handlePermissions(grantedPermissions)
+            viewModel.setupPermissionLauncher(grantedPermissions,applicationContext)
         }
+
+    private fun logPermissions(granted: Map<String, Boolean>, denied: Map<String, Boolean>) {
+        granted.forEach { (permission, isGranted) ->
+            Log.d(permission, "$permission is granted: $isGranted")
+        }
+        denied.forEach { (permission, isGranted) ->
+            Log.d(permission, "$permission is granted: $isGranted")
+        }
+    }
+
     companion object {
         lateinit var instance: MainActivity
             private set
@@ -218,7 +199,8 @@ fun SignupPagePreview() {
 @Composable
 fun HomePagePreview() {
     val navController = rememberNavController()
-    HomePage(navController)
+    HomePage(viewModel = Identified(),
+        navController = navController, onRecordingStarted = { println("Recording started")})
 }
 @Preview(showBackground = true)
 @Composable
@@ -247,7 +229,8 @@ fun Navigation(loginState: LoginState,
     {
         if (loginState.isLoggedIn) {
             if (loginState.currentUser?.isVisuallyImpaired == true) {
-                composable(route = "HomePage") { HomePage(navController = navController) }
+                composable(route = "HomePage") {HomePage(viewModel = Identified(),
+                    navController = navController, onRecordingStarted = { println("Recording started")}) }
             } else {
                 composable(route = "HelpListPage") { HelpListPage(navController = navController) }
             }
@@ -268,7 +251,8 @@ fun Navigation(loginState: LoginState,
             loginDataStore),navController = navController) }
         composable(route = "SignupPage") { SignupPage(viewModel = Signup(apiService),navController = navController) }
         composable(route = "RequestPage") { RequestPage(navController = navController) }
-        composable(route = "HomePage") { HomePage(navController = navController) }
+        composable(route = "HomePage") { HomePage(viewModel = Identified(),
+            navController = navController, onRecordingStarted = { println("Recording started")}) }
         composable(route = "SettingPage") { SettingPage(viewModel = Setting(apiService),
             languageSettingsStore,navController = navController) }
         composable(route = "HelpListPage") { HelpListPage(navController = navController) }
@@ -706,13 +690,81 @@ fun Navigationbar(
 }
 
 @Composable
-fun HomePage(navController: NavController) {
+fun HomePage(viewModel: Identified,
+             onRecordingStarted: () -> Unit,
+             navController: NavController) {
     val current=1
     val isvisualimpired=true
+    var isRecording by remember { mutableStateOf(false) }
+    var recordingFilePath by remember { mutableStateOf<String?>(null) }
+    var isPermissionGranted by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     Scaffold (modifier = Modifier.fillMaxSize(),
         bottomBar = { Navigationbar(current,navController,isvisualimpired)}){
             innerPadding -> println(innerPadding)
+        Surface {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        if (isRecording) {
+                            viewModel.stopRecording(context, recordingFilePath!!)
+                            if (viewModel.isUploadSuccess) {
+                                viewModel.deleteRecordingFile(context, recordingFilePath!!)
+                            }
+                        } else {
+                            viewModel.startRecording(context) { filePath ->
+                                recordingFilePath = filePath
+                                onRecordingStarted()
+                            }
+                        }
+                    },
+                    enabled = isPermissionGranted,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isRecording) Color.Red else Color.Blue
+                    )
+                ) {
+                    Text(text = if (isRecording) "Stop" else "Start")
+                }
+
+                if (recordingFilePath != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("file name: $recordingFilePath")
+
+                    if (!viewModel.isUploadSuccess) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row {
+                            Button(onClick = {
+                                // Retry uploading
+                                viewModel.uploadRecordingFile(context, recordingFilePath!!) { success ->
+                                    if (success) {
+                                        viewModel.isUploadSuccess = true
+                                    }
+                                }
+                            }) {
+                                Text("try again")
+                            }
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Button(onClick = {
+                                // Delete recording
+                                viewModel.deleteRecordingFile(context, recordingFilePath!!)
+                            }) {
+                                Text("delete")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
