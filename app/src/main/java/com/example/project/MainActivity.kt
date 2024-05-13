@@ -713,6 +713,8 @@ fun HomePage(viewModel: Identified,
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
+                    shape = CircleShape,
+                    elevation = ButtonDefaults.buttonElevation(4.dp),
                     onClick = {
                         if (isRecording) {
                             viewModel.stopRecording(context, recordingFilePath!!)
@@ -729,7 +731,7 @@ fun HomePage(viewModel: Identified,
                     enabled = isPermissionGranted,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRecording) Color.Red else Color.Blue
-                    )
+                    ),
                 ) {
                     Text(text = if (isRecording) "Stop" else "Start")
                 }

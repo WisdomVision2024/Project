@@ -67,7 +67,6 @@ class Identified : ViewModel(){
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    @RequiresApi(Build.VERSION_CODES.S)
     fun startRecording(context: Context, onRecordingStarted: (String) -> Unit) {
         val recordingFile = createRecordingFile(context)
 
@@ -100,7 +99,7 @@ class Identified : ViewModel(){
             recorder?.release()
         }
     }
-    @RequiresApi(Build.VERSION_CODES.S)
+
     fun stopRecording(context: Context, recordingFilePath: String) {
         val recorder = MediaRecorder(context)
 
