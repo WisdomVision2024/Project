@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -65,6 +67,7 @@ class Identified : ViewModel(){
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     fun startRecording(context: Context, onRecordingStarted: (String) -> Unit) {
         val recordingFile = createRecordingFile(context)
 
@@ -97,6 +100,7 @@ class Identified : ViewModel(){
             recorder?.release()
         }
     }
+    @RequiresApi(Build.VERSION_CODES.S)
     fun stopRecording(context: Context, recordingFilePath: String) {
         val recorder = MediaRecorder(context)
 
