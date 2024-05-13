@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account">アカウント（携帯番号）</string>
+    <string name="password">パスワード</string>
+    <string name="input_new_password">新しいパスワードを入力</string>
+    <string name="phone_number">携帯番号</string>
+    <string name="email">アカウントのメールアドレス</string>
+    <string name="input_new_email">新しいメールアドレスを入力してください</string>
+    <string name="username">ユーザー名</string>
+    <string name="input_new_username">新しい名前を入力してください</string>
+    <string name="isVisuallyImpaired">あなたは視覚障害がありますか?</string>
+    <string name="back">戻る</string>
+    <string name="log_in">ログイン</string>
+    <string name="log_out">サインアウト</string>
+    <string name="sign_up">登録する</string>
+    <string name="close_account">アカウントをキャンセルする</string>
+    <string name="check_of_close_account">"このアカウントをログアウトするかどうかを確認します "</string>
+    <string name="repeat">パスワードを再度入力してください</string>
+    <string name="input_email">メールアドレスを入力してください</string>
+    <string name="input_password">"パスワードを入力する "</string>
+    <string name="input_phone_num">携帯番号を入力してください</string>
+    <string name="input_user_name">ユーザーネームを入力してください</string>
+    <string name="user_setting">ユーザープロファイル設定</string>
+    <string name="change_password">パスワードを変更する</string>
+    <string name="change_user_name">ユーザー名の変更</string>
+    <string name="change_email">アカウントのメールアドレスを変更する</string>
+    <string name="confirm">確認</string>
+    <string name="cancel">キャンセル</string>
+    <string name="home_page">ホームページ</string>
+    <string name="setting_page">設定</string>
+    <string name="signup_page">登録する</string>
+    <string name="connect">接続する</string>
+    <string name="help">助ける</string>
+    <string name="other_set">その他の設定</string>
+    <string name="change_language">言語を変えてください</string>
+    <string name="toggle_password_visibility">パスワードの表示を切り替えます</string>
+    <string name="language_selection">言語を選択してください</string>
+    <string name="request">助けが必要</string>
+    <string name="list">ヘルプリスト</string>
+    <string name="yes">はい</string>
+    <string name="no">いいえ</string>
+</resources>

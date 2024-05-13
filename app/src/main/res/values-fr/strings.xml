@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account">"Numéro de compte (numéro de téléphone portable) "</string>
+    <string name="password">mot de passe</string>
+    <string name="input_new_password">entrer un nouveau mot de passe</string>
+    <string name="phone_number">numéro de téléphone</string>
+    <string name="email">e-mail</string>
+    <string name="input_new_email">Entrez un nouvel e-mail</string>
+    <string name="username">nom d\'utilisateur</string>
+    <string name="input_new_username">Entrez un nouveau nom</string>
+    <string name="isVisuallyImpaired">Êtes-vous malvoyant?</string>
+    <string name="back">dos</string>
+    <string name="log_in">se connecter</string>
+    <string name="log_out">se déconnecter</string>
+    <string name="sign_up">registre</string>
+    <string name="close_account">Annuler le compte</string>
+    <string name="check_of_close_account">Confirmez si vous devez vous déconnecter de ce compte?</string>
+    <string name="repeat">Entrez à nouveau le mot de passe</string>
+    <string name="input_email">Entrer l\'adresse e-mail</string>
+    <string name="input_password">Entrer le mot de passe</string>
+    <string name="input_phone_num">Entrez le numéro de portable</string>
+    <string name="input_user_name">Saisissez votre nom d\'utilisateur</string>
+    <string name="user_setting">Paramètres du profil utilisateur</string>
+    <string name="change_password">changer le mot de passe</string>
+    <string name="change_user_name">Changer le nom d\'utilisateur</string>
+    <string name="change_email">"Changer de boîte aux lettres "</string>
+    <string name="confirm">confirmation</string>
+    <string name="cancel">Annuler</string>
+    <string name="home_page">page d\'accueil</string>
+    <string name="setting_page">paramètre</string>
+    <string name="signup_page">registre</string>
+    <string name="connect">Connectez-nous</string>
+    <string name="help">aide</string>
+    <string name="other_set">Autre paramètre</string>
+    <string name="change_language">Changer de langue</string>
+    <string name="toggle_password_visibility">Basculer la visibilité du mot de passe</string>
+    <string name="language_selection">Choisissez une langue</string>
+    <string name="request">Besoin d\'aide</string>
+    <string name="list">liste d\'aide</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+</resources>
