@@ -1,6 +1,8 @@
 package ViewModels
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
@@ -12,7 +14,9 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.project.MainActivity
 import kotlinx.coroutines.Dispatchers
@@ -27,36 +31,35 @@ import kotlin.reflect.KProperty
 class Identified : ViewModel(){
     var isUploadSuccess by mutableStateOf(false)
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
+
+    fun setupPermissionLauncher(context: Context) {
+        permissionLauncher = (context as MainActivity).registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            setupPermissionLauncher(permissions, context)
+        }
+    }
+
     fun setupPermissionLauncher(permissions: Map<String, Boolean>, context: Context) {
-            val isRecordAudioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
-            // You can handle other permissions similarly
-
-            if (isRecordAudioGranted) {
-                // Permission granted, continue with the recording
-                // You can also update UI state here if needed
-                enableRecordingUI()
-            } else {
-                // Permission denied, handle accordingly
-                disableRecordingUI()
-                showPermissionDeniedDialog(context)
-            }
-    }
-
-
-    private fun enableRecordingUI() {
-        // Enable recording button and update UI to show recording is available
-    }
-
-    private fun disableRecordingUI() {
-        // Disable recording button and update UI to show recording is unavailable
+        val isRecordAudioGranted = permissions[Manifest.permission.RECORD_AUDIO] ?: false
+        if (!isRecordAudioGranted) {
+            showPermissionDeniedDialog(context)
+        }
     }
 
     private fun showPermissionDeniedDialog(context: Context) {
-        //  Create a dialog explaining why the permission is needed and ask for permission again
-        //  Call onPositiveClick() when user clicks "Grant Permission"
+        AlertDialog.Builder(context)
+            .setTitle("Permission Required")
+            .setMessage("This app needs audio recording permission to function properly. Please grant the permission.")
+            .setPositiveButton("Grant Permission") { _, _ ->
+                requestRecordAudioPermission(context)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+            .show()
     }
 
-    fun requestRecordAudioPermission(context: Context) {
+    private fun requestRecordAudioPermission(context: Context) {
         permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
     }
 
@@ -69,8 +72,8 @@ class Identified : ViewModel(){
 
     fun startRecording(context: Context, onRecordingStarted: (String) -> Unit) {
         val recordingFile = createRecordingFile(context)
-
         if (!isPermissionGranted(context)) {
+            requestRecordAudioPermission(context)
             throw SecurityException("RECORD_AUDIO permission not granted")
         }
         var recorder: MediaRecorder? = null
@@ -78,15 +81,17 @@ class Identified : ViewModel(){
             // Check if the RECORD_AUDIO permission is granted
             if (isPermissionGranted(context)) {
                 recorder = MediaRecorder(context)
-                recorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-                recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                recorder.setOutputFile(recordingFile.absolutePath)
-                recorder.prepare()
-                recorder.start()
-
+                recorder.run {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
+                    setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                    setOutputFile(recordingFile.absolutePath)
+                    prepare()
+                    start()
+                }
                 // Recording started successfully
                 onRecordingStarted(recordingFile.absolutePath)
             } else {
+                requestRecordAudioPermission(context)
                 // Permission not granted
                 throw SecurityException("RECORD_AUDIO permission not granted")
             }
@@ -135,6 +140,7 @@ class Identified : ViewModel(){
         }
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun createRecordingFile(context: Context): File {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
         val recordingFileName = "Recording_$timestamp.mp4"
@@ -143,7 +149,7 @@ class Identified : ViewModel(){
     }
 
     operator fun getValue(mainActivity: MainActivity, property: KProperty<*>): Identified {
-        TODO("Not yet implemented")
+        return ViewModelProvider(mainActivity)[Identified::class.java]
     }
 
     companion object {

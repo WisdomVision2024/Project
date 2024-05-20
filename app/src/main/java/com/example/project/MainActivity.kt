@@ -364,6 +364,8 @@ fun SingleSelectCheckbox(
     }
 }
 
+
+
 @Composable
 fun LoginPage(viewModel: Login,
               navController: NavController
@@ -630,26 +632,72 @@ fun RequestPage(navController: NavController) {
 fun Navigationbar(
     current:Int,
     navController:NavController,
-    isvisualimpired:Boolean
 ){
     var currentSelect by remember {
         mutableIntStateOf(current)
     }
     val menuData = listOf(
-        if (isvisualimpired){
-            BottomNavItem(
-                stringResource(R.string.request),
-                stringResource(R.string.request),
-                Icons.Filled.AddCircle)}
-        else{BottomNavItem(
-            stringResource(R.string.list),
-            stringResource(R.string.list),
-            Icons.Filled.Menu)}
+        BottomNavItem(
+            stringResource(R.string.request),
+            stringResource(R.string.request),
+            Icons.Filled.AddCircle)
         ,
         BottomNavItem(
             stringResource(R.string.Route_HomePage),
             stringResource(R.string.home_page),
             Icons.Filled.Home)
+        ,
+        BottomNavItem(
+            stringResource( R.string.Route_SettingPage),
+            stringResource(R.string.setting_page),
+            Icons.Filled.Settings)
+    )
+    NavigationBar(containerColor = Color(8, 79, 209),
+        contentColor = Color(255, 255, 255),
+        tonalElevation = 12.dp) {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentDestination = navBackStackEntry?.destination
+        menuData.forEachIndexed { index, bottomItemData ->
+            NavigationBarItem(
+                colors= NavigationBarItemDefaults.colors(Color(0,0,0)),
+                selected = currentDestination?.hierarchy?.any {
+                    it.route == bottomItemData.route
+                } == true,
+                icon = {
+                    Icon(
+                        imageVector = bottomItemData.icon,
+                        contentDescription = "點選按鈕",
+                        tint = Color(255,255,255)
+                    )
+                },
+                onClick = {
+                    currentSelect = index // 更新当前选中索引
+                    navController.navigate(bottomItemData.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun Navigationbar2(
+    current:Int,
+    navController:NavController,
+){
+    var currentSelect by remember {
+        mutableIntStateOf(current)
+    }
+    val menuData = listOf(
+        BottomNavItem(
+            stringResource(R.string.list),
+            stringResource(R.string.list),
+            Icons.Filled.Menu)
         ,
         BottomNavItem(
             stringResource( R.string.Route_SettingPage),
@@ -697,20 +745,20 @@ fun HomePage(viewModel: Identified,
     val isvisualimpired=true
     var isRecording by remember { mutableStateOf(false) }
     var recordingFilePath by remember { mutableStateOf<String?>(null) }
-    var isPermissionGranted by remember { mutableStateOf(false) }
     val context = LocalContext.current
     Scaffold (modifier = Modifier.fillMaxSize(),
-        bottomBar = { Navigationbar(current,navController,isvisualimpired)}){
+        bottomBar = { if (isvisualimpired)Navigationbar(current,navController)
+        else Navigationbar2(current, navController)
+        })
+    {
             innerPadding -> println(innerPadding)
         Surface {
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                contentAlignment = Alignment.Center
             ) {
-
-                Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     shape = CircleShape,
@@ -728,10 +776,10 @@ fun HomePage(viewModel: Identified,
                             }
                         }
                     },
-                    enabled = isPermissionGranted,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isRecording) Color.Red else Color.Blue
                     ),
+                    modifier = Modifier.size(96.dp)
                 ) {
                     Text(text = if (isRecording) "Stop" else "Start")
                 }
@@ -774,8 +822,10 @@ fun HomePage(viewModel: Identified,
 fun HelpListPage(navController: NavController) {
     val current = 0
     val isvisualimpired=true
-    Scaffold(modifier = Modifier.fillMaxSize(),
-        bottomBar = { Navigationbar(current, navController,isvisualimpired) })
+    Scaffold (modifier = Modifier.fillMaxSize(),
+        bottomBar = { if (isvisualimpired)Navigationbar(current,navController)
+        else Navigationbar2(current, navController)
+        })
     { innerPadding ->
         println(innerPadding)
         Box(
@@ -793,48 +843,57 @@ fun HelpListPage(navController: NavController) {
 
 @Composable
 fun SettingPage(viewModel:Setting,languageSettingsStore: LanguageSettingsStore,
-                navController: NavController){
+                navController: NavController) {
     val context = LocalContext.current
     val dataStore = languageSettingsStore.getDataStore()
+    var isSettingContextVisible by remember { mutableStateOf(true) }
+    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
+    var currentLanguage by remember { mutableStateOf<Language?>(Language.English) }
     if (dataStore == null) {
         languageSettingsStore.setDataStore(context)
     }
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
-    val settingContentVisible by remember { mutableStateOf(true) }
-    val currentLanguageFlow=languageSettingsStore.loadLanguageSettings(dataStore!!)
-        .map { it.language } // Get language from settings
-
-    var currentLanguage by remember {  mutableStateOf<Language?>(null) }
-    LaunchedEffect(currentLanguageFlow) {
-        currentLanguageFlow.onEach { language ->
-            if (settingContentVisible) {
+    else {
+        val currentLanguageFlow = languageSettingsStore.loadLanguageSettings(dataStore)
+            .map { it.language }
+        // Get language from settings
+        LaunchedEffect(currentLanguageFlow) {
+            currentLanguageFlow.onEach { language ->
                 currentLanguage = language
             }
         }
-    }
-    if (isLanguageChangeScreenVisible){
-        currentLanguage?.let {
-            LanguageChangeScreen(
-                onLanguageSelected ={selectedLanguage ->
-                    viewModel.SaveLanguageSettings(
-                        languageSettingsStore, selectedLanguage)
-                    isLanguageChangeScreenVisible = false},
-                currentLanguage= currentLanguage
-            )
+        if (isLanguageChangeScreenVisible) {
+            currentLanguage?.let {
+                LanguageChangeScreen(
+                    onLanguageSelected = { selectedLanguage ->
+                        viewModel.SaveLanguageSettings(
+                            languageSettingsStore, selectedLanguage
+                        )
+                        isLanguageChangeScreenVisible = false
+                    },
+                    currentLanguage = currentLanguage
+                )
+            }
+        }
+        else{
+            SettingContent(
+                language = currentLanguage ?: Language.English,
+                navController = navController,
+                onLanguageChangeRequested = { isLanguageChangeScreenVisible = true })
         }
     }
-    SettingContent(currentLanguage ?: Language.English, navController)
 }
-
 @Composable
-fun SettingContent( language: Language,
-                    navController: NavController,
-                    ){
-    val current = 2
+fun SettingContent(
+    language: Language,
+    navController: NavController,
+    onLanguageChangeRequested: () -> Unit
+    ){
     val isvisualimpired = true
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
-    Scaffold(modifier = Modifier.fillMaxSize(),
-        bottomBar = { Navigationbar(current, navController, isvisualimpired) })
+    Scaffold (modifier = Modifier.fillMaxSize(),
+        bottomBar = { if (isvisualimpired)Navigationbar(2,navController)
+        else Navigationbar2(1, navController)
+        })
     { innerPadding ->
         println(innerPadding)
         Surface()
@@ -892,7 +951,7 @@ fun SettingContent( language: Language,
                 Button(
                     elevation = ButtonDefaults.buttonElevation(4.dp),
                     modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { isLanguageChangeScreenVisible = true })
+                    onClick = { onLanguageChangeRequested()})
                 {
                     Text(
                         text = stringResource(id = R.string.change_language),
