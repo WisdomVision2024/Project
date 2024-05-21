@@ -155,5 +155,4 @@ class Identified : ViewModel(){
     companion object {
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 101
     }
-
 }

@@ -1,15 +1,14 @@
 package assets
 
 import Data.EmailChangeRequest
-import Data.EmailChangeResponse
 import Data.LoginRequest
 import Data.LoginResponse
 import Data.NameChangeRequest
-import Data.NameResponse
 import Data.PasswordChangeRequest
-import Data.PasswordChangeResponse
 import Data.SignupRequest
 import Data.SignupResponse
+import Data.UpdateResponse
+import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -24,11 +23,11 @@ interface ApiService {
     @POST("Signup")
     suspend fun signup(@Body signupRequest: SignupRequest):Response<SignupResponse>
     @PUT("Setting")
-    suspend fun name(@Body nameRequest: NameChangeRequest):Response<NameResponse>
+    suspend fun name(@Body nameRequest: NameChangeRequest):Response<UpdateResponse>
+    @GET@PUT("Setting")
+    suspend fun password(@Body passwordChangeRequest: PasswordChangeRequest):Response<UpdateResponse>
     @PUT("Setting")
-    suspend fun password(@Body passwordChangeRequest: PasswordChangeRequest):Response<PasswordChangeResponse>
-    @PUT("Setting")
-    suspend fun email(@Body emailChangeRequest: EmailChangeRequest): Response<EmailChangeResponse>
+    suspend fun email(@Body emailChangeRequest: EmailChangeRequest): Response<UpdateResponse>
 }
 private class Api(){
     private val retrofit = Retrofit.Builder()

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 sealed class SignupUiState {
-    object Initial : SignupUiState()
+    data object Initial : SignupUiState()
     data class Success(val signupResponse: SignupResponse?) : SignupUiState()
     data class Error(val message: String) : SignupUiState()
 }

@@ -36,20 +36,15 @@ data class SignupResponse(
 data class NameChangeRequest(
     val username: String,
 )
-data class NameResponse(
-    val username: String
-)
+
 data class PasswordChangeRequest(
     val password: String
 )
-data class PasswordChangeResponse(
-    val success: Boolean
-)
-data class EmailChangeRequest(
-    val email: String,
-    val password: String
-)
-data class EmailChangeResponse(
-    val success: Boolean
-)
 
+data class EmailChangeRequest(
+    val email: String
+)
+data class UpdateResponse(
+    val success: Boolean,
+    val errorMessage: String?
+)

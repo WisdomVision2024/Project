@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonDefaults.shape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,8 +58,10 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +73,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -215,7 +219,7 @@ fun SettingPagePreview() {
     val apiService = retrofit.create(ApiService::class.java)
     val navController = rememberNavController()
     val languageSettingsStore = LanguageSettingsStore()
-    SettingPage(viewModel = Setting(apiService),languageSettingsStore,navController)
+    SettingPage(viewModel = Setting(apiService,languageSettingsStore),languageSettingsStore,navController)
 }
 
 @Composable
@@ -253,7 +257,7 @@ fun Navigation(loginState: LoginState,
         composable(route = "RequestPage") { RequestPage(navController = navController) }
         composable(route = "HomePage") { HomePage(viewModel = Identified(),
             navController = navController, onRecordingStarted = { println("Recording started")}) }
-        composable(route = "SettingPage") { SettingPage(viewModel = Setting(apiService),
+        composable(route = "SettingPage") { SettingPage(viewModel = Setting(apiService,languageSettingsStore),
             languageSettingsStore,navController = navController) }
         composable(route = "HelpListPage") { HelpListPage(navController = navController) }
     }
@@ -315,7 +319,10 @@ fun LanguageChangeScreen(
     currentLanguage: Language?
 ) {
     Dialog(onDismissRequest = { /* Dismiss the dialog */ }) {
-        Column(modifier = Modifier.background(Color(255,255,255))) {
+        Column(modifier = Modifier
+            .background(Color(255, 255, 255))
+        )
+        {
             Text(text = stringResource(id = R.string.change_language))
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
@@ -361,266 +368,6 @@ fun SingleSelectCheckbox(
         Spacer(modifier = Modifier.padding(4.dp))
         Text(text = text, fontSize = 20.sp)
         Spacer(modifier = Modifier.padding(12.dp))
-    }
-}
-
-
-
-@Composable
-fun LoginPage(viewModel: Login,
-              navController: NavController
-) {
-    var account by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    val scaffoldState = rememberScaffoldState()
-    val state = viewModel.loginState.collectAsState().value
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            Text(
-                stringResource(R.string.name),
-                fontSize = 100.sp,
-                lineHeight = 70.sp,
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.padding(30.dp))
-            EditInputField(
-                value = account,
-                onValueChanged = { account = it },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
-                ),
-                label = R.string.account, modifier = Modifier
-            )
-            Spacer(modifier = Modifier.padding(16.dp))
-            PasswordInputField(
-                value = password,
-                onValueChanged = { password = it },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password, imeAction = ImeAction.Done
-                ),
-                label = R.string.password,
-                modifier = Modifier
-            )
-            Spacer(modifier = Modifier.padding(30.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(
-                    onClick = { navController.navigate("SignupPage") },
-                    shape = CircleShape,
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(96.dp)
-                )
-                {
-                    Text(text = stringResource(R.string.sign_up))
-                }
-                Button(
-                    onClick = { viewModel.login(account, password) },
-                    shape = CircleShape,
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(96.dp)
-                ) {
-                    Text(stringResource(R.string.log_in))
-                }
-            }
-            LaunchedEffect(state) {
-                when (state) {
-                    is LoginUiState.Success -> {
-                        navController.navigate("HomePage") {
-                            popUpTo("LoginPage") {
-                                inclusive = true
-                            }
-                        }
-                    }
-                    is LoginUiState.Error -> {
-                        val message = state.message
-                        scaffoldState.snackbarHostState.showSnackbar(message)
-                    }
-                    else -> {
-                        Unit
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SignupPage(viewModel: Signup,
-               navController: NavHostController
-) {
-    var account by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var repeatpassword by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var isVisuallyImpaired by remember { mutableStateOf(false) }
-    val scaffoldState = rememberScaffoldState()
-    val state = viewModel.registerState.collectAsState().value
-    val isCorrect: Boolean = repeatpassword == password
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Row {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Spacer(modifier = Modifier.padding(12.dp))
-                Text(
-                    text = stringResource(R.string.input_phone_num),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField(
-                    value = account,
-                    onValueChanged = { account = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.account,
-                    modifier = Modifier
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_user_name),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField(
-                    value = username,
-                    onValueChanged = { username = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.username,
-                    modifier = Modifier
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_password),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                PasswordInputField(
-                    value = password,
-                    onValueChanged = { password = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.password,
-                    modifier = Modifier
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.repeat),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                PasswordInputField(
-                    value = repeatpassword,
-                    onValueChanged = { repeatpassword = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Next
-                    ),
-                    label = R.string.repeat,
-                    modifier = Modifier
-                )
-                if (!isCorrect && repeatpassword.isNotEmpty()) {
-                    Text(
-                        text = "Different from Password!",
-                        fontSize = 16.sp,
-                        style = TextStyle(Color(255, 0, 0))
-                    )
-                }
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_email),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField(
-                    value = email,
-                    onValueChanged = { email = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Done
-                    ),
-                    label = R.string.phone_number,
-                    modifier = Modifier
-                )
-                Spacer(modifier = Modifier.padding(12.dp))
-                Text(
-                    text = stringResource(R.string.isVisuallyImpaired),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SingleSelectCheckbox(
-                        isChecked = isVisuallyImpaired,
-                        onCheckedChange = {isChecked->
-                            isVisuallyImpaired = isChecked
-                        },
-                        text = stringResource(R.string.yes)
-                    )
-                    SingleSelectCheckbox(
-                        isChecked = !isVisuallyImpaired,
-                        onCheckedChange = {isChecked->
-                            isVisuallyImpaired = isChecked
-                        },
-                        text = stringResource(R.string.no)
-                    )
-                }
-                Spacer(modifier = Modifier.padding(30.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                    ,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(
-                        onClick = { navController.popBackStack() },
-                        shape = CircleShape,
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier.size(96.dp)
-                    )
-                    {
-                        Text(text = stringResource(R.string.back))
-                    }
-                    Button(
-                        onClick = {
-                            viewModel.signup(account, username, password, email, isVisuallyImpaired)
-                        },
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        shape = CircleShape,
-                        modifier = Modifier.size(96.dp)
-                    ) {
-                        Text(stringResource(R.string.sign_up))
-                    }
-                }
-                LaunchedEffect(state) {
-                    when (state) {
-                        is SignupUiState.Success -> {
-                            navController.navigate("LoginPage") {
-                                popUpTo("SignupPage") {
-                                    inclusive = true
-                                }
-                            }
-                        }
-                        is SignupUiState.Error -> {
-                            val message = state.message
-                            scaffoldState.snackbarHostState.showSnackbar(message)
-                        }
-                        else -> {
-                            Unit
-                        }
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -737,281 +484,4 @@ fun Navigationbar2(
     }
 }
 
-@Composable
-fun HomePage(viewModel: Identified,
-             onRecordingStarted: () -> Unit,
-             navController: NavController) {
-    val current=1
-    val isvisualimpired=true
-    var isRecording by remember { mutableStateOf(false) }
-    var recordingFilePath by remember { mutableStateOf<String?>(null) }
-    val context = LocalContext.current
-    Scaffold (modifier = Modifier.fillMaxSize(),
-        bottomBar = { if (isvisualimpired)Navigationbar(current,navController)
-        else Navigationbar2(current, navController)
-        })
-    {
-            innerPadding -> println(innerPadding)
-        Surface {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
 
-                Button(
-                    shape = CircleShape,
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    onClick = {
-                        if (isRecording) {
-                            viewModel.stopRecording(context, recordingFilePath!!)
-                            if (viewModel.isUploadSuccess) {
-                                viewModel.deleteRecordingFile(context, recordingFilePath!!)
-                            }
-                        } else {
-                            viewModel.startRecording(context) { filePath ->
-                                recordingFilePath = filePath
-                                onRecordingStarted()
-                            }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isRecording) Color.Red else Color.Blue
-                    ),
-                    modifier = Modifier.size(96.dp)
-                ) {
-                    Text(text = if (isRecording) "Stop" else "Start")
-                }
-
-                if (recordingFilePath != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("file name: $recordingFilePath")
-
-                    if (!viewModel.isUploadSuccess) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row {
-                            Button(onClick = {
-                                // Retry uploading
-                                viewModel.uploadRecordingFile(context, recordingFilePath!!) { success ->
-                                    if (success) {
-                                        viewModel.isUploadSuccess = true
-                                    }
-                                }
-                            }) {
-                                Text("try again")
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Button(onClick = {
-                                // Delete recording
-                                viewModel.deleteRecordingFile(context, recordingFilePath!!)
-                            }) {
-                                Text("delete")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun HelpListPage(navController: NavController) {
-    val current = 0
-    val isvisualimpired=true
-    Scaffold (modifier = Modifier.fillMaxSize(),
-        bottomBar = { if (isvisualimpired)Navigationbar(current,navController)
-        else Navigationbar2(current, navController)
-        })
-    { innerPadding ->
-        println(innerPadding)
-        Box(
-            modifier = Modifier
-                .background(Color(8, 79, 209))
-                .fillMaxWidth()
-                .padding(15.dp),
-            contentAlignment = Alignment.Center,
-        )
-        {
-        }
-    }
-}
-
-
-@Composable
-fun SettingPage(viewModel:Setting,languageSettingsStore: LanguageSettingsStore,
-                navController: NavController) {
-    val context = LocalContext.current
-    val dataStore = languageSettingsStore.getDataStore()
-    var isSettingContextVisible by remember { mutableStateOf(true) }
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
-    var currentLanguage by remember { mutableStateOf<Language?>(Language.English) }
-    if (dataStore == null) {
-        languageSettingsStore.setDataStore(context)
-    }
-    else {
-        val currentLanguageFlow = languageSettingsStore.loadLanguageSettings(dataStore)
-            .map { it.language }
-        // Get language from settings
-        LaunchedEffect(currentLanguageFlow) {
-            currentLanguageFlow.onEach { language ->
-                currentLanguage = language
-            }
-        }
-        if (isLanguageChangeScreenVisible) {
-            currentLanguage?.let {
-                LanguageChangeScreen(
-                    onLanguageSelected = { selectedLanguage ->
-                        viewModel.SaveLanguageSettings(
-                            languageSettingsStore, selectedLanguage
-                        )
-                        isLanguageChangeScreenVisible = false
-                    },
-                    currentLanguage = currentLanguage
-                )
-            }
-        }
-        else{
-            SettingContent(
-                language = currentLanguage ?: Language.English,
-                navController = navController,
-                onLanguageChangeRequested = { isLanguageChangeScreenVisible = true })
-        }
-    }
-}
-@Composable
-fun SettingContent(
-    language: Language,
-    navController: NavController,
-    onLanguageChangeRequested: () -> Unit
-    ){
-    val isvisualimpired = true
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
-    Scaffold (modifier = Modifier.fillMaxSize(),
-        bottomBar = { if (isvisualimpired)Navigationbar(2,navController)
-        else Navigationbar2(1, navController)
-        })
-    { innerPadding ->
-        println(innerPadding)
-        Surface()
-        {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Spacer(modifier = Modifier.padding(20.dp))
-                Text(
-                    stringResource(id = R.string.user_setting),
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Start
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { /*TODO*/ })
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_user_name),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { /*TODO*/ })
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_password),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { /*TODO*/ })
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_email),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(30.dp))
-                Text(
-                    stringResource(id = R.string.other_set),
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Start
-                )
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { onLanguageChangeRequested()})
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_language),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(20.dp))
-                Row(
-                    modifier = Modifier
-
-                        .padding(12.dp)
-                )
-                {
-                    Button(
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier
-                            .size(150.dp, 40.dp)
-                    )
-                    {
-                        Text(text = stringResource(id = R.string.close_account))
-                    }
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier
-                            .size(150.dp, 40.dp)
-                    )
-                    {
-                        Text(text = stringResource(id = R.string.help))
-                    }
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                )
-                {
-                    Button(
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier
-                            .size(150.dp, 40.dp)
-                    )
-                    {
-                        Text(text = stringResource(id = R.string.log_out))
-                    }
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier
-                            .size(150.dp, 40.dp)
-                    )
-                    {
-                        Text(text = stringResource(id = R.string.connect))
-                    }
-                }
-            }
-        }
-    }
-}
