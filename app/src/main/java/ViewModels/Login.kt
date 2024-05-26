@@ -9,7 +9,7 @@ import Data.LoginState
 import Data.Savedata
 import Data.User
 import DataStore.LoginDataStore
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,14 +30,14 @@ class Login(private val apiService: ApiService,
     fun login(username: String, password: String) {
         _loginState.value = LoginUiState.Loading // Indicate loading state
 
-        CoroutineScope(Dispatchers.IO).launch  {
+        viewModelScope.launch(Dispatchers.IO){
             try {
                 val response = apiService.login(LoginRequest(username, password))
                 if (response.isSuccessful) {
                     val user = response.body()?.user
-                    val savedata= user?.let { Savedata(it.account,user.password,user.isVisuallyImpaired) }
+                    val savedata= user?.let { Savedata(user.account,user.isVisuallyImpaired) }
                     if (user != null) {
-                        savedata?.let { storeUserDataInDataStore(it) }
+                        savedata?.let { storeUserDataInDataStore(true,savedata) }
                         _loginState.value = LoginUiState.Success(response.body()?.user)
                     }
                     else{_loginState.value = LoginUiState.Error("Wrong  user data!")}
@@ -54,9 +54,9 @@ class Login(private val apiService: ApiService,
             }
         }
     }
-    private suspend fun storeUserDataInDataStore(savedata: Savedata) {
+    private suspend fun storeUserDataInDataStore(isLoggedIn:Boolean,savedata: Savedata) {
         val loginState = LoginState(
-            isLoggedIn = true,
+            isLoggedIn = isLoggedIn,
             currentUser = savedata
         )
         loginDataStore.saveLoginState(loginDataStore.createLoginDataStore(applicationContext), loginState)

@@ -1,9 +1,7 @@
 package com.example.project
 
 import Language.Language
-import ViewModels.SignupUiState
 import ViewModels.Signup
-import ViewModels.LoginUiState
 import ViewModels.Login
 import Data.BottomNavItem
 import Data.LoginState
@@ -23,8 +21,6 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,10 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
@@ -47,21 +40,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Clear
-import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonDefaults.shape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -73,16 +59,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -97,10 +78,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import assets.ApiService
 import com.example.project.ui.theme.ProjectTheme
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
     private val languageSettingsStore = LanguageSettingsStore()
@@ -140,18 +118,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val viewModel: Identified by viewModels()
-
     private val multiplePermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             val grantedPermissions = permissions.filterValues { it }
             val deniedPermissions = permissions.filterValues { !it }
-
-            // 可以抽出一个函数来处理每个权限的日志输出
-            logPermissions(grantedPermissions, deniedPermissions)
-
-            // 将授权结果传递给 ViewModel 中更明确的函数，比如 handlePermissions(grantedPermissions)
-            viewModel.setupPermissionLauncher(grantedPermissions,applicationContext)
         }
 
     private fun logPermissions(granted: Map<String, Boolean>, denied: Map<String, Boolean>) {
@@ -176,18 +146,18 @@ private val retrofit = Retrofit.Builder()
 @Preview(showBackground = true)
 @Composable
 fun LoginPagePreview() {
+    val apiService = retrofit.create(ApiService::class.java)
+    val navController = rememberNavController()
     val loginDataStore = LoginDataStore(LocalContext.current.applicationContext)
     val dataStore = loginDataStore.createLoginDataStore(LocalContext.current)
     val loginStateFlow = loginDataStore.loadLoginState(dataStore)
     val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
-    val apiService = retrofit.create(ApiService::class.java)
-    val navController = rememberNavController()
     Navigation(
         loginState = loginState,
         navController = navController,
         apiService = apiService,
         loginDataStore =loginDataStore,
-        LanguageSettingsStore()
+        languageSettingsStore=LanguageSettingsStore()
     )
 }
 
@@ -228,7 +198,6 @@ fun Navigation(loginState: LoginState,
                apiService: ApiService,
                loginDataStore: LoginDataStore,
                languageSettingsStore: LanguageSettingsStore) {
-    val currentLanguage by remember { mutableStateOf(languageSettingsStore.currentLanguage) }
     NavHost(navController = navController, startDestination = "LoginPage")
     {
         if (loginState.isLoggedIn) {
@@ -262,6 +231,7 @@ fun Navigation(loginState: LoginState,
         composable(route = "HelpListPage") { HelpListPage(navController = navController) }
     }
 }
+
 
 @Composable
 fun EditInputField(
@@ -371,9 +341,6 @@ fun SingleSelectCheckbox(
     }
 }
 
-@Composable
-fun RequestPage(navController: NavController) {
-}
 
 @Composable
 fun Navigationbar(

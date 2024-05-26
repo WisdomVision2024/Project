@@ -55,23 +55,6 @@ fun HomePage(viewModel: Identified,
                     else RectangleShape,
                     elevation = ButtonDefaults.buttonElevation(4.dp),
                     onClick = {
-                        // 移动 isRecording 的更新到这里
-                        if (recordingFilePath != null) {
-                            if (isRecording==false) {
-                                viewModel.startRecording(context) { filePath ->
-                                    recordingFilePath = filePath
-                                    onRecordingStarted()
-                                }
-                            } else {//true
-                                viewModel.stopRecording(context, recordingFilePath!!)
-                                if (viewModel.isUploadSuccess) {
-                                    viewModel.deleteRecordingFile(context, recordingFilePath!!)
-                                }
-                            }
-                        } else {
-                            println("無文件可用")
-                        }
-                        isRecording = !isRecording
                     }
                     ,
                     colors = ButtonDefaults.buttonColors(
@@ -81,35 +64,6 @@ fun HomePage(viewModel: Identified,
                     modifier = Modifier.size(96.dp)
                 ) {
                     Text(text = if (isRecording==true) "Stop" else "Start")
-                }
-                if (recordingFilePath != null) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("file name: $recordingFilePath")
-
-                    if (!viewModel.isUploadSuccess) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row {
-                            Button(onClick = {
-                                // Retry uploading
-                                viewModel.uploadRecordingFile(context, recordingFilePath!!) { success ->
-                                    if (success) {
-                                        viewModel.isUploadSuccess = true
-                                    }
-                                }
-                            }) {
-                                Text("try again")
-                            }
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Button(onClick = {
-                                // Delete recording
-                                viewModel.deleteRecordingFile(context, recordingFilePath!!)
-                            }) {
-                                Text("delete")
-                            }
-                        }
-                    }
                 }
             }
         }

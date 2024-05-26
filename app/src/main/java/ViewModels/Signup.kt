@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import assets.ApiService
 import Data.SignupRequest
 import Data.SignupResponse
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,7 @@ class Signup (private val apiService: ApiService): ViewModel(){
         isVisuallyImpaired: Boolean
     )
     {
-        CoroutineScope(Dispatchers.IO).launch {
+        viewModelScope.launch(Dispatchers.IO){
             try {
                 val response = apiService.signup(SignupRequest(account, username, password,email,isVisuallyImpaired))
                 if (response.isSuccessful) {

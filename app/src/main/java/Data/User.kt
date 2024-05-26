@@ -10,10 +10,25 @@ data class User(
 
 data class Savedata(
     val account: String,
-    val password:String,
     val isVisuallyImpaired:Boolean
 )
 
+data class IdentifiedData(
+    val text:String?
+)
+data class IdentifiedResponse(
+    val ans:List<String?>
+)
+
+data class HelpRequest(
+    val type:String,
+    val description:String,
+    val address:String
+)
+
+data class HelpResponse(
+    val request:List<String?>
+)
 data class LoginRequest(
     val account: String,
     val password: String

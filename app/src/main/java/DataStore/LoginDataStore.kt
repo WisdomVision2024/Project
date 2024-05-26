@@ -20,13 +20,11 @@ class LoginDataStore(applicationContext: Context) {
     }
     private val isLoggedInKey = booleanPreferencesKey("isLoggedIn")
     private val userIdKey = stringPreferencesKey("account")
-    private val userPasswordKey=stringPreferencesKey("password")
     private val isVisuallyImpairedKey= booleanPreferencesKey("isVisuallyImpaired")
 
     val defaultLoginState = preferencesOf(
         isLoggedInKey to false,
         userIdKey to "",
-        userPasswordKey to "",
         isVisuallyImpairedKey to false
     )
 
@@ -34,7 +32,6 @@ class LoginDataStore(applicationContext: Context) {
         dataStore.edit { preferences ->
             preferences[isLoggedInKey] = loginState.isLoggedIn
             preferences[userIdKey] = loginState.currentUser?.account ?: ""
-            preferences[userPasswordKey] = loginState.currentUser?.password ?: ""
             preferences[isVisuallyImpairedKey]=loginState.currentUser?.isVisuallyImpaired?:false
         }
     }
@@ -46,7 +43,6 @@ class LoginDataStore(applicationContext: Context) {
                 currentUser = if (preferences[isLoggedInKey] == false) {
                     Savedata(
                         account = preferences[userIdKey] ?: "",
-                        password = preferences[userPasswordKey]?:"",
                         isVisuallyImpaired=preferences[isVisuallyImpairedKey]?:false
                     )
                 } else {

@@ -40,9 +40,6 @@ fun SettingPage(viewModel:Setting,
     var currentLanguage by remember { mutableStateOf<Language?>(Language.English) }
     LaunchedEffect(Unit) {
         viewModel.initialize(context)
-        languageSettingsStore.currentLanguage.collect { newLanguage ->
-            currentLanguage = newLanguage
-        }
     }
     if (isLanguageChangeScreenVisible) {
         currentLanguage?.let {
@@ -72,7 +69,7 @@ fun SettingContent(
     navController: NavController,
     onLanguageChangeRequested: () -> Unit
 ){
-    val isvisualimpired = true
+    val isvisualimpired = false
     Scaffold (modifier = Modifier.fillMaxSize(),
         bottomBar = { if (isvisualimpired)Navigationbar(2,navController)
         else Navigationbar2(1, navController)

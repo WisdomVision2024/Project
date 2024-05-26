@@ -5,11 +5,9 @@ import Data.UpdateResponse
 import DataStore.LanguageSettingsStore
 import Language.Language
 import android.content.Context
-import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import assets.ApiService
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +15,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import Data.NameChangeRequest
 import Data.PasswordChangeRequest
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 
 sealed class UpdateUiState {
     data object Initial : UpdateUiState()
@@ -30,28 +30,26 @@ class Setting (private val apiService: ApiService,
     val updateState: StateFlow<UpdateUiState> = _updateUiState
     private val _currentLanguage = MutableStateFlow<Language>(Language.English)
     val currentLanguage: StateFlow<Language> = _currentLanguage
+    private lateinit var dataStore: DataStore<Preferences>
     fun initialize(context: Context) {
+        dataStore= languageSettingsStore.createLanguageSettingsStore(context)
         viewModelScope.launch {
-            val dataStore = languageSettingsStore.createLanguageSettingsStore(context)
-            languageSettingsStore.loadLanguageSettings(dataStore).map { it.language }.collect { language ->
+            languageSettingsStore.loadLanguageSettings(dataStore)
+                .map { it.language }
+                .collect { language ->
                 _currentLanguage.value = language
             }
         }
     }
     fun SaveLanguageSettings(languageSettingsStore: LanguageSettingsStore, selectedLanguage: Language) {
-        viewModelScope.launch() {
-            val dataStore = languageSettingsStore.getDataStore() ?: return@launch
+        viewModelScope.launch{
             languageSettingsStore.saveLanguageSettings(dataStore, selectedLanguage)
+            _currentLanguage.value=selectedLanguage
         }
     }
 
-
-    fun updateLanguage(selectedLanguage: Language) {
-        _currentLanguage.value = selectedLanguage
-        // Persist the language to DataStore (optional, already done in saveLanguageSettings)
-    }
     fun changeName(name:String){
-        CoroutineScope(Dispatchers.IO).launch{
+        viewModelScope.launch(Dispatchers.IO){
             try {
                 val response = apiService.name(NameChangeRequest(name))
                 if (response.isSuccessful){
@@ -71,29 +69,37 @@ class Setting (private val apiService: ApiService,
             }
         }
     }
-    fun changePassword(password:String){
-        CoroutineScope(Dispatchers.IO).launch{
+    fun changePassword(oldPassword:String, newPassword:String){
+        viewModelScope.launch(Dispatchers.IO){
             try {
-                val response = apiService.password(PasswordChangeRequest(password))
-                if (response.isSuccessful){
-                    if (response.body()?.success == true){
-                        _updateUiState.value=UpdateUiState.Success(response.body())
+                val oldPasswordResponse = apiService.getOldPassword()
+                if (oldPasswordResponse.isSuccessful) {
+                    val serverOldPassword = oldPasswordResponse.body()
+                    if (serverOldPassword != null && serverOldPassword == oldPassword) {
+                        // Step 2: 旧密码验证通过，更新新密码
+                        val response = apiService.password(PasswordChangeRequest(newPassword))
+                        if (response.isSuccessful) {
+                            if (response.body()?.success == true) {
+                                _updateUiState.value = UpdateUiState.Success(response.body())
+                            } else {
+                                _updateUiState.value = UpdateUiState.Error(response.body()?.errorMessage ?: "Update failed")
+                            }
+                        } else {
+                            _updateUiState.value = UpdateUiState.Error(response.message())
+                        }
+                    } else {
+                        _updateUiState.value = UpdateUiState.Error("Old password is incorrect")
                     }
-                    else{
-                        _updateUiState.value=UpdateUiState.Error(
-                            response.body()?.errorMessage  ?:"Update failed"
-                        )
-                    }
+                } else {
+                    _updateUiState.value = UpdateUiState.Error(oldPasswordResponse.message())
                 }
-                else{_updateUiState.value=UpdateUiState.Error(response.message())}
-            }
-            catch (e: Exception){
-                _updateUiState.value=UpdateUiState.Error(e.message ?: "Unknown error")
+            } catch (e: Exception) {
+                _updateUiState.value = UpdateUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
     fun changeEmail(email:String){
-        CoroutineScope(Dispatchers.IO).launch{
+        viewModelScope.launch(Dispatchers.IO){
             try {
                 val response = apiService.email(EmailChangeRequest(email))
                 if (response.isSuccessful){

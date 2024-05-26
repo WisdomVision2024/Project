@@ -1,5 +1,7 @@
 package com.example.project
 
+import Data.LoginState
+import DataStore.LoginDataStore
 import ViewModels.Login
 import ViewModels.LoginUiState
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,6 +46,7 @@ fun LoginPage(viewModel: Login,
     var password by remember { mutableStateOf("") }
     val scaffoldState = rememberScaffoldState()
     val state = viewModel.loginState.collectAsState().value
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -104,11 +108,12 @@ fun LoginPage(viewModel: Login,
             LaunchedEffect(state) {
                 when (state) {
                     is LoginUiState.Success -> {
-                        navController.navigate("HomePage") {
-                            popUpTo("LoginPage") {
-                                inclusive = true
+                        val destination =
+                            if (state.user?.isVisuallyImpaired == true) "HomePage" else "HelpListPage"
+                        navController.navigate(route = destination) {
+                                // 设置 popUpTo 以确保用户不能返回到 LoginPage
+                                popUpTo("LoginPage") { inclusive = true }
                             }
-                        }
                     }
                     is LoginUiState.Error -> {
                         val message = state.message

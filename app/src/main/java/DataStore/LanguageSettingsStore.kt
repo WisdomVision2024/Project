@@ -22,10 +22,10 @@ class LanguageSettingsStore {
         return context.languageSettingsDataStore
     }
 
-    val languageKey = stringPreferencesKey ("language")
-    val localeKey = stringPreferencesKey("locale")
+    private val languageKey = stringPreferencesKey ("language")
+    private val localeKey = stringPreferencesKey("locale")
 
-    val defaultLanguageSettings = preferencesOf(
+    private val defaultLanguageSettings = preferencesOf(
         languageKey to Language.Chinese.name,
         localeKey to Language.Chinese.locale.toString()
     )
@@ -37,17 +37,8 @@ class LanguageSettingsStore {
     }
     private var dataStore: DataStore<Preferences>? = null
 
-    fun setDataStore(context: Context) {
-        this.dataStore = context.languageSettingsDataStore // 在合适的地方设置 dataStore
-    }
-
     fun getDataStore(): DataStore<Preferences>? {
         return dataStore
-    }
-    private val _currentLanguage = MutableStateFlow(Language.English)
-    val currentLanguage: StateFlow<Language> = _currentLanguage
-    fun setCurrentLanguage(language: Language) {
-        _currentLanguage.value = language
     }
 
     fun loadLanguageSettings(dataStore: DataStore<Preferences>): Flow<LanguageSetting> {
