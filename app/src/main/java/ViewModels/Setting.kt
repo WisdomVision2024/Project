@@ -1,7 +1,7 @@
 package ViewModels
 
 import Data.EmailChangeRequest
-import Data.UpdateResponse
+import Data.UploadResponse
 import DataStore.LanguageSettingsStore
 import Language.Language
 import android.content.Context
@@ -17,19 +17,23 @@ import Data.NameChangeRequest
 import Data.PasswordChangeRequest
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import Language.LanguageManager
 
 sealed class UpdateUiState {
     data object Initial : UpdateUiState()
-    data class Success(val updateResponse: UpdateResponse?) : UpdateUiState()
+    data class Success(val uploadResponse: UploadResponse?) : UpdateUiState()
     data class Error(val message: String) : UpdateUiState()
 }
-class Setting (private val apiService: ApiService,
-               private val languageSettingsStore: LanguageSettingsStore) : ViewModel()
+class Setting(private val apiService: ApiService,
+               private val languageSettingsStore: LanguageSettingsStore
+) : ViewModel()
 {
     private val _updateUiState = MutableStateFlow<UpdateUiState>(UpdateUiState.Initial)
     val updateState: StateFlow<UpdateUiState> = _updateUiState
-    private val _currentLanguage = MutableStateFlow<Language>(Language.English)
+
+    private val _currentLanguage = MutableStateFlow(Language.English)
     val currentLanguage: StateFlow<Language> = _currentLanguage
+
     private lateinit var dataStore: DataStore<Preferences>
     fun initialize(context: Context) {
         dataStore= languageSettingsStore.createLanguageSettingsStore(context)
@@ -41,7 +45,9 @@ class Setting (private val apiService: ApiService,
             }
         }
     }
-    fun SaveLanguageSettings(languageSettingsStore: LanguageSettingsStore, selectedLanguage: Language) {
+    fun saveLanguageSettings(languageSettingsStore: LanguageSettingsStore,
+                             selectedLanguage: Language, context: Context?) {
+        context ?: return
         viewModelScope.launch{
             languageSettingsStore.saveLanguageSettings(dataStore, selectedLanguage)
             _currentLanguage.value=selectedLanguage
@@ -75,7 +81,7 @@ class Setting (private val apiService: ApiService,
                 val oldPasswordResponse = apiService.getOldPassword()
                 if (oldPasswordResponse.isSuccessful) {
                     val serverOldPassword = oldPasswordResponse.body()
-                    if (serverOldPassword != null && serverOldPassword == oldPassword) {
+                    if (serverOldPassword != null && serverOldPassword.equals(oldPassword)) {
                         // Step 2: 旧密码验证通过，更新新密码
                         val response = apiService.password(PasswordChangeRequest(newPassword))
                         if (response.isSuccessful) {

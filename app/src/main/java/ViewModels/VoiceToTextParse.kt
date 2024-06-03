@@ -16,7 +16,7 @@ class VoiceToTextParse(
 
     private val _state= MutableStateFlow(VoiceToTextParseState())
     val state=_state.asStateFlow()
-    val recognizer=SpeechRecognizer.createSpeechRecognizer(app)
+    private val recognizer=SpeechRecognizer.createSpeechRecognizer(app)
     fun startListening(languageCode:String){
         _state.update { VoiceToTextParseState() }
 
@@ -29,7 +29,7 @@ class VoiceToTextParse(
         val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE,languageCode)
         }

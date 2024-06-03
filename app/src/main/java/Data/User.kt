@@ -27,7 +27,7 @@ data class HelpRequest(
 )
 
 data class HelpResponse(
-    val request:List<String?>
+    val request: List<String?>?
 )
 data class LoginRequest(
     val account: String,
@@ -56,10 +56,14 @@ data class PasswordChangeRequest(
     val password: String
 )
 
+data class getOldPasswordResponse(
+    val oldPassword: String
+)
+
 data class EmailChangeRequest(
     val email: String
 )
-data class UpdateResponse(
+data class UploadResponse(
     val success: Boolean,
     val errorMessage: String?
 )

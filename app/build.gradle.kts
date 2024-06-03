@@ -50,6 +50,11 @@ android {
 }
 
 dependencies {
+    val appcompat_version = "1.7.0"
+
+    implementation("androidx.appcompat:appcompat:$appcompat_version")
+    // For loading and tinting drawables on older versions of the platform
+    implementation("androidx.appcompat:appcompat-resources:$appcompat_version")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.compose.material:material:1.6.4")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

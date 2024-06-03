@@ -18,3 +18,8 @@ enum class Language {
             French -> Locale("fr")
         }
 }
+
+data class LanguageSetting (
+    val language: Language,
+    val locale: Locale = language.locale
+)

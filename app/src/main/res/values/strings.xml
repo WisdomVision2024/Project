@@ -29,9 +29,8 @@
     <string name="cancel">Cancel</string>
     <string name="home_page">Home Page</string>
     <string name="setting_page">Setting</string>
-    <string name="Route_FriendList" translatable="false">Route_FriendList</string>
     <string name="Route_HomePage" translatable="false">HomePage</string>
-    <string name="Route_SettingPage" translatable="false">Setting</string>
+    <string name="Route_SettingPage" translatable="false">SettingPage</string>
     <string name="signup_page">Sign up</string>
     <string name="connect">Connect us</string>
     <string name="help">Help</string>
@@ -48,4 +47,8 @@
     <string name="list">help list</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="Route_ListPage" translatable="false">HelpListPage</string>
+    <string name="Route_FriendList" translatable="false">RequestPage</string>
+    <string name="Route_LoggingPage" translatable="false">LoginPage</string>
+    <string name="Route_RequestPage" translatable="false">RequestPage</string>
 </resources>

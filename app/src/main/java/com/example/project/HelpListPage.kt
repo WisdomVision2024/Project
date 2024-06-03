@@ -11,22 +11,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 
 @Composable
-fun HelpListPage(navController: NavController) {
-    val current = 0
-    val isvisualimpired=true
+fun HelpListPage(navController: NavHostController) {
     Scaffold (modifier = Modifier.fillMaxSize(),
-        bottomBar = { if (isvisualimpired)Navigationbar(current,navController)
-        else Navigationbar2(current, navController)
-        })
-    { innerPadding ->
-        println(innerPadding)
+        bottomBar = { Navigationbar2(0, navController)
+        }
+    )
+    { padding->
         Box(
             modifier = Modifier
                 .background(Color(8, 79, 209))
                 .fillMaxWidth()
+                .padding(padding)
                 .padding(15.dp),
             contentAlignment = Alignment.Center,
         )
