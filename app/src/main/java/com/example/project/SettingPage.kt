@@ -34,7 +34,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 
 @Composable
@@ -97,23 +96,23 @@ fun SettingPage(viewModel:Setting,
                 {emailChangeScreenVisible=true},
                 individualised)
         }
-    }
-    if (nameChangeScreenVisible){
-        NameChangeScreen(
-            viewModel = viewModel,
-            name =username,
-            onClose = { nameChangeScreenVisible = false }
-        )
-    }
-    if (passwordChangeScreenVisible){
-        PasswordChangeScreen(viewModel = viewModel, old = old,
-            new = password,
-            onClose = {passwordChangeScreenVisible=false})
-    }
-    if (emailChangeScreenVisible){
-        EmailChangeScreen(viewModel = viewModel,
-            email=email,
-            onClose = {emailChangeScreenVisible=false})
+        if (nameChangeScreenVisible){
+            NameChangeScreen(
+                viewModel = viewModel,
+                name =username,
+                onClose = { nameChangeScreenVisible = false }
+            )
+        }
+        if (passwordChangeScreenVisible){
+            PasswordChangeScreen(viewModel = viewModel, old = old,
+                new = password,
+                onClose = {passwordChangeScreenVisible=false})
+        }
+        if (emailChangeScreenVisible){
+            EmailChangeScreen(viewModel = viewModel,
+                email=email,
+                onClose = {emailChangeScreenVisible=false})
+        }
     }
 }
 

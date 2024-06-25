@@ -49,12 +49,6 @@ fun SignupPage(
     languageSettingsStore: LanguageSettingsStore,
     navController: NavHostController
 ) {
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val languageStore = languageSettingsStore.createLanguageSettingsStore(context)
-    val languageSetting by languageSettingsStore.loadLanguageSettings(languageStore)
-        .collectAsState(initial = LanguageSetting(Language.English))
-    var currentLanguage by remember { mutableStateOf(languageSetting.language) }
     var account by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -64,6 +58,12 @@ fun SignupPage(
     val scaffoldState = rememberScaffoldState()
     val state = viewModel.registerState.collectAsState().value
     val isCorrect: Boolean = repeatPassword == password
+    val context = LocalContext.current
+    val languageStore = languageSettingsStore.createLanguageSettingsStore(context)
+    val languageSetting by languageSettingsStore.loadLanguageSettings(languageStore)
+        .collectAsState(initial = LanguageSetting(Language.English))
+    var currentLanguage by remember { mutableStateOf(languageSetting.language) }
+    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.initialize(context)

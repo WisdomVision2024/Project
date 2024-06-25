@@ -19,7 +19,7 @@ class LanguageManager(private val context: Context):ContextWrapper(context){
                 configuration.setLocales(LocaleList(locale))
                 newContext = context.createConfigurationContext(configuration)
             }
-            return LanguageManager(newContext)
+            return LanguageManager(newContext?:context)
         }
     }
 }

@@ -42,12 +42,15 @@ class Signup (private val apiService: ApiService,
                 }
         }
     }
+
     fun saveLanguageSettings(languageSettingsStore: LanguageSettingsStore,
                              selectedLanguage: Language, context: Context?) {
         context ?: return
         viewModelScope.launch{
-            languageSettingsStore.saveLanguageSettings(dataStore, selectedLanguage)
-            _currentLanguage.value=selectedLanguage
+            if (::dataStore.isInitialized) {
+                languageSettingsStore.saveLanguageSettings(dataStore, selectedLanguage)
+                _currentLanguage.value=selectedLanguage
+            }
         }
     }
     fun signup(

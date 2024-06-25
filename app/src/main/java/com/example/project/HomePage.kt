@@ -60,7 +60,7 @@ fun HomePage(
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
                         .padding(padding)
                 ) {
                     Column(
@@ -102,7 +102,6 @@ fun HomePage(
                             onClick = {
                                 if (state.isSpeaking) {
                                     androidViewModel.stopListening()
-                                    androidViewModel.processRecognizedText(text = text,navController)
                                 } else {
                                     androidViewModel.startListening(languageSetting.locale.toString())
                                 }

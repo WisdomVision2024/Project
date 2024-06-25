@@ -55,12 +55,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HomePage(
-                        androidViewModel =Identified(application,apiService),
+                    Navigation(
+                        loginState = loginState,
+                        navController = navController,
+                        apiService = apiService,
+                        loginDataStore = loginDataStore,
                         languageSettingsStore = languageSettingsStore,
-                        navController = navController
+                        application
                     )
-
                 }
             }
         }

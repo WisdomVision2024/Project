@@ -40,9 +40,11 @@ fun Navigation(loginState: LoginState,
                     viewModel = Login(
                         apiService,
                         LocalContext.current.applicationContext,
-                        loginDataStore
+                        loginDataStore,
+                        languageSettingsStore
                     ),
-                    navController = navController
+                    navController = navController,
+                    languageSettingsStore = languageSettingsStore
                 )
             }
             composable(route = "SignupPage") {

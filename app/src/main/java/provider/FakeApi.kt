@@ -13,14 +13,14 @@ import Data.SignupRequest
 import Data.SignupResponse
 import Data.UploadResponse
 import Data.User
-import Data.getOldPasswordResponse
+import Data.GetOldPasswordResponse
 import assets.ApiService
 import retrofit2.Response
 
 class FakeApi:ApiService {
     override suspend fun login(loginRequest: LoginRequest): Response<LoginResponse> {
-        return Response.success(LoginResponse("AAA", User("A","AAA","A",
-            "A@gmail.com",true)))
+        return Response.success(LoginResponse("A","AAA","A",
+            "A@gmail.com",true))
     }
 
     override suspend fun signup(signupRequest: SignupRequest): Response<SignupResponse> {
@@ -31,8 +31,8 @@ class FakeApi:ApiService {
         return Response.success(UploadResponse(true,null))
     }
 
-    override suspend fun getOldPassword(): Response<getOldPasswordResponse> {
-        return Response.success(getOldPasswordResponse("AAA"))
+    override suspend fun getOldPassword(): Response<GetOldPasswordResponse> {
+        return Response.success(GetOldPasswordResponse("AAA"))
     }
 
     override suspend fun password(passwordChangeRequest: PasswordChangeRequest): Response<UploadResponse> {
