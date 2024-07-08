@@ -9,6 +9,7 @@ import android.speech.SpeechRecognizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.Locale
 
 class VoiceToTextParse(
     private val app:Application
@@ -17,7 +18,7 @@ class VoiceToTextParse(
     private val _state= MutableStateFlow(VoiceToTextParseState())
     val state=_state.asStateFlow()
     private val recognizer=SpeechRecognizer.createSpeechRecognizer(app)
-    fun startListening(languageCode:String){
+    fun startListening(){
         _state.update { VoiceToTextParseState() }
 
         if (!SpeechRecognizer.isRecognitionAvailable(app)){
@@ -26,12 +27,13 @@ class VoiceToTextParse(
             }
         }
 
+        val systemLocale = Locale.getDefault().toLanguageTag()
         val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE,languageCode)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE,systemLocale)
         }
 
         recognizer.setRecognitionListener(this)

@@ -8,46 +8,46 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import Data.LoginState
 import Data.Savedata
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class LoginDataStore(applicationContext: Context) {
-    private val Context.loginDataStore by preferencesDataStore(name = "login_data")
-    fun createLoginDataStore(context: Context): DataStore<Preferences> {
-        return context.loginDataStore
-    }
+data class LoginState(
+    val isLoggedIn: Boolean = false,
+    val currentUser: Savedata? = null
+)
+class LoginDataStore (context: Context){
+    private val Context.loginDataStore by preferencesDataStore(name = "loginData")
+    private val dataStore=context.loginDataStore
     private val isLoggedInKey = booleanPreferencesKey("isLoggedIn")
     private val userIdKey = stringPreferencesKey("account")
     private val isVisuallyImpairedKey= booleanPreferencesKey("isVisuallyImpaired")
 
-    val defaultLoginState = preferencesOf(
-        isLoggedInKey to false,
-        userIdKey to "",
-        isVisuallyImpairedKey to false
-    )
-
-    suspend fun saveLoginState(dataStore: DataStore<Preferences>, loginState: LoginState) {
+    suspend fun saveLoginState(loginState: LoginState) {
         dataStore.edit { preferences ->
             preferences[isLoggedInKey] = loginState.isLoggedIn
             preferences[userIdKey] = loginState.currentUser?.account ?: ""
             preferences[isVisuallyImpairedKey]=loginState.currentUser?.isVisuallyImpaired?:false
         }
+        Log.d("saveLoginState","is saved")
     }
 
-    fun loadLoginState(dataStore: DataStore<Preferences>): Flow<LoginState> {
+    fun loadLoginState(): Flow<LoginState> {
         return dataStore.data.map { preferences ->
+            val isLoggedIn = preferences[isLoggedInKey] ?: false
+            val currentUser = if (isLoggedIn) {
+                Savedata(
+                    account = preferences[userIdKey] ?: "",
+                    isVisuallyImpaired = preferences[isVisuallyImpairedKey] ?: false
+                )
+            } else {
+                null
+            }
+            Log.d("loadLoginData","isLoggedIn${isLoggedIn},current user$currentUser")
             LoginState(
-                isLoggedIn = preferences[isLoggedInKey] ?: false,
-                currentUser = if (preferences[isLoggedInKey] == false) {
-                    Savedata(
-                        account = preferences[userIdKey] ?: "",
-                        isVisuallyImpaired=preferences[isVisuallyImpairedKey]?:false
-                    )
-                } else {
-                    null
-                }
+                isLoggedIn = isLoggedIn,
+                currentUser = currentUser
             )
         }
     }

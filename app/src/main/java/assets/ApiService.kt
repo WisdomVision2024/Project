@@ -20,11 +20,12 @@ import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 interface ApiService {
     @POST("login/")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
-    @POST("Signup")
+    @POST("signup/")
     suspend fun signup(@Body signupRequest: SignupRequest):Response<SignupResponse>
     @PUT("Setting/newName")
     suspend fun name(@Body nameRequest: NameChangeRequest):Response<UploadResponse>
@@ -39,5 +40,5 @@ interface ApiService {
     @POST("SendRequest")
     suspend fun sendRequest(@Body helpRequest: HelpRequest):Response<UploadResponse>
     @GET("GetRequest")
-    suspend fun getRequire(@Body helpRequest: HelpRequest):Response<HelpResponse>
+    suspend fun getRequire(@Query("helpRequest") helpRequest: HelpRequest):Response<HelpResponse>
 }

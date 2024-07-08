@@ -39,4 +39,5 @@
     <string name="list">도움말 목록</string>
     <string name="yes">예</string>
     <string name="no">아니요</string>
+    <string name="check_of_Log_out">로그아웃하시겠습니까?</string>
 </resources>

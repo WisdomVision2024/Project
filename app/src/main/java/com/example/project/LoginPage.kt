@@ -1,12 +1,10 @@
 package com.example.project
 
-import DataStore.LanguageSettingsStore
-import Language.Language
-import Language.LanguageManager
-import Language.LanguageSetting
 import ViewModels.Login
 import ViewModels.LoginUiState
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +20,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
@@ -44,43 +40,57 @@ import androidx.navigation.NavController
 
 @Composable
 fun LoginPage(viewModel: Login,
-              languageSettingsStore:LanguageSettingsStore,
               navController: NavController
 ) {
     var account by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val scaffoldState = rememberScaffoldState()
     val state = viewModel.loginState.collectAsState().value
-    val context = LocalContext.current
-    val languageStore = languageSettingsStore.createLanguageSettingsStore(context)
-    val languageSetting by languageSettingsStore.loadLanguageSettings(languageStore)
-        .collectAsState(initial = LanguageSetting(Language.English))
-    val currentLanguage by remember { mutableStateOf(languageSetting.language) }
+    var loginTriggered by remember { mutableStateOf(false) }
     LoginContent(
         account = account,
         onAccountChange = { account = it },
         password = password,
-        onPasswordChange = { password =it },
-        onLoginClick ={viewModel.login(account, password)},
-        onSignupClick = {navController.navigate("SignupPage")}
+        onPasswordChange = { password = it },
+        onLoginClick = {
+            loginTriggered = true
+            viewModel.login(account, password)
+        },
+        onSignupClick = { navController.navigate("SignupPage") }
     )
-    LaunchedEffect(state) {
-        when (state) {
-            is LoginUiState.Success -> {
-                val destination =
-                    if (state.isVisuallyImpaired == true) "HomePage" else "HelpListPage"
-                navController.navigate(route = destination) {
-                    // 设置 popUpTo 以确保用户不能返回到 LoginPage
-                    popUpTo("LoginPage") { inclusive = true }
+    LaunchedEffect(state, loginTriggered) {
+        if (loginTriggered) {
+            Log.d("state", "Connect")
+            when (state) {
+                is LoginUiState.OtherError -> {
+                    val message = (state as LoginUiState.OtherError).message
+                    scaffoldState.snackbarHostState.showSnackbar(message)
+                    Log.d("Error", message)
+                }
+
+                is LoginUiState.Success -> {
+                    val destination =
+                        if ((state as LoginUiState.Success).isVisuallyImpaired == true)
+                            "HomePage" else "HelpListPage"
+                    navController.navigate(route = destination) {
+                        // 设置 popUpTo 以确保用户不能返回到 LoginPage
+                        popUpTo("LoginPage") { inclusive = true }
+                    }
+                    Log.d("Login success", "navigate success")
+                }
+
+                is LoginUiState.Error -> {
+                    val message = (state as LoginUiState.Error).message
+                    scaffoldState.snackbarHostState.showSnackbar(message)
+                    Log.d("Login failed", message)
+                }
+
+                else -> {
+                    Unit
                 }
             }
-            is LoginUiState.Error -> {
-                val message = state.message
-                scaffoldState.snackbarHostState.showSnackbar(message)
-            }
-            else -> {
-                Unit
-            }
+            // 重置 loginTriggered 状态，以避免重复触发登录操作
+            loginTriggered = false
         }
     }
 }
@@ -121,6 +131,9 @@ fun LoginContent(
                 ),
                 label = R.string.account,
                 modifier = Modifier.background(color = Color(242,231,220))
+                    .border(4.dp,
+                        color = Color(3,140,127)
+                        )
             )
             Spacer(modifier = Modifier.padding(16.dp))
             PasswordInputField(
@@ -131,6 +144,9 @@ fun LoginContent(
                 ),
                 label = R.string.password,
                 modifier = Modifier.background(color = Color(242,231,220))
+                    .border(4.dp,
+                        color = Color(3,140,127),
+                        )
             )
             Spacer(modifier = Modifier.padding(30.dp))
             Button(

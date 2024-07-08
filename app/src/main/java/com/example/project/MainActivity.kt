@@ -1,14 +1,17 @@
 package com.example.project
 
 import ViewModels.Signup
-import Data.LoginState
-import DataStore.LanguageSettingsStore
 import DataStore.LoginDataStore
+import DataStore.LoginState
+import ViewModels.HelpList
 import ViewModels.Identified
 import provider.IdentifiedFactory
 import ViewModels.Setting
 import android.app.Application
+import android.app.LocaleConfig
+import android.app.LocaleManager
 import android.os.Bundle
+import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -19,9 +22,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
@@ -29,7 +34,6 @@ import provider.FakeApi
 import provider.FakeApplication
 
 class MainActivity : ComponentActivity() {
-    private val languageSettingsStore = LanguageSettingsStore()
     private val apiService by lazy { RetrofitInstance.apiService }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,10 +47,11 @@ class MainActivity : ComponentActivity() {
                 android.Manifest.permission.ACCESS_FINE_LOCATION
             )
         )
+
         setContent {
-            val loginDataStore = LoginDataStore(LocalContext.current.applicationContext)
-            val dataStore = loginDataStore.createLoginDataStore(LocalContext.current)
-            val loginStateFlow = loginDataStore.loadLoginState(dataStore)
+            val context=applicationContext
+            val loginDataStore= remember { LoginDataStore(context)}
+            val loginStateFlow = loginDataStore.loadLoginState()
             val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
             val navController = rememberNavController()
             ProjectTheme {
@@ -55,14 +60,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Navigation(
-                        loginState = loginState,
-                        navController = navController,
-                        apiService = apiService,
-                        loginDataStore = loginDataStore,
-                        languageSettingsStore = languageSettingsStore,
-                        application
-                    )
+                        Navigation(
+                            loginState = loginState,
+                            navController = navController,
+                            apiService = apiService,
+                            loginDataStore = loginDataStore,
+                            application
+                        )
+
                 }
             }
         }
@@ -70,7 +75,8 @@ class MainActivity : ComponentActivity() {
         private val identifiedViewModel: Identified by viewModels {
             IdentifiedFactory(
                 application,
-                apiService
+                apiService,
+                navController = NavController(applicationContext)
             )
         }
         private val multiplePermissions =
@@ -84,16 +90,14 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun LoginPagePreview() {
     val navController = rememberNavController()
-    val loginDataStore = LoginDataStore(LocalContext.current.applicationContext)
-    val dataStore = loginDataStore.createLoginDataStore(LocalContext.current)
-    val loginStateFlow = loginDataStore.loadLoginState(dataStore)
+    val loginDataStore = LoginDataStore(LocalContext.current)
+    val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
     Navigation(
         loginState = loginState,
         navController = navController,
         apiService = RetrofitInstance.apiService,
         loginDataStore =loginDataStore,
-        languageSettingsStore=LanguageSettingsStore(),
         app = Application()
     )
 }
@@ -101,11 +105,10 @@ fun LoginPagePreview() {
 @Preview(showBackground = true)
 @Composable
 fun SignupPagePreview() {
-    val languageSettingsStore = LanguageSettingsStore()
+    val loginDataStore = LoginDataStore(LocalContext.current)
     val navController = rememberNavController()
     SignupPage(viewModel = Signup(RetrofitInstance.apiService,
-        languageSettingsStore = languageSettingsStore),
-        languageSettingsStore,navController)
+        loginDataStore),navController)
 }
 
 @Preview(showBackground = true)
@@ -113,12 +116,13 @@ fun SignupPagePreview() {
 fun HomePagePreview() {
     val context = LocalContext.current
     val navController = rememberNavController()
-    val languageSettingsStore = LanguageSettingsStore()
     val fakeApplication = context.applicationContext as? Application ?: FakeApplication()
     val fakeApiService = FakeApi()
+    val loginDataStore=LoginDataStore(context)
     val identifiedViewModel = Identified(fakeApplication, fakeApiService, isPreview = true)
     HomePage(androidViewModel =identifiedViewModel,
-        navController = navController, languageSettingsStore =languageSettingsStore )
+        viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+        navController = navController )
 }
 @Preview(showBackground = true)
 @Composable
@@ -130,9 +134,15 @@ fun RequestPagePreview() {
 @Preview(showBackground = true)
 @Composable
 fun SettingPagePreview() {
+    val context=LocalContext.current
     val navController = rememberNavController()
-    val languageSettingsStore = LanguageSettingsStore()
-    val loginDataStore=LoginDataStore(LocalContext.current.applicationContext)
-    SettingPage(viewModel = Setting(RetrofitInstance.apiService, languageSettingsStore)
-        ,languageSettingsStore,loginDataStore,navController)
+    val loginDataStore=LoginDataStore(context)
+    SettingPage(viewModel = Setting(RetrofitInstance.apiService,loginDataStore)
+        ,loginDataStore,navController)
+}
+@Preview(showBackground = true)
+@Composable
+fun HelpListPagePreview(){
+    val navController = rememberNavController()
+    HelpListPage(navController = navController)
 }

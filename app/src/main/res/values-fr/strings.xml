@@ -39,4 +39,5 @@
     <string name="list">liste d\'aide</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
+    <string name="check_of_Log_out">Êtes-vous sûr de vous déconnecter ?</string>
 </resources>

@@ -1,22 +1,21 @@
 package com.example.project
 
 import Data.BottomNavItem
-import Language.Language
 import ViewModels.Setting
+import android.util.Log
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Image
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.IconButton
@@ -24,21 +23,21 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -47,11 +46,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -59,9 +58,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.os.LocaleListCompat
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 
@@ -78,6 +78,7 @@ fun EditInputField(
         value = value,
         onValueChange = onValueChanged,
         singleLine = true,
+        shape = RoundedCornerShape(12.dp),
         keyboardOptions=keyboardOptions,
         label = { Text(stringResource(label)) },
         modifier=modifier
@@ -95,11 +96,14 @@ fun EditInputField2(
 {
     TextField(
         value = value,
+        textStyle = TextStyle(fontSize = 12.sp),
         onValueChange = onValueChanged,
         singleLine = true,
         keyboardOptions=keyboardOptions,
         label = { Text(stringResource(label)) },
-        modifier=modifier.background(color = Color.White)
+        modifier= modifier
+            .height(64.dp)
+            .width(320.dp)
     )
 }
 @Composable
@@ -114,11 +118,14 @@ fun PasswordInputField(
     var passwordVisible by remember { mutableStateOf(false) }
     TextField(
         value = value,
+        textStyle = TextStyle(fontSize = 12.sp),
         onValueChange = onValueChanged,
         singleLine = true,
         label = { Text(stringResource(label)) },
         keyboardOptions = keyboardOptions,
-        modifier=modifier.background(color = Color.White),
+        modifier= modifier
+            .height(64.dp)
+            .width(320.dp),
         visualTransformation =
         if (!passwordVisible) PasswordVisualTransformation()
         else VisualTransformation.None,
@@ -137,43 +144,50 @@ fun PasswordInputField(
 }
 
 @Composable
-fun LanguageChangeScreen(
-    onLanguageSelected: (Language) -> Unit,
-    currentLanguage: Language?
-) {
-    Dialog(onDismissRequest = { /* Dismiss the dialog */ }) {
-        Column(modifier = Modifier
-            .background(Color(255, 255, 255))
+fun LanguageChangeScreen(onClose: () -> Unit) {
+    val localeOptions = mapOf(
+        R.string.english to "en-rUS",
+        R.string.french to "fr",
+        R.string.chinese to "zh-rTW",
+        R.string.japanese to "ja",
+        R.string.korean to "ko-rKR"
+    ).mapKeys { stringResource(it.key) }
+    Dialog(onDismissRequest = {onClose()}) {
+        Column(
+            modifier = Modifier
+                .width(100.dp)
+                .height(150.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(Color(255, 255, 255))
+                .border(
+                    width = 4.dp,
+                    color = Color(2, 115, 115),
+                    shape = RoundedCornerShape(12.dp)
+                )
         )
         {
+            Spacer(modifier = Modifier.height(8.dp))
             Text(text = stringResource(id = R.string.change_language))
             Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn {
-                items(Language.entries.size) { index ->
-                    val language = Language.entries[index]
-                    val isSelected = language == currentLanguage
-                    Row(
+            Column {
+                localeOptions.keys.forEach { selectionLocale ->
+                    Text(
+                        text = selectionLocale,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onLanguageSelected(language) }
-                            .padding(16.dp)
-                    ) {
-                        Text(text = language.name) // 語言名稱
-                        Spacer(modifier = Modifier.weight(1f))
-                        Image(
-                            imageVector = if (isSelected)
-                                Icons.Filled.Check // 選中圖標
-                            else
-                                Icons.Outlined.Clear, // 未選中圖標
-                            contentDescription = stringResource(R.string.language_selection) // 語言選擇
-                        )
-                    }
+                            .clickable {
+                                // set app locale given the user's selected locale
+                                AppCompatDelegate.setApplicationLocales(
+                                    LocaleListCompat.forLanguageTags(
+                                        localeOptions[selectionLocale]
+                                    )
+                                )// Optionally, you can navigate back or perform other actions
+                            }
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
 fun NameChangeScreen(
     viewModel: Setting,
@@ -183,11 +197,13 @@ fun NameChangeScreen(
     var newName by remember { mutableStateOf(name) }
     Dialog(onDismissRequest = { onClose() }) { // 添加 onClose 参数
         Column(modifier = Modifier
-            .width(330.dp)
-            .height(470.dp)
+            .width(320.dp)
+            .height(400.dp)
+            .clip(RoundedCornerShape(4.dp))
             .background(Color(242, 231, 220))
-            .border(width = 8.dp, color = Color(2, 115, 115)),
-            horizontalAlignment=Alignment.CenterHorizontally
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         )
         {
             Spacer(modifier = Modifier.padding(20.dp))
@@ -229,21 +245,42 @@ fun PasswordChangeScreen(
     var newp by remember { mutableStateOf(new) }
     Dialog(onDismissRequest = { onClose() }) {
         Column(modifier = Modifier
-            .background(Color(255, 255, 255))
+            .width(320.dp)
+            .height(400.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(242, 231, 220))
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         )
         {
+            Spacer(modifier = Modifier.padding(20.dp))
             Text(text = stringResource(id = R.string.change_password),
                 fontSize = 20.sp)
+            Spacer(modifier = Modifier.padding(40.dp))
             EditInputField2(label = R.string.input_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next),
-                value = old, onValueChanged = {oldp=it})
+                value = old, onValueChanged = {oldp=it},
+                modifier = Modifier
+                    .width(268.dp)
+                    .height(60.dp)
+                    .background(Color(169, 217, 108)))
             EditInputField2(label = R.string.input_new_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done),
-                value = new, onValueChanged = {newp=it})
-            Button(onClick = { viewModel.changePassword(old,new) }) {
-                Text(text = stringResource(id = R.string.confirm))
+                value = new, onValueChanged = {newp=it},
+                modifier = Modifier
+                    .width(268.dp)
+                    .height(60.dp)
+                    .background(Color(169, 217, 108)))
+            Spacer(modifier = Modifier.padding(40.dp))
+            Button(onClick = { viewModel.changePassword(old,new) },
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                shape = RoundedCornerShape(12.dp),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
+            {
+                Text(text = stringResource(id = R.string.confirm), color = Color.White)
             }
         }
     }
@@ -258,21 +295,77 @@ fun EmailChangeScreen(
     var newe by remember { mutableStateOf(email) }
     Dialog(onDismissRequest = {onClose() }) {
         Column(modifier = Modifier
-            .background(Color(255, 255, 255))
+            .width(320.dp)
+            .height(400.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(242, 231, 220))
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         )
         {
+            Spacer(modifier = Modifier.padding(20.dp))
             Text(text = stringResource(id = R.string.change_user_name),
                 fontSize = 20.sp)
+            Spacer(modifier = Modifier.padding(40.dp))
             EditInputField2(label = R.string.change_email,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done),
-                value = email, onValueChanged = {newe=it})
-            Button(onClick = {viewModel.changeName(email)}) {
-                Text(text = stringResource(id = R.string.confirm))
+                value = email, onValueChanged = {newe=it},
+                modifier = Modifier
+                    .width(268.dp)
+                    .height(60.dp)
+                    .background(Color(169, 217, 108)))
+            Spacer(modifier = Modifier.padding(40.dp))
+            Button(onClick = {viewModel.changeEmail(email)},
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
+            {
+                Text(text = stringResource(id = R.string.confirm), color = Color.White)
             }
         }
     }
 }
+
+@Composable
+fun LogOutScreen(
+    viewModel: Setting,
+    navController: NavController,
+    onClose: () -> Unit
+) {
+    Dialog(onDismissRequest = {onClose() }) {
+        Column(modifier = Modifier
+            .width(320.dp)
+            .height(400.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(242, 231, 220))
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        )
+        {
+            Spacer(modifier = Modifier.padding(20.dp))
+            Text(text = stringResource(id = R.string.check_of_Log_out),
+                fontSize = 24.sp )
+            Spacer(modifier = Modifier.padding(40.dp))
+            Row {
+                Button(onClick = { viewModel.logOut()
+                    navController.navigate("LoginPage"){
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    }
+                }
+                ) {
+                    Text(text = stringResource(id = R.string.confirm))
+                }
+                Button(onClick = { onClose() }) {
+                    Text(text = stringResource(id = R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun SingleSelectCheckbox(
@@ -286,6 +379,7 @@ fun SingleSelectCheckbox(
     ) {
         Checkbox(
             checked = isChecked,
+            colors = androidx.compose.material3.CheckboxDefaults.colors(Color(2,115,115)),
             onCheckedChange = null // Disable direct checkbox interaction
         )
         Spacer(modifier = Modifier.padding(4.dp))
@@ -298,7 +392,7 @@ fun SingleSelectCheckbox(
 @Composable
 fun Navigationbar(
     current:Int,
-    navController: NavHostController,
+    navController: NavController,
 ){
     var currentSelect by remember {
         mutableIntStateOf(current)
@@ -319,14 +413,14 @@ fun Navigationbar(
             stringResource(R.string.setting_page),
             Icons.Filled.Settings)
     )
-    NavigationBar(containerColor = Color(8, 79, 209),
-        contentColor = Color(255, 255, 255),
+    NavigationBar(containerColor = Color(3, 140, 127),
+        contentColor = Color(0, 0, 0),
         tonalElevation = 12.dp) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
         menuData.forEachIndexed { index, bottomItemData ->
             NavigationBarItem(
-                colors= NavigationBarItemDefaults.colors(Color(0,0,0)),
+                colors= NavigationBarItemDefaults.colors(Color(255,255,255)),
                 selected = currentDestination?.hierarchy?.any {
                     it.route == bottomItemData.route
                 } == true,
@@ -334,7 +428,7 @@ fun Navigationbar(
                     Icon(
                         imageVector = bottomItemData.icon,
                         contentDescription = "點選按鈕",
-                        tint = Color(255,255,255)
+                        tint = Color(0,0,0)
                     )
                 },
                 onClick = {
@@ -355,7 +449,7 @@ fun Navigationbar(
 @Composable
 fun Navigationbar2(
     current:Int,
-    navController: NavHostController,
+    navController: NavController,
 ){
     var currentSelect by remember {
         mutableIntStateOf(current)
@@ -371,14 +465,14 @@ fun Navigationbar2(
             stringResource(R.string.setting_page),
             Icons.Filled.Settings)
     )
-    NavigationBar(containerColor = Color(8, 79, 209),
-        contentColor = Color(255, 255, 255),
+    NavigationBar(containerColor = Color(3, 140, 127),
+        contentColor = Color(0, 0, 0),
         tonalElevation = 12.dp) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentDestination = navBackStackEntry?.destination
         menuData.forEachIndexed { index, bottomItemData ->
             NavigationBarItem(
-                colors= NavigationBarItemDefaults.colors(Color(0,0,0)),
+                colors= NavigationBarItemDefaults.colors(Color(255,255,255)),
                 selected = currentDestination?.hierarchy?.any {
                     it.route == bottomItemData.route
                 } == true,
@@ -386,7 +480,7 @@ fun Navigationbar2(
                     Icon(
                         imageVector = bottomItemData.icon,
                         contentDescription = "點選按鈕",
-                        tint = Color(255,255,255)
+                        tint = Color(0,0,0)
                     )
                 },
                 onClick = {
@@ -403,5 +497,56 @@ fun Navigationbar2(
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LocaleDropdownMenu() {
+    val localeOptions = mapOf(
+        R.string.english to "en",
+        R.string.french to "fr",
+        R.string.chinese to "zh-rTW",
+        R.string.japanese to "ja",
+        R.string.korean to "ko-rKR"
+    ).mapKeys { stringResource(it.key) }
 
-
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = {
+            expanded = !expanded
+            Log.d("expand","$expanded")
+        }
+    ) {
+        TextField(
+            readOnly = true,
+            value = stringResource(R.string.change_language),
+            onValueChange = { },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(
+                    expanded = expanded
+                )
+            }
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = {
+                expanded = false
+            }
+        ) {
+            localeOptions.keys.forEach { selectionLocale ->
+                DropdownMenuItem(
+                    text= { Text(selectionLocale) },
+                    onClick = {
+                        expanded = false
+                        // set app locale given the user's selected locale
+                        AppCompatDelegate.setApplicationLocales(
+                            LocaleListCompat.forLanguageTags(
+                                localeOptions[selectionLocale]
+                            )
+                        )
+                        Log.d("locale", selectionLocale)
+                    }
+                )
+            }
+        }
+    }
+}

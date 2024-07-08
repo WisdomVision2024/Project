@@ -20,7 +20,7 @@ import retrofit2.Response
 class FakeApi:ApiService {
     override suspend fun login(loginRequest: LoginRequest): Response<LoginResponse> {
         return Response.success(LoginResponse("A","AAA","A",
-            "A@gmail.com",true))
+            true,"A@gmail.com"))
     }
 
     override suspend fun signup(signupRequest: SignupRequest): Response<SignupResponse> {
@@ -44,7 +44,7 @@ class FakeApi:ApiService {
     }
 
     override suspend fun identify(identifiedData: IdentifiedData): Response<IdentifiedResponse> {
-        return Response.success(IdentifiedResponse(listOf("Fake response")))
+        return Response.success(IdentifiedResponse("Fake response"))
     }
 
     override suspend fun sendRequest(helpRequest: HelpRequest): Response<UploadResponse> {

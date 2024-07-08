@@ -1,18 +1,14 @@
 package com.example.project
 
-import Data.LoginState
-import DataStore.LanguageSettingsStore
 import DataStore.LoginDataStore
-import Language.Language
-import Language.LanguageSetting
-import Language.LanguageManager
+import DataStore.LoginState
 import ViewModels.Setting
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -20,8 +16,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,103 +23,60 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 
 @Composable
 fun SettingPage(viewModel:Setting,
-                languageSettingsStore: LanguageSettingsStore,
                 loginDataStore: LoginDataStore,
-                navController: NavHostController,
-                initialScreen: String? = null)
+                navController: NavController)
 {
     val context = LocalContext.current
-    val dataStore = loginDataStore.createLoginDataStore(context)
-    val loginStateFlow = loginDataStore.loadLoginState(dataStore)
+    val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
     val individualised = loginState.currentUser?.isVisuallyImpaired
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
+    var logOutScreenVisible by remember { mutableStateOf(false) }
     val username by remember { mutableStateOf("") }
     val old by remember { mutableStateOf("") }
     val password by remember { mutableStateOf("") }
     val email by remember { mutableStateOf("") }
-    val languageStore = languageSettingsStore.createLanguageSettingsStore(context)
-    val languageSetting by languageSettingsStore.loadLanguageSettings(languageStore).collectAsState(
-        initial = LanguageSetting(Language.English)
-    )
-    var currentLanguage by remember { mutableStateOf(languageSetting.language) }
 
-    LaunchedEffect(Unit) {
-        viewModel.initialize(context)
-        initialScreen?.let {
-            when (it) {
-                "name" -> nameChangeScreenVisible = true
-                "password" -> passwordChangeScreenVisible = true
-                "email" -> emailChangeScreenVisible = true
-                "language"->isLanguageChangeScreenVisible=true
-            }
+    if (isLanguageChangeScreenVisible) {
+        LanguageChangeScreen(
+            onClose = {isLanguageChangeScreenVisible=false}
+        )
         }
+    if (nameChangeScreenVisible){
+        NameChangeScreen(
+            viewModel = viewModel,
+            name =username,
+            onClose = { nameChangeScreenVisible = false }
+        )
     }
-
-    CompositionLocalProvider(LocalContext provides LanguageManager.wrap(context, currentLanguage.locale)) {
-        if (isLanguageChangeScreenVisible) {
-            LanguageChangeScreen(
-                onLanguageSelected = { selectedLanguage ->
-                    viewModel.saveLanguageSettings(
-                        languageSettingsStore, selectedLanguage,context
-                    )
-                    currentLanguage=selectedLanguage
-                    isLanguageChangeScreenVisible = false
-                },
-                currentLanguage = currentLanguage
-            )
-        }
-        else{
-            SettingContent(
-                navController = navController,
-                { isLanguageChangeScreenVisible = true },
-                { nameChangeScreenVisible = true },
-                {passwordChangeScreenVisible=true},
-                {emailChangeScreenVisible=true},
-                individualised)
-        }
-        if (nameChangeScreenVisible){
-            NameChangeScreen(
-                viewModel = viewModel,
-                name =username,
-                onClose = { nameChangeScreenVisible = false }
-            )
-        }
-        if (passwordChangeScreenVisible){
-            PasswordChangeScreen(viewModel = viewModel, old = old,
-                new = password,
-                onClose = {passwordChangeScreenVisible=false})
-        }
-        if (emailChangeScreenVisible){
-            EmailChangeScreen(viewModel = viewModel,
-                email=email,
-                onClose = {emailChangeScreenVisible=false})
-        }
+    if (passwordChangeScreenVisible){
+    PasswordChangeScreen(viewModel = viewModel, old = old,
+        new = password,
+        onClose = {passwordChangeScreenVisible=false})
     }
-}
-
-
-@Composable
-fun SettingContent(
-    navController: NavHostController,
-    onLanguageChangeRequested: () -> Unit,
-    onNameChangeRequested:()->Unit,
-    onPasswordChangeRequested:()->Unit,
-    onEmailChangeRequested:()->Unit,
-    individualised:Boolean?
-){
+    if (emailChangeScreenVisible){
+        EmailChangeScreen(viewModel = viewModel,
+            email=email,
+            onClose = {emailChangeScreenVisible=false})
+    }
+    if (logOutScreenVisible){
+        LogOutScreen(viewModel = viewModel,
+            navController = navController,
+            onClose = {logOutScreenVisible=false})
+    }
     Scaffold (modifier = Modifier.fillMaxSize(),
         bottomBar = { if (individualised==true)Navigationbar(2,navController)
         else Navigationbar2(1, navController)
@@ -133,124 +84,116 @@ fun SettingContent(
     { padding ->
         Surface()
         {
-            Column(
+            LazyColumn(
                 modifier = Modifier
+                    .background(color = Color(242, 231, 220))
                     .padding(padding)
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.padding(20.dp))
-                Text(
-                    stringResource(id = R.string.user_setting),
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Start
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = {onNameChangeRequested() })
-                {
+                item {
+                    Spacer(modifier = Modifier.padding(20.dp))
                     Text(
-                        text = stringResource(id = R.string.change_user_name),
-                        fontSize = 18.sp
+                        stringResource(id = R.string.user_setting),
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Start
                     )
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { onPasswordChangeRequested()})
-                {
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Button(shape = RoundedCornerShape(8.dp),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        modifier = Modifier.size(300.dp, 40.dp),
+                        onClick = {nameChangeScreenVisible=true})
+                    {
+                        Text(
+                            text = stringResource(id = R.string.change_user_name),
+                            fontSize = 18.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(12.dp))
+                    Button(shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        modifier = Modifier
+                            .size(300.dp, 44.dp),
+                        onClick = { passwordChangeScreenVisible=true})
+                    {
+                        Text(
+                            text = stringResource(id = R.string.change_password),
+                            fontSize = 18.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(12.dp))
+                    Button(shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        modifier = Modifier
+                            .size(300.dp, 44.dp),
+                        onClick = { emailChangeScreenVisible=true})
+                    {
+                        Text(
+                            text = stringResource(id = R.string.change_email),
+                            fontSize = 18.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.padding(30.dp))
                     Text(
-                        text = stringResource(id = R.string.change_password),
-                        fontSize = 18.sp
+                        stringResource(id = R.string.other_set),
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Start
                     )
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { onEmailChangeRequested()})
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_email),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(30.dp))
-                Text(
-                    stringResource(id = R.string.other_set),
-                    fontSize = 24.sp,
-                    textAlign = TextAlign.Start
-                )
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = { onLanguageChangeRequested()})
-                {
-                    Text(
-                        text = stringResource(id = R.string.change_language),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(20.dp))
-                Row(
-                    modifier = Modifier
-
-                        .padding(12.dp)
-                )
-                {
+                    Spacer(modifier = Modifier.padding(12.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
                         modifier = Modifier
-                            .size(150.dp, 40.dp)
-                    )
+                            .size(300.dp, 44.dp),
+                        onClick = {isLanguageChangeScreenVisible=true})
                     {
-                        Text(text = stringResource(id = R.string.close_account))
+                        Text(
+                            text = stringResource(id = R.string.change_language),
+                            fontSize = 18.sp
+                        )
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = { /*TODO*/ },
                         modifier = Modifier
-                            .size(150.dp, 40.dp)
+                            .size(300.dp, 44.dp)
                     )
                     {
-                        Text(text = stringResource(id = R.string.help))
+                        Text(text = stringResource(id = R.string.help),
+                            fontSize = 18.sp)
                     }
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                )
-                {
+                    Spacer(modifier = Modifier.padding(32.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = { /*TODO*/ },
                         modifier = Modifier
-                            .size(150.dp, 40.dp)
+                            .size(300.dp, 44.dp)
                     )
                     {
-                        Text(text = stringResource(id = R.string.log_out))
+                        Text(text = stringResource(id = R.string.close_account),
+                            fontSize = 18.sp)
                     }
-                    Spacer(modifier = Modifier.padding(12.dp))
+                    Spacer(modifier = Modifier.padding(24.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
+                        onClick = { logOutScreenVisible=true },
                         modifier = Modifier
-                            .size(150.dp, 40.dp)
+                            .size(300.dp, 44.dp)
                     )
                     {
-                        Text(text = stringResource(id = R.string.connect))
+                        Text(text = stringResource(id = R.string.log_out),
+                            fontSize = 18.sp)
                     }
                 }
             }

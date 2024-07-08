@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="account">Account(Phone Number)</string>
+    <string name="password">Password</string>
+    <string name="input_new_password">Input new password</string>
+    <string name="phone_number">Phone number</string>
+    <string name="email">e-mail</string>
+    <string name="input_new_email">Input new Email</string>
+    <string name="username">User Name</string>
+    <string name="input_new_username">Iinput new username</string>
+    <string name="isVisuallyImpaired">Is visually impaired</string>
+    <string name="back">Back</string>
+    <string name="log_in">Log in</string>
+    <string name="log_out">Log out</string>
+    <string name="sign_up">Sign up</string>
+    <string name="close_account">Close account</string>
+    <string name="check_of_close_account">Are you sure to close account?</string>
+    <string name="repeat">Repeat Password</string>
+    <string name="input_email">Input e-mail</string>
+    <string name="input_password">Input Password</string>
+    <string name="input_phone_num">Input Phone Number</string>
+    <string name="input_user_name">Input Your Name</string>
+    <string name="user_setting">User Data Setting</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_user_name">change User Name</string>
+    <string name="change_email">Change e-mail</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="home_page">Home Page</string>
+    <string name="setting_page">Setting</string>
+    <string name="signup_page">Sign up</string>
+    <string name="connect">Connect us</string>
+    <string name="help">Help</string>
+    <string name="other_set">Others Setting</string>
+    <string name="change_language">Change Language</string>
+    <string name="toggle_password_visibility">Toggle Password Visibility</string>
+    <string name="language_selection">Language Selection</string>
+    <string name="request">need help</string>
+    <string name="list">help list</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="check_of_Log_out">Are you sure to Log Out?</string>
+</resources>

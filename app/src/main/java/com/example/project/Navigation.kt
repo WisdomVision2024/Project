@@ -1,15 +1,14 @@
 package com.example.project
 
-import Data.LoginState
-import DataStore.LanguageSettingsStore
+
 import DataStore.LoginDataStore
+import DataStore.LoginState
 import ViewModels.Identified
 import ViewModels.Login
 import ViewModels.Setting
 import ViewModels.Signup
 import android.app.Application
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,7 +20,6 @@ fun Navigation(loginState: LoginState,
                navController: NavHostController,
                apiService: ApiService,
                loginDataStore: LoginDataStore,
-               languageSettingsStore: LanguageSettingsStore,
                app: Application
 ) {
     NavHost(navController = navController,
@@ -39,41 +37,31 @@ fun Navigation(loginState: LoginState,
                 LoginPage(
                     viewModel = Login(
                         apiService,
-                        LocalContext.current.applicationContext,
-                        loginDataStore,
-                        languageSettingsStore
+                        loginDataStore
                     ),
                     navController = navController,
-                    languageSettingsStore = languageSettingsStore
                 )
             }
             composable(route = "SignupPage") {
-                SignupPage(viewModel = Signup(apiService,languageSettingsStore),
-                    languageSettingsStore,
+                SignupPage(viewModel = Signup(apiService,loginDataStore),
                     navController = navController)
             }
         }
         composable(route = "HomePage") {
             HomePage(
                 androidViewModel = Identified(app, apiService),
-                languageSettingsStore = languageSettingsStore,
+                viewModel = Setting(apiService,loginDataStore),
                 navController = navController
             )
         }
-        composable(
-            route = "SettingPage?screen={screen}",
-            arguments = listOf(navArgument("screen") { defaultValue = "" })
-        ) { backStackEntry ->
-            val screen = backStackEntry.arguments?.getString("screen")
+        composable(route = "SettingPage")
+        {
             SettingPage(
                 viewModel = Setting(
-                    apiService,
-                    languageSettingsStore
+                    apiService,loginDataStore
                 ),
-                languageSettingsStore,
                 loginDataStore,
-                navController = navController,
-                initialScreen = screen
+                navController = navController
             )
         }
         composable(route = "HelpListPage") {

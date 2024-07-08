@@ -2,57 +2,30 @@ package ViewModels
 
 import Data.EmailChangeRequest
 import Data.UploadResponse
-import DataStore.LanguageSettingsStore
-import Language.Language
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import assets.ApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import Data.NameChangeRequest
 import Data.PasswordChangeRequest
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import Language.LanguageManager
+import Data.Savedata
+import DataStore.LoginDataStore
+import DataStore.LoginState
+import android.util.Log
 
 sealed class UpdateUiState {
     data object Initial : UpdateUiState()
     data class Success(val uploadResponse: UploadResponse?) : UpdateUiState()
     data class Error(val message: String) : UpdateUiState()
 }
-class Setting(private val apiService: ApiService,
-               private val languageSettingsStore: LanguageSettingsStore
+class Setting(private val apiService: ApiService,private val loginDataStore: LoginDataStore
 ) : ViewModel()
 {
     private val _updateUiState = MutableStateFlow<UpdateUiState>(UpdateUiState.Initial)
     val updateState: StateFlow<UpdateUiState> = _updateUiState
-
-    private val _currentLanguage = MutableStateFlow(Language.English)
-    val currentLanguage: StateFlow<Language> = _currentLanguage
-
-    private lateinit var dataStore: DataStore<Preferences>
-    fun initialize(context: Context) {
-        dataStore= languageSettingsStore.createLanguageSettingsStore(context)
-        viewModelScope.launch {
-            languageSettingsStore.loadLanguageSettings(dataStore)
-                .map { it.language }
-                .collect { language ->
-                _currentLanguage.value = language
-            }
-        }
-    }
-    fun saveLanguageSettings(languageSettingsStore: LanguageSettingsStore,
-                             selectedLanguage: Language, context: Context?) {
-        context ?: return
-        viewModelScope.launch{
-            languageSettingsStore.saveLanguageSettings(dataStore, selectedLanguage)
-            _currentLanguage.value=selectedLanguage
-        }
-    }
 
     fun changeName(name:String){
         viewModelScope.launch(Dispatchers.IO){
@@ -122,6 +95,19 @@ class Setting(private val apiService: ApiService,
             }
             catch (e: Exception){
                 _updateUiState.value=UpdateUiState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun logOut(){
+        viewModelScope.launch(Dispatchers.IO){
+            try {
+                loginDataStore.saveLoginState(LoginState())
+                Log.d("Log Out","Log Out Success")
+                _updateUiState.value=UpdateUiState.Success(null)
+            }catch (e:Exception){
+                Log.d("Log Out","Log Out Failed")
+                _updateUiState.value=UpdateUiState.Error("Unknown Error")
             }
         }
     }

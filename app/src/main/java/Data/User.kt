@@ -1,20 +1,21 @@
 package Data
 
 import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.Serializable
 
 data class User(
     @SerializedName("Phone")
     val account: String,
     @SerializedName("Password")
     val password:String,
-    @SerializedName("username")
+    @SerializedName("Name")
     val username: String,
     @SerializedName("Email")
     val email: String?,
     @SerializedName("Identity")
     val isVisuallyImpaired:Boolean
 )
-
+@Serializable
 data class Savedata(
     @SerializedName("Phone")
     val account: String?,
@@ -26,7 +27,7 @@ data class IdentifiedData(
     val text:String?
 )
 data class IdentifiedResponse(
-    val ans:List<String?>
+    val ans:String?
 )
 
 data class HelpRequest(
@@ -38,42 +39,49 @@ data class HelpRequest(
 data class HelpResponse(
     val request: List<String?>?
 )
+
+@Serializable
+data class SignupRequest(
+    @SerializedName("Phone")
+    val account: String,
+    @SerializedName("Name")
+    val username: String,
+    @SerializedName("Password")
+    val password:String,
+    @SerializedName("Email")
+    val email: String?,
+    @SerializedName("Identity")
+    val isVisuallyImpaired:Boolean
+)
+
+@Serializable
 data class LoginRequest(
     @SerializedName("Phone")
     val account: String,
     @SerializedName("Password")
     val password: String
 )
-data class SignupRequest(
-    @SerializedName("Phone")
-    val account: String,
-    @SerializedName("Password")
-    val password:String,
-    @SerializedName("username")
-    val username: String,
-    @SerializedName("Email")
-    val email: String?,
-    @SerializedName("Identity")
-    val isVisuallyImpaired:Boolean
-)
+@Serializable
 data class LoginResponse(
     @SerializedName("Phone")
     val account: String?,
     @SerializedName("Password")
     val password:String?,
-    @SerializedName("username")
+    @SerializedName("Name")
     val username: String?,
-    @SerializedName("Email")
-    val email: String?,
     @SerializedName("Identity")
-    val isVisuallyImpaired:Boolean?
+    val isVisuallyImpaired:Boolean?,
+    @SerializedName("Email")
+    val email: String?
 )
+
+@Serializable
 data class SignupResponse(
     val success:Boolean,
     val errorMessage: String?
 )
 data class NameChangeRequest(
-    @SerializedName("username")
+    @SerializedName("Name")
     val username: String,
 )
 

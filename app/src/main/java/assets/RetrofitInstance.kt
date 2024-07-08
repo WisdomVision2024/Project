@@ -1,15 +1,31 @@
 package assets
 
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
+import java.util.concurrent.TimeUnit
 
+val logging = HttpLoggingInterceptor().apply {
+    setLevel(HttpLoggingInterceptor.Level.BODY)
+}
+
+// 配置 OkHttpClient 並添加 HttpLoggingInterceptor
+val client = OkHttpClient.Builder()
+    .connectTimeout(10, TimeUnit.SECONDS) // 連接超時為10秒
+    .readTimeout(10, TimeUnit.SECONDS)    // 讀取超時為10秒
+    .addInterceptor(logging)
+    .build()
 
 private val retrofit=
     Retrofit.Builder()
-        .baseUrl("http://163.13.201.104:8080/") // 這裡放你的伺服器 URL
         .addConverterFactory(GsonConverterFactory.create())
-        .addConverterFactory(ScalarsConverterFactory.create())
+        .baseUrl("http://163.13.201.104:8080/") // 這裡放你的伺服器 URL
+        .client(client)
         .build()
 
 object RetrofitInstance {
