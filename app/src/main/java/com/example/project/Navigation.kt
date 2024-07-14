@@ -67,9 +67,6 @@ fun Navigation(loginState: LoginState,
         composable(route = "HelpListPage") {
             HelpListPage(navController = navController)
         }
-        composable(route = "RequestPage") {
-            RequestPage(navController = navController)
-        }
     }
 }
 

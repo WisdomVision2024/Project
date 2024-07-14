@@ -2,6 +2,7 @@ package Data
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
+import org.w3c.dom.Text
 
 data class User(
     @SerializedName("Phone")
@@ -37,21 +38,28 @@ data class HelpRequest(
 )
 
 data class HelpResponse(
-    val request: List<String?>?
+    val request: List<HelpRequest>?
 )
 
 @Serializable
 data class SignupRequest(
     @SerializedName("Phone")
     val account: String,
-    @SerializedName("Name")
-    val username: String,
     @SerializedName("Password")
     val password:String,
-    @SerializedName("Email")
-    val email: String?,
+    @SerializedName("Name")
+    val username: String,
     @SerializedName("Identity")
-    val isVisuallyImpaired:Boolean
+    val isVisuallyImpaired:Boolean,
+    @SerializedName("Email")
+    val email: String?
+)
+@Serializable
+data class SignupResponse(
+    @SerializedName("success")
+    val success:Boolean,
+    @SerializedName("errorMessage")
+    val errorMessage: String?
 )
 
 @Serializable
@@ -64,21 +72,23 @@ data class LoginRequest(
 @Serializable
 data class LoginResponse(
     @SerializedName("Phone")
-    val account: String?,
+    val account: String,
     @SerializedName("Password")
-    val password:String?,
+    val password:String,
     @SerializedName("Name")
-    val username: String?,
+    val username: String,
     @SerializedName("Identity")
-    val isVisuallyImpaired:Boolean?,
+    val isVisuallyImpaired:Boolean,
     @SerializedName("Email")
-    val email: String?
+    val email: String?,
+    @SerializedName("success")
+    val success: Boolean,
+    @SerializedName("errorMessage")
+    val errorMessage:String
 )
-
-@Serializable
-data class SignupResponse(
-    val success:Boolean,
-    val errorMessage: String?
+data class LoginErrorResponse(
+    val success: Boolean,
+    val errorMessage: String
 )
 data class NameChangeRequest(
     @SerializedName("Name")

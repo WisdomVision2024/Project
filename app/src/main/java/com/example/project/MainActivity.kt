@@ -3,15 +3,11 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
-import ViewModels.HelpList
 import ViewModels.Identified
 import provider.IdentifiedFactory
 import ViewModels.Setting
 import android.app.Application
-import android.app.LocaleConfig
-import android.app.LocaleManager
 import android.os.Bundle
-import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,8 +26,6 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
-import provider.FakeApi
-import provider.FakeApplication
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
@@ -60,14 +54,13 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                        Navigation(
-                            loginState = loginState,
-                            navController = navController,
-                            apiService = apiService,
-                            loginDataStore = loginDataStore,
-                            application
-                        )
-
+                    Navigation(
+                        loginState = loginState,
+                        navController = navController,
+                        apiService = apiService,
+                        loginDataStore = loginDataStore,
+                        app = application
+                    )
                 }
             }
         }
@@ -116,19 +109,10 @@ fun SignupPagePreview() {
 fun HomePagePreview() {
     val context = LocalContext.current
     val navController = rememberNavController()
-    val fakeApplication = context.applicationContext as? Application ?: FakeApplication()
-    val fakeApiService = FakeApi()
     val loginDataStore=LoginDataStore(context)
-    val identifiedViewModel = Identified(fakeApplication, fakeApiService, isPreview = true)
-    HomePage(androidViewModel =identifiedViewModel,
+    HomePage(androidViewModel = Identified(application = Application(),RetrofitInstance.apiService ),
         viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
         navController = navController )
-}
-@Preview(showBackground = true)
-@Composable
-fun RequestPagePreview() {
-    val navController = rememberNavController()
-    RequestPage(navController)
 }
 
 @Preview(showBackground = true)

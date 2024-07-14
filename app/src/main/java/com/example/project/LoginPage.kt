@@ -47,6 +47,9 @@ fun LoginPage(viewModel: Login,
     val scaffoldState = rememberScaffoldState()
     val state = viewModel.loginState.collectAsState().value
     var loginTriggered by remember { mutableStateOf(false) }
+    var errorMessageScreenVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember{ mutableStateOf("") }
+
     LoginContent(
         account = account,
         onAccountChange = { account = it },
@@ -81,7 +84,8 @@ fun LoginPage(viewModel: Login,
 
                 is LoginUiState.Error -> {
                     val message = (state as LoginUiState.Error).message
-                    scaffoldState.snackbarHostState.showSnackbar(message)
+                    errorMessage=message
+                    errorMessageScreenVisible=true
                     Log.d("Login failed", message)
                 }
 
@@ -92,6 +96,11 @@ fun LoginPage(viewModel: Login,
             // 重置 loginTriggered 状态，以避免重复触发登录操作
             loginTriggered = false
         }
+    }
+    if (errorMessageScreenVisible){
+        ErrorMessageScreen(errorMessage =errorMessage,
+            onClose = {errorMessageScreenVisible=false}
+        )
     }
 }
 
@@ -130,10 +139,12 @@ fun LoginContent(
                     keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
                 ),
                 label = R.string.account,
-                modifier = Modifier.background(color = Color(242,231,220))
-                    .border(4.dp,
-                        color = Color(3,140,127)
-                        )
+                modifier = Modifier
+                    .background(color = Color(242, 231, 220))
+                    .border(
+                        4.dp,
+                        color = Color(3, 140, 127)
+                    )
             )
             Spacer(modifier = Modifier.padding(16.dp))
             PasswordInputField(
@@ -143,10 +154,12 @@ fun LoginContent(
                     keyboardType = KeyboardType.Password, imeAction = ImeAction.Done
                 ),
                 label = R.string.password,
-                modifier = Modifier.background(color = Color(242,231,220))
-                    .border(4.dp,
-                        color = Color(3,140,127),
-                        )
+                modifier = Modifier
+                    .background(color = Color(242, 231, 220))
+                    .border(
+                        4.dp,
+                        color = Color(3, 140, 127),
+                    )
             )
             Spacer(modifier = Modifier.padding(30.dp))
             Button(

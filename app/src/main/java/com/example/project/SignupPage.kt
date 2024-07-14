@@ -57,11 +57,10 @@ fun SignupPage(
     var repeatPassword by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var isVisuallyImpaired by remember { mutableStateOf(true) }
-    val scaffoldState = rememberScaffoldState()
     val state = viewModel.registerState.collectAsState().value
     val isCorrect: Boolean = repeatPassword == password
-    val items = listOf(stringResource(id = R.string.yes), stringResource(id = R.string.no))
-    val checkBoxStates = remember { mutableStateListOf(false, false) }
+    var errorMessageScreenVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember{ mutableStateOf("") }
 
     Surface(modifier = Modifier
         .fillMaxSize()
@@ -159,12 +158,17 @@ fun SignupPage(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SingleSelectCheckbox(
                         isChecked = isVisuallyImpaired,
-                        onCheckedChange = { isVisuallyImpaired = true },
+                        onCheckedChange = {
+                            isVisuallyImpaired = true
+                            Log.d("SignupPage", "isVisuallyImpaired set to true")
+                                          },
                         text = stringResource(R.string.yes)
                     )
                     SingleSelectCheckbox(
                         isChecked = !isVisuallyImpaired,
-                        onCheckedChange = { isVisuallyImpaired = false },
+                        onCheckedChange = {
+                            isVisuallyImpaired = false
+                            Log.d("SignupPage", "isVisuallyImpaired set to false")},
                         text = stringResource(R.string.no)
                     )
                 }
@@ -200,7 +204,9 @@ fun SignupPage(
                         shape = CircleShape,
                         modifier = Modifier.size(96.dp)
                     ) {
-                        Text(stringResource(R.string.sign_up))
+                        Icon(painter = painterResource(id = R.drawable.arrowforward_foreground),
+                            contentDescription =stringResource(R.string.sign_up),
+                            tint = Color.White)
                     }
                 }
             }
@@ -213,187 +219,23 @@ fun SignupPage(
                     if (isVisuallyImpaired) "HomePage" else "HelpListPage"
                         navController.navigate(destination) {
                             Log.d("SignupNavigation","success")
-                            popUpTo("SignupPage") {
+                            popUpTo("LoginPage") {
                                 inclusive = true
                             }
                         }
                     }
             is SignupUiState.Error -> {
                 val message = (state as SignupUiState.Error).message
-                scaffoldState.snackbarHostState.showSnackbar(message)
+                errorMessage=message
+                errorMessageScreenVisible=true
             }
             else -> {
                 Unit
             }
         }
     }
-}
-
-@Composable
-fun SignUpContent(
-    account: String,
-    onAccountChange: (String) -> Unit,
-    username: String,
-    onUsernameChange: (String) -> Unit,
-    password: String,
-    onPasswordChange: (String) -> Unit,
-    repeatPassword: String,
-    onRepeatPasswordChange: (String) -> Unit,
-    email: String,
-    onEmailChange: (String) -> Unit,
-    isVisuallyImpaired: Boolean,
-    onVisuallyImpairedChange: (Boolean) -> Unit,
-    onSignupClick: () -> Unit,
-    onBackClick: () -> Unit,
-    onLanguageChangeClick: () -> Unit,
-    isCorrect: Boolean
-) {
-    Surface(modifier = Modifier
-        .fillMaxSize()
-        ) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = Color(242, 231, 220)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            item {
-
-                Spacer(modifier = Modifier.padding(12.dp))
-                Button(
-                    shape = RoundedCornerShape(8.dp),
-                    elevation = ButtonDefaults.buttonElevation(4.dp),
-                    colors = ButtonDefaults.buttonColors(Color(2,115,115)),
-                    modifier = Modifier.size(300.dp, 40.dp),
-                    onClick = onLanguageChangeClick
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.change_language),
-                        fontSize = 18.sp
-                    )
-                }
-                Spacer(modifier = Modifier.padding(12.dp))
-                Text(
-                    text = stringResource(R.string.input_phone_num),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField2(
-                    value = account,
-                    onValueChanged = onAccountChange,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.account,
-                    modifier = Modifier.background(color = Color(169,217,208))
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_user_name),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField2(
-                    value = username,
-                    onValueChanged = onUsernameChange,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.username,
-                    modifier = Modifier.background(color = Color(169,217,208))
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_password),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                PasswordInputField(
-                    value = password,
-                    onValueChanged = onPasswordChange,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.password,
-                    modifier = Modifier.background(color = Color(169,217,208))
-                )
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.repeat),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                PasswordInputField(
-                    value = repeatPassword,
-                    onValueChanged = onRepeatPasswordChange,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
-                    ),
-                    label = R.string.repeat,
-                    modifier = Modifier.background(color = Color(169,217,208))
-                )
-                if (!isCorrect && repeatPassword.isNotEmpty()) {
-                    Text(
-                        text = "Different from Password!",
-                        fontSize = 16.sp,
-                        style = TextStyle(Color(255, 0, 0))
-                    )
-                }
-                Spacer(modifier = Modifier.padding(8.dp))
-                Text(
-                    text = stringResource(R.string.input_email),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                EditInputField2(
-                    value = email,
-                    onValueChanged = onEmailChange,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email, imeAction = ImeAction.Done
-                    ),
-                    label = R.string.phone_number,
-                    modifier = Modifier.background(color = Color(169,217,208))
-                )
-                Spacer(modifier = Modifier.padding(12.dp))
-                Text(
-                    text = stringResource(R.string.isVisuallyImpaired),
-                    fontSize = 20.sp, textAlign = TextAlign.Left
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SingleSelectCheckbox(
-                        isChecked = isVisuallyImpaired,
-                        onCheckedChange = { onVisuallyImpairedChange(true) },
-                        text = stringResource(R.string.yes)
-                    )
-                    SingleSelectCheckbox(
-                        isChecked = !isVisuallyImpaired,
-                        onCheckedChange = { onVisuallyImpairedChange(false) },
-                        text = stringResource(R.string.no)
-                    )
-                }
-                Spacer(modifier = Modifier.padding(20.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(
-                        onClick = onBackClick,
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(Color(2,115,115)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier.size(96.dp)
-                    ) {
-                        Text(text = stringResource(R.string.back))
-                    }
-                    Button(
-                        onClick = onSignupClick,
-                        colors = ButtonDefaults.buttonColors(Color(2,115,115)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        shape = CircleShape,
-                        modifier = Modifier.size(96.dp)
-                    ) {
-                        Text(stringResource(R.string.sign_up))
-                    }
-                }
-            }
-        }
+    if (errorMessageScreenVisible){
+        ErrorMessageScreen(errorMessage,
+            onClose = {errorMessageScreenVisible=false})
     }
 }

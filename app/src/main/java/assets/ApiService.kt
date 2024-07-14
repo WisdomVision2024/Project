@@ -13,6 +13,7 @@ import Data.PasswordChangeRequest
 import Data.SignupRequest
 import Data.SignupResponse
 import Data.UploadResponse
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
@@ -24,9 +25,9 @@ import retrofit2.http.Query
 
 interface ApiService {
     @POST("login/")
-    suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
+    suspend fun login(@Body loginRequest: LoginRequest): Response<ResponseBody>
     @POST("signup/")
-    suspend fun signup(@Body signupRequest: SignupRequest):Response<SignupResponse>
+    suspend fun signup(@Body signupRequest: SignupRequest):Response<ResponseBody>
     @PUT("Setting/newName")
     suspend fun name(@Body nameRequest: NameChangeRequest):Response<UploadResponse>
     @GET("Setting/oldPassword")

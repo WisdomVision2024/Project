@@ -20,6 +20,7 @@ sealed class UploadState {
 }
 sealed class HandleResult{
     data object Initial : HandleResult()
+    data object Loading:HandleResult()
     data object NavigateRequest:HandleResult()
     data object NavigateSetting:HandleResult()
     data object LanguageChange:HandleResult()
@@ -45,7 +46,7 @@ class Identified(application: Application,
 
     private val _handleResult= MutableStateFlow<HandleResult>(HandleResult.Initial)
     val handleResult: StateFlow<HandleResult> = _handleResult
-    fun handle(){
+    init {
         if (!isPreview) {
             viewModelScope.launch {
                 voiceToTextParse.state.collectLatest { newState ->
@@ -59,6 +60,7 @@ class Identified(application: Application,
             }
         }
     }
+
     fun checkPermissions(granted: Map<String, Boolean>, denied: Map<String, Boolean>) {
         // 更新权限状态
         _permissionState.value = granted + denied
@@ -107,70 +109,84 @@ class Identified(application: Application,
     }
 
     private fun processRecognizedText(text: String) {
-        when {
-            text.contains("change name", ignoreCase = true) ||
-                    text.contains("更改名稱", ignoreCase = true) ||
-                    text.contains("Changer le nom d'utilisateur", ignoreCase = true) ||
-                    text.contains("ユーザー名の変更", ignoreCase = true) ||
-                    text.contains("사용자 이름 변경", ignoreCase = true)
-            ->{
-                _handleResult.value = HandleResult.NameChange
-                Log.d("HandleResult","NameChange")
-            }
-            text.contains("change password", ignoreCase = true) ||
-                    text.contains("更改密碼", ignoreCase = true) ||
-                    text.contains("changer le mot de passe", ignoreCase = true) ||
-                    text.contains("パスワードを変更する", ignoreCase = true) ||
-                    text.contains("비밀번호 변경", ignoreCase = true)
-            ->
+        if (text!=""){
+            when {
+                (text.contains("change", ignoreCase = true) &&text.contains("name", ignoreCase = true))||(
+                        (text.contains("更改", ignoreCase = true)||text.contains("更換", ignoreCase = true))&&
+                                (text.contains("名字", ignoreCase = true)||text.contains("名稱", ignoreCase = true))
+                        )
+                        ||
+                        text.contains("Changer le nom d'utilisateur", ignoreCase = true) ||
+                        text.contains("ユーザー名の変更", ignoreCase = true) ||
+                        text.contains("사용자 이름 변경", ignoreCase = true)
+                ->{
+                    _handleResult.value = HandleResult.NameChange
+                    Log.d("HandleResult","NameChange")
+                }
+                text.contains("change password", ignoreCase = true) ||(
+                        (text.contains("更改", ignoreCase = true)||text.contains("更換", ignoreCase = true))&&
+                                text.contains("密碼", ignoreCase = true)) ||
+                        text.contains("changer le mot de passe", ignoreCase = true) ||
+                        text.contains("パスワードを変更する", ignoreCase = true) ||
+                        text.contains("비밀번호 변경", ignoreCase = true)
+                ->
                 {
                     _handleResult.value = HandleResult.PasswordChange
                     Log.d("HandleResult","PasswordChange")
                 }
-            text.contains("change email", ignoreCase = true) ||
-                    text.contains("更改電子郵件", ignoreCase = true) ||
-                    text.contains("更改電子郵件", ignoreCase = true) ||
-                    text.contains("更改電子郵件", ignoreCase = true) ||
-                    text.contains("更改電子郵件", ignoreCase = true)
-            ->
+                text.contains("change email", ignoreCase = true) ||(
+                        (text.contains("更改", ignoreCase = true)||text.contains("更換", ignoreCase = true))&&
+                                text.contains("郵件", ignoreCase = true)||text.contains("信箱", ignoreCase = true) )||
+                        text.contains("Changer de boîte aux lettres ", ignoreCase = true) ||
+                        text.contains("アカウントのメールアドレスを変更する", ignoreCase = true) ||
+                        text.contains("사서함 변경", ignoreCase = true)
+                ->
                 {
                     _handleResult.value = HandleResult.EmailChange
                     Log.d("HandleResult","EmailChange")
                 }
-            text.contains("change language",ignoreCase = true)||
-                    text.contains("更改語言", ignoreCase = true)||
-                    text.contains("Changer de boîte aux lettres ", ignoreCase = true)||
-                    text.contains("アカウントのメールアドレスを変更する", ignoreCase = true)||
-                    text.contains("사서함 변경", ignoreCase = true)
-            ->
+                text.contains("change language",ignoreCase = true)||(
+                        (text.contains("更改", ignoreCase = true)||text.contains("更換", ignoreCase = true))&&
+                                text.contains("語言", ignoreCase = true))||
+                        text.contains("Changer de boîte aux lettres ", ignoreCase = true)||
+                        text.contains("アカウントのメールアドレスを変更する", ignoreCase = true)||
+                        text.contains("사서함 변경", ignoreCase = true)
+                ->
                 {
                     _handleResult.value=HandleResult.LanguageChange
                     Log.d("HandleResult","LanguageChange")
                 }
-            text.contains("send request", ignoreCase = true) ||
-                    text.contains("need help", ignoreCase = true)||
-                    text.contains("發送請求", ignoreCase = true)||
-                    text.contains("需要幫助", ignoreCase = true)||
-                    text.contains("Besoin d'aide", ignoreCase = true)||
-                    text.contains("助けが必要", ignoreCase = true)||
-                    text.contains("도움이 필요하다", ignoreCase = true)
-            ->{
-                _handleResult.value=HandleResult.NavigateRequest
-                Log.d("HandleResult","NavigateRequest")
-            }
-            text.contains("setting", ignoreCase = true)||
-                    text.contains("設定", ignoreCase = true)||
-                    text.contains("paramètre", ignoreCase = true)||
-                    text.contains("설정", ignoreCase = true)
-            -> {
-                _handleResult.value=HandleResult.NavigateSetting
-                Log.d("HandleResult","NavigateSetting")
-            }
-            else -> {
-               upLoad(text)
-                _handleResult.value=HandleResult.Upload
-                Log.d("HandleResult","Upload")
+                text.contains("send request", ignoreCase = true) ||
+                        text.contains("need help", ignoreCase = true)||
+                        text.contains("發送請求", ignoreCase = true)||
+                        text.contains("需要幫助", ignoreCase = true)||
+                        text.contains("Besoin d'aide", ignoreCase = true)||
+                        text.contains("助けが必要", ignoreCase = true)||
+                        text.contains("도움이 필요하다", ignoreCase = true)
+                ->{
+                    _handleResult.value=HandleResult.NavigateRequest
+                    Log.d("HandleResult","NeedHelp")
+                }
+                text.contains("setting", ignoreCase = true)||
+                        text.contains("設定", ignoreCase = true)||
+                        text.contains("paramètre", ignoreCase = true)||
+                        text.contains("설정", ignoreCase = true)
+                -> {
+                    _handleResult.value=HandleResult.NavigateSetting
+                    Log.d("HandleResult","NavigateSetting")
+                }
+                else -> {
+                    _handleResult.value=HandleResult.Upload
+                    Log.d("HandleResult","Upload")
+                }
             }
         }
-    } }
+        else{
+            _handleResult.value=HandleResult.Loading
+        }
+    }
+    fun resetHandleState(){
+        _handleResult.value=HandleResult.Initial
+    }
+                }
 

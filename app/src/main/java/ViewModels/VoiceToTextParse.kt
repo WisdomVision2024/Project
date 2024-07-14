@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -43,6 +44,7 @@ class VoiceToTextParse(
                 isSpeaking = true
             )
         }
+        Log.d("VoiceToTextParse","Start to listen")
     }
     fun stopListening(){
         _state.update {
@@ -51,6 +53,7 @@ class VoiceToTextParse(
             )
         }
         recognizer.stopListening()
+        Log.d("VoiceToTextParse","Stop to listen")
     }
     override fun onReadyForSpeech(params: Bundle?) {
         _state.update {
@@ -58,6 +61,7 @@ class VoiceToTextParse(
                 error=null
             )
         }
+        Log.d("VoiceToTextParse","Ready")
     }
 
     override fun onBeginningOfSpeech() =Unit

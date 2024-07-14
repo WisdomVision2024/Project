@@ -2,13 +2,13 @@ package com.example.project
 
 import Data.BottomNavItem
 import ViewModels.Setting
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,10 +29,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -155,34 +151,51 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
     Dialog(onDismissRequest = {onClose()}) {
         Column(
             modifier = Modifier
-                .width(100.dp)
-                .height(150.dp)
+                .width(320.dp)
+                .height(400.dp)
                 .clip(RoundedCornerShape(4.dp))
                 .background(Color(255, 255, 255))
                 .border(
-                    width = 4.dp,
+                    width = 8.dp,
                     color = Color(2, 115, 115),
-                    shape = RoundedCornerShape(12.dp)
-                )
+                    shape = RoundedCornerShape(4.dp)
+                ),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         )
         {
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(id = R.string.change_language))
+            Text(text = stringResource(id = R.string.change_language),
+                fontSize = 32.sp)
             Spacer(modifier = Modifier.height(16.dp))
             Column {
                 localeOptions.keys.forEach { selectionLocale ->
-                    Text(
-                        text = selectionLocale,
-                        modifier = Modifier
-                            .clickable {
-                                // set app locale given the user's selected locale
-                                AppCompatDelegate.setApplicationLocales(
-                                    LocaleListCompat.forLanguageTags(
-                                        localeOptions[selectionLocale]
-                                    )
-                                )// Optionally, you can navigate back or perform other actions
-                            }
+                    Box (modifier = Modifier
+                        .clickable {
+                            // set app locale given the user's selected locale
+                            AppCompatDelegate.setApplicationLocales(
+                                LocaleListCompat.forLanguageTags(
+                                    localeOptions[selectionLocale]
+                                )
+                            )// Optionally, you can navigate back or perform other actions
+                        }
+                        .padding(20.dp)
                     )
+                    {
+                        Text(
+                            text = selectionLocale,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .clickable {
+                                    // set app locale given the user's selected locale
+                                    AppCompatDelegate.setApplicationLocales(
+                                        LocaleListCompat.forLanguageTags(
+                                            localeOptions[selectionLocale]
+                                        )
+                                    )// Optionally, you can navigate back or perform other actions
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -191,10 +204,9 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
 @Composable
 fun NameChangeScreen(
     viewModel: Setting,
-    name:String,
     onClose: () -> Unit
 ) {
-    var newName by remember { mutableStateOf(name) }
+    var username by remember { mutableStateOf("") }
     Dialog(onDismissRequest = { onClose() }) { // 添加 onClose 参数
         Column(modifier = Modifier
             .width(320.dp)
@@ -214,15 +226,15 @@ fun NameChangeScreen(
                 label = R.string.input_new_username, // 修改为用户名的标签
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done),
-                value = newName,
-                onValueChanged = {newName=it}
+                value = username,
+                onValueChanged = {username=it}
             , modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
                     .background(Color(169, 217, 108))
             )
             Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = { viewModel.changeName(newName) },
+            Button(onClick = { viewModel.changeName(username) },
                 colors = ButtonDefaults.buttonColors(containerColor=Color.Red),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -237,12 +249,10 @@ fun NameChangeScreen(
 @Composable
 fun PasswordChangeScreen(
     viewModel: Setting,
-    old:String,
-    new:String,
     onClose: () -> Unit
 ) {
-    var oldp by remember { mutableStateOf(old) }
-    var newp by remember { mutableStateOf(new) }
+    var oldp by remember { mutableStateOf("") }
+    var newp by remember { mutableStateOf("") }
     Dialog(onDismissRequest = { onClose() }) {
         Column(modifier = Modifier
             .width(320.dp)
@@ -257,25 +267,26 @@ fun PasswordChangeScreen(
             Spacer(modifier = Modifier.padding(20.dp))
             Text(text = stringResource(id = R.string.change_password),
                 fontSize = 20.sp)
-            Spacer(modifier = Modifier.padding(40.dp))
+            Spacer(modifier = Modifier.padding(20.dp))
             EditInputField2(label = R.string.input_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next),
-                value = old, onValueChanged = {oldp=it},
+                value = oldp, onValueChanged = {oldp=it},
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
                     .background(Color(169, 217, 108)))
+            Spacer(modifier = Modifier.padding(8.dp))
             EditInputField2(label = R.string.input_new_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done),
-                value = new, onValueChanged = {newp=it},
+                value = newp, onValueChanged = {newp=it},
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
                     .background(Color(169, 217, 108)))
-            Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = { viewModel.changePassword(old,new) },
+            Spacer(modifier = Modifier.padding(20.dp))
+            Button(onClick = { viewModel.changePassword(oldp,newp) },
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
@@ -289,29 +300,31 @@ fun PasswordChangeScreen(
 @Composable
 fun EmailChangeScreen(
     viewModel: Setting,
-    email:String,
     onClose: () -> Unit
 ) {
-    var newe by remember { mutableStateOf(email) }
+    var email by remember { mutableStateOf("") }
     Dialog(onDismissRequest = {onClose() }) {
         Column(modifier = Modifier
             .width(320.dp)
             .height(400.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(Color(242, 231, 220))
-            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            .border(
+                width = 8.dp, color = Color(2, 115, 115),
+                shape = RoundedCornerShape(4.dp)
+            ),
             horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         )
         {
             Spacer(modifier = Modifier.padding(20.dp))
-            Text(text = stringResource(id = R.string.change_user_name),
+            Text(text = stringResource(id = R.string.change_email),
                 fontSize = 20.sp)
             Spacer(modifier = Modifier.padding(40.dp))
             EditInputField2(label = R.string.change_email,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done),
-                value = email, onValueChanged = {newe=it},
+                value = email, onValueChanged = {email=it},
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
@@ -329,15 +342,14 @@ fun EmailChangeScreen(
 }
 
 @Composable
-fun LogOutScreen(
-    viewModel: Setting,
-    navController: NavController,
+fun ErrorMessageScreen(
+    errorMessage: String,
     onClose: () -> Unit
 ) {
     Dialog(onDismissRequest = {onClose() }) {
         Column(modifier = Modifier
             .width(320.dp)
-            .height(400.dp)
+            .height(240.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(Color(242, 231, 220))
             .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
@@ -345,22 +357,13 @@ fun LogOutScreen(
             verticalArrangement = Arrangement.Center
         )
         {
-            Spacer(modifier = Modifier.padding(20.dp))
-            Text(text = stringResource(id = R.string.check_of_Log_out),
-                fontSize = 24.sp )
-            Spacer(modifier = Modifier.padding(40.dp))
-            Row {
-                Button(onClick = { viewModel.logOut()
-                    navController.navigate("LoginPage"){
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    }
-                }
-                ) {
-                    Text(text = stringResource(id = R.string.confirm))
-                }
-                Button(onClick = { onClose() }) {
-                    Text(text = stringResource(id = R.string.cancel))
-                }
+            Text(text = errorMessage, fontSize = 20.sp, color = Color.White)
+            Button(onClick = {onClose()},
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
+            {
+                Text(text = stringResource(id = R.string.confirm), color = Color.White)
             }
         }
     }
@@ -494,59 +497,6 @@ fun Navigationbar2(
                     }
                 }
             )
-        }
-    }
-}
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun LocaleDropdownMenu() {
-    val localeOptions = mapOf(
-        R.string.english to "en",
-        R.string.french to "fr",
-        R.string.chinese to "zh-rTW",
-        R.string.japanese to "ja",
-        R.string.korean to "ko-rKR"
-    ).mapKeys { stringResource(it.key) }
-
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = !expanded
-            Log.d("expand","$expanded")
-        }
-    ) {
-        TextField(
-            readOnly = true,
-            value = stringResource(R.string.change_language),
-            onValueChange = { },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(
-                    expanded = expanded
-                )
-            }
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                expanded = false
-            }
-        ) {
-            localeOptions.keys.forEach { selectionLocale ->
-                DropdownMenuItem(
-                    text= { Text(selectionLocale) },
-                    onClick = {
-                        expanded = false
-                        // set app locale given the user's selected locale
-                        AppCompatDelegate.setApplicationLocales(
-                            LocaleListCompat.forLanguageTags(
-                                localeOptions[selectionLocale]
-                            )
-                        )
-                        Log.d("locale", selectionLocale)
-                    }
-                )
-            }
         }
     }
 }
