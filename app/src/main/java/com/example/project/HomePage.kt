@@ -1,6 +1,9 @@
 
 package com.example.project
 
+import DataStore.LoginDataStore
+import DataStore.LoginState
+import ViewModels.BlueTooth
 import ViewModels.HandleResult
 import ViewModels.Identified
 import ViewModels.Setting
@@ -35,6 +38,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,19 +57,34 @@ import androidx.navigation.NavController
 @Composable
 fun HomePage(
     androidViewModel: Identified,
+    blueTooth: BlueTooth,
+    loginDataStore:LoginDataStore,
     viewModel: Setting,
     navController: NavController
 ) {
     val upLoadResponseState = androidViewModel.uploadState.collectAsState().value
+
     val handleState by androidViewModel.handleResult.collectAsState()
+
     val state by androidViewModel.state.collectAsState()
+
+    val blueToothState by blueTooth.newMessageReceived.observeAsState()
+
+    val loginStateFlow = loginDataStore.loadLoginState()
+    val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
+
+    val account = loginState.currentUser?.account
+
     var response by remember { mutableStateOf("")  }
+
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var uploadResponseState by remember { mutableStateOf(false) }
+
     val text=state.spokenText.ifEmpty { "" }
+
     LaunchedEffect(handleState) {
         when (handleState) {
             is HandleResult.LanguageChange -> isLanguageChangeScreenVisible = true
@@ -77,26 +96,6 @@ fun HomePage(
         }
     }
 
-    DisposableEffect(handleState) {
-        when (handleState) {
-            is HandleResult.NavigateSetting -> {
-                navController.navigate("SettingPage")
-                androidViewModel.resetHandleState()
-            }
-            is HandleResult.NavigateRequest -> {/* No-op */ }
-            // 其他情況需要處理
-            is HandleResult.LanguageChange -> { /* No-op */ }
-            is HandleResult.NameChange -> { /* No-op */ }
-            is HandleResult.PasswordChange -> { /* No-op */ }
-            is HandleResult.EmailChange -> { /* No-op */ }
-            is HandleResult.Upload -> { /* No-op */ }
-            is HandleResult.Initial -> { /* No-op */ }
-            is HandleResult.Loading -> { /* No-op */ }
-        }
-        onDispose {
-            // 清理操作，如果需要
-        }
-    }
     LaunchedEffect(upLoadResponseState) {
         when(upLoadResponseState){
             is UploadState.Success->{
@@ -110,6 +109,7 @@ fun HomePage(
             }
         }
     }
+
     if (isLanguageChangeScreenVisible) {
         LanguageChangeScreen(
             onClose = {isLanguageChangeScreenVisible=false}
@@ -118,17 +118,21 @@ fun HomePage(
     if (nameChangeScreenVisible){
         NameChangeScreen(
             viewModel = viewModel,
+            account,
             onClose = { nameChangeScreenVisible = false }
         )
     }
     if (passwordChangeScreenVisible){
         PasswordChangeScreen(viewModel = viewModel,
+            account,
             onClose = {passwordChangeScreenVisible=false})
     }
     if (emailChangeScreenVisible){
         EmailChangeScreen(viewModel = viewModel,
+            account,
             onClose = {emailChangeScreenVisible=false})
     }
+
     Scaffold(modifier = Modifier.fillMaxSize(),
         topBar ={
             Box(modifier = Modifier.fillMaxWidth(),

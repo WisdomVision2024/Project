@@ -52,7 +52,7 @@ fun SettingPage(viewModel:Setting,
     val context = LocalContext.current
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
-    val individualised = loginState.currentUser?.isVisuallyImpaired
+    val account = loginState.currentUser?.account
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
@@ -71,15 +71,18 @@ fun SettingPage(viewModel:Setting,
     if (nameChangeScreenVisible){
         NameChangeScreen(
             viewModel = viewModel,
+            account=account,
             onClose = { nameChangeScreenVisible = false }
         )
     }
     if (passwordChangeScreenVisible){
     PasswordChangeScreen(viewModel = viewModel,
+        account=account,
         onClose = {passwordChangeScreenVisible=false})
     }
     if (emailChangeScreenVisible){
         EmailChangeScreen(viewModel = viewModel,
+            account=account,
             onClose = {emailChangeScreenVisible=false})
     }
     if (logOutScreenVisible){

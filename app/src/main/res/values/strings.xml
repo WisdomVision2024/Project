@@ -52,4 +52,7 @@
     <string name="Route_LoggingPage" translatable="false">LoginPage</string>
     <string name="Route_RequestPage" translatable="false">RequestPage</string>
     <string name="check_of_Log_out">Are you sure to Log Out?</string>
+    <string name="Client">Client</string>
+    <string name="Description">Detail description</string>
+    <string name="Location">Location</string>
 </resources>

@@ -1,5 +1,6 @@
 package Data
 
+import android.os.Message
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 import org.w3c.dom.Text
@@ -32,13 +33,20 @@ data class IdentifiedResponse(
 )
 
 data class HelpRequest(
-    val type:String,
+    val id:String,
+    val name:String,
     val description:String,
     val address:String
 )
 
 data class HelpResponse(
-    val request: List<HelpRequest>?
+    val request: List<HelpRequest>?,
+    val errorMessage: String?
+)
+
+data class AcceptCommissionResponse(
+    val success: Boolean,
+    val message: String?
 )
 
 @Serializable

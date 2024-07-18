@@ -40,4 +40,7 @@
     <string name="yes">是</string>
     <string name="no">否</string>
     <string name="check_of_Log_out">確認是否登出？</string>
+    <string name="Client">委託人</string>
+    <string name="Description">詳細說明</string>
+    <string name="Location">位置</string>
 </resources>

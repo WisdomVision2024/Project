@@ -40,4 +40,7 @@
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="check_of_Log_out">Êtes-vous sûr de vous déconnecter ?</string>
+    <string name="Client">Client</string>
+    <string name="Description">Description détaillée</string>
+    <string name="Location">Emplacement</string>
 </resources>

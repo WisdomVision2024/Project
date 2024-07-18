@@ -28,8 +28,10 @@ sealed class HandleResult{
     data object PasswordChange:HandleResult()
     data object EmailChange:HandleResult()
     data object Upload:HandleResult()
+    data object BlueTooth:HandleResult()
 }
 class Identified(application: Application,
+                 private val blueTooth: BlueTooth,
                  private val apiService: ApiService,
                  private val isPreview: Boolean = false,
                 ) : AndroidViewModel(application) {
@@ -175,14 +177,20 @@ class Identified(application: Application,
                     _handleResult.value=HandleResult.NavigateSetting
                     Log.d("HandleResult","NavigateSetting")
                 }
+                text.contains("", ignoreCase = true)->{
+                    _handleResult.value=HandleResult.BlueTooth
+                    blueTooth.sendData(text)
+                }
                 else -> {
                     _handleResult.value=HandleResult.Upload
+                    upLoad(text)
                     Log.d("HandleResult","Upload")
                 }
             }
         }
         else{
             _handleResult.value=HandleResult.Loading
+            Log.d("HandleResult","Loading")
         }
     }
     fun resetHandleState(){

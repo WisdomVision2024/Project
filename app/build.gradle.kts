@@ -58,6 +58,7 @@ dependencies {
     // For loading and tinting drawables on older versions of the platform
     implementation("androidx.appcompat:appcompat-resources:$appcompat_version")
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.compose.runtime:runtime-livedata:1.4.3")
     implementation("androidx.compose.material:material:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("com.squareup.retrofit2:converter-scalars:2.9.0")

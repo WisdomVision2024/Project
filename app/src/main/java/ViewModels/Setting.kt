@@ -15,6 +15,8 @@ import Data.Savedata
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import android.util.Log
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 sealed class UpdateUiState {
     data object Initial : UpdateUiState()
@@ -27,10 +29,11 @@ class Setting(private val apiService: ApiService,private val loginDataStore: Log
     private val _updateUiState = MutableStateFlow<UpdateUiState>(UpdateUiState.Initial)
     val updateState: StateFlow<UpdateUiState> = _updateUiState
 
-    fun changeName(name:String){
+
+    fun changeName(account:String?,name:String){
         viewModelScope.launch(Dispatchers.IO){
             try {
-                val response = apiService.name(NameChangeRequest(name))
+                val response = apiService.name(account,NameChangeRequest(name))
                 if (response.isSuccessful){
                     if (response.body()?.success == true){
                         _updateUiState.value=UpdateUiState.Success(response.body())
@@ -48,15 +51,15 @@ class Setting(private val apiService: ApiService,private val loginDataStore: Log
             }
         }
     }
-    fun changePassword(oldPassword:String, newPassword:String){
+    fun changePassword(account:String?,oldPassword:String, newPassword:String){
         viewModelScope.launch(Dispatchers.IO){
             try {
-                val oldPasswordResponse = apiService.getOldPassword()
+                val oldPasswordResponse = apiService.getOldPassword(account)
                 if (oldPasswordResponse.isSuccessful) {
                     val serverOldPassword = oldPasswordResponse.body()
                     if (serverOldPassword != null && serverOldPassword.equals(oldPassword)) {
                         // Step 2: 旧密码验证通过，更新新密码
-                        val response = apiService.password(PasswordChangeRequest(newPassword))
+                        val response = apiService.password(account,PasswordChangeRequest(newPassword))
                         if (response.isSuccessful) {
                             if (response.body()?.success == true) {
                                 _updateUiState.value = UpdateUiState.Success(response.body())
@@ -77,10 +80,10 @@ class Setting(private val apiService: ApiService,private val loginDataStore: Log
             }
         }
     }
-    fun changeEmail(email:String){
+    fun changeEmail(account:String?,email:String){
         viewModelScope.launch(Dispatchers.IO){
             try {
-                val response = apiService.email(EmailChangeRequest(email))
+                val response = apiService.email(account,EmailChangeRequest(email))
                 if (response.isSuccessful){
                     if (response.body()?.success == true){
                         _updateUiState.value=UpdateUiState.Success(response.body())

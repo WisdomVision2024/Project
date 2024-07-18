@@ -204,6 +204,7 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
 @Composable
 fun NameChangeScreen(
     viewModel: Setting,
+    account:String?,
     onClose: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
@@ -234,7 +235,7 @@ fun NameChangeScreen(
                     .background(Color(169, 217, 108))
             )
             Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = { viewModel.changeName(username) },
+            Button(onClick = { viewModel.changeName(account,username) },
                 colors = ButtonDefaults.buttonColors(containerColor=Color.Red),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
@@ -249,6 +250,7 @@ fun NameChangeScreen(
 @Composable
 fun PasswordChangeScreen(
     viewModel: Setting,
+    account:String?,
     onClose: () -> Unit
 ) {
     var oldp by remember { mutableStateOf("") }
@@ -286,7 +288,7 @@ fun PasswordChangeScreen(
                     .height(60.dp)
                     .background(Color(169, 217, 108)))
             Spacer(modifier = Modifier.padding(20.dp))
-            Button(onClick = { viewModel.changePassword(oldp,newp) },
+            Button(onClick = { viewModel.changePassword(account,oldp,newp) },
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
@@ -300,6 +302,7 @@ fun PasswordChangeScreen(
 @Composable
 fun EmailChangeScreen(
     viewModel: Setting,
+    account:String?,
     onClose: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -330,7 +333,7 @@ fun EmailChangeScreen(
                     .height(60.dp)
                     .background(Color(169, 217, 108)))
             Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = {viewModel.changeEmail(email)},
+            Button(onClick = {viewModel.changeEmail(account,email)},
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))

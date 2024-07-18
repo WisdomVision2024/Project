@@ -1,5 +1,6 @@
 package assets
 
+import Data.AcceptCommissionResponse
 import Data.EmailChangeRequest
 import Data.GetOldPasswordResponse
 import Data.HelpRequest
@@ -28,18 +29,21 @@ interface ApiService {
     suspend fun login(@Body loginRequest: LoginRequest): Response<ResponseBody>
     @POST("signup/")
     suspend fun signup(@Body signupRequest: SignupRequest):Response<ResponseBody>
-    @PUT("Setting/newName")
-    suspend fun name(@Body nameRequest: NameChangeRequest):Response<UploadResponse>
-    @GET("Setting/oldPassword")
-    suspend fun getOldPassword(): Response<GetOldPasswordResponse>
-    @PUT("Setting/newPassword")
-    suspend fun password(@Body passwordChangeRequest: PasswordChangeRequest):Response<UploadResponse>
-    @PUT("Setting/newEmail")
-    suspend fun email(@Body emailChangeRequest: EmailChangeRequest): Response<UploadResponse>
-    @POST("Identified")
+    @PUT("setting/newName")
+    suspend fun name(@Query("Phone")account:String?,@Body nameRequest: NameChangeRequest):Response<UploadResponse>
+    @GET("setting/oldPassword")
+    suspend fun getOldPassword(@Query("Phone")account:String?): Response<GetOldPasswordResponse>
+    @PUT("setting/newPassword")
+    suspend fun password(@Query("Phone")account:String?,@Body passwordChangeRequest: PasswordChangeRequest):Response<UploadResponse>
+    @PUT("setting/newEmail")
+    suspend fun email(@Query("Phone")account:String?,@Body emailChangeRequest: EmailChangeRequest): Response<UploadResponse>
+    @POST("identified")
     suspend fun identify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
-    @POST("SendRequest")
+    @POST("sendRequest")
     suspend fun sendRequest(@Body helpRequest: HelpRequest):Response<UploadResponse>
-    @GET("GetRequest")
-    suspend fun getRequire(@Query("helpRequest") helpRequest: HelpRequest):Response<HelpResponse>
+    @GET("getRequest")
+    suspend fun getRequire():Response<HelpResponse>
+    @PUT("acceptCommission")
+    suspend fun acceptCommission(@Query("id")id:String ):Response<AcceptCommissionResponse>
 }
+

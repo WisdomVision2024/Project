@@ -40,4 +40,7 @@
     <string name="yes">はい</string>
     <string name="no">いいえ</string>
     <string name="check_of_Log_out">ログアウトしますか?</string>
+    <string name="Client">クライアント</string>
+    <string name="Description">詳細説明</string>
+    <string name="Location">位置</string>
 </resources>
