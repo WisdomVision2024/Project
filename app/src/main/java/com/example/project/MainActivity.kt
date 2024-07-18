@@ -163,6 +163,7 @@ fun HomePagePreview() {
     val loginDataStore=LoginDataStore(context)
     HomePage(androidViewModel = Identified(application = Application(),
         blueTooth = BlueTooth(Application()),RetrofitInstance.apiService ),
+        blueTooth = BlueTooth(Application()),
         viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
         loginDataStore = loginDataStore,
         navController = navController )
