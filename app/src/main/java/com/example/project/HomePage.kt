@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -62,6 +63,7 @@ fun HomePage(
     viewModel: Setting,
     navController: NavController
 ) {
+    val context = LocalContext.current
     val upLoadResponseState = androidViewModel.uploadState.collectAsState().value
 
     val handleState by androidViewModel.handleResult.collectAsState()
@@ -95,7 +97,11 @@ fun HomePage(
             else -> { Unit }
         }
     }
-
+    LaunchedEffect(blueToothState) {
+        blueToothState?.let {
+            blueTooth.playAlertSound(context)
+        }
+    }
     LaunchedEffect(upLoadResponseState) {
         when(upLoadResponseState){
             is UploadState.Success->{

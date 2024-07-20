@@ -1,5 +1,6 @@
 package provider
 
+import ViewModels.BlueTooth
 import ViewModels.Identified
 import android.app.Application
 import androidx.lifecycle.ViewModel
@@ -16,7 +17,7 @@ class IdentifiedFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(Identified::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return Identified(application, apiService) as T
+            return Identified(application, blueTooth = BlueTooth(application),apiService) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

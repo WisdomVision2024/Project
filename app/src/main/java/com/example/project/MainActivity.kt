@@ -11,6 +11,7 @@ import ViewModels.Setting
 import acitivity.getMacAddress
 import android.app.AlertDialog
 import android.app.Application
+import android.content.pm.PackageManager
 import provider.BluToothFactory
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -36,7 +38,6 @@ import com.example.project.ui.theme.ProjectTheme
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,14 +56,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Navigation(
-                        loginState = loginState,
-                        navController = navController,
-                        apiService = apiService,
-                        loginDataStore = loginDataStore,
-                        blueTooth = bluetoothViewModel,
-                        app = application
-                    )
+                    TestPage(blueTooth = bluetoothViewModel)
                 }
             }
         }
@@ -75,7 +69,8 @@ class MainActivity : ComponentActivity() {
         )
     }
     private val multiplePermissions =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            permissions ->
             val grantedPermissions = permissions.filterValues { it }
             val deniedPermissions = permissions.filterValues { !it }
             if (deniedPermissions.isNotEmpty()) {
@@ -129,6 +124,7 @@ class MainActivity : ComponentActivity() {
             .show()
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun LoginPagePreview() {
@@ -183,11 +179,4 @@ fun SettingPagePreview() {
 fun HelpListPagePreview(){
     val navController = rememberNavController()
     HelpListPage(viewModel = HelpList(RetrofitInstance.apiService),navController = navController)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HelpPagePreview(){
-    val navController = rememberNavController()
-    HelpPage("1","Lily","find my pen", "MeetingRoom No.3",navController)
 }
