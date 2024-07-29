@@ -7,8 +7,7 @@ plugins {
 android {
     namespace = "com.example.project"
     compileSdk = 34
-
-
+    
     defaultConfig {
         applicationId = "com.example.project"
         minSdk = 33
@@ -68,6 +67,11 @@ dependencies {
     implementation ("com.squareup.okhttp3:logging-interceptor:4.9.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
+
+    implementation(":libuvccamera")
+    implementation(":usbCameraCommon")
+
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.ktx)

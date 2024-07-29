@@ -3,6 +3,7 @@ package com.example.project
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Setting
+import ViewModels.UpdateUiState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,20 +51,29 @@ fun SettingPage(viewModel:Setting,
                 loginDataStore: LoginDataStore,
                 navController: NavController)
 {
-    val context = LocalContext.current
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
+    val updateState = viewModel.updateState.collectAsState().value
     val account = loginState.currentUser?.account
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var logOutScreenVisible by remember { mutableStateOf(false) }
-    val username by remember { mutableStateOf("") }
-    val old by remember { mutableStateOf("") }
-    val password by remember { mutableStateOf("") }
-    val email by remember { mutableStateOf("") }
-
+    var errorScreen by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
+    LaunchedEffect(updateState) {
+        when(updateState){
+            is UpdateUiState.Error->{
+                message=updateState.message
+                errorScreen=true
+            }
+            else->{Unit}
+        }
+    }
+    if (errorScreen){
+        ErrorMessageScreen(errorMessage = message, onClose = {errorScreen=false})
+    }
     if (isLanguageChangeScreenVisible) {
         LanguageChangeScreen(
             onClose = {isLanguageChangeScreenVisible=false}
@@ -101,13 +112,13 @@ fun SettingPage(viewModel:Setting,
                 Text(text = stringResource(id = R.string.check_of_Log_out),
                     fontSize = 24.sp )
                 Spacer(modifier = Modifier.padding(40.dp))
-                Row {
-                    Button(onClick = {
-                        viewModel.logOut()
+                Row(modifier = Modifier.width(300.dp),
+                    horizontalArrangement = Arrangement.SpaceAround) {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(Color.Red),
+                        onClick = {
                         logOutScreenVisible=false
-                        navController.navigate("LoginPage"){
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
+                        viewModel.logOut()
                     }
                     ) {
                         Text(text = stringResource(id = R.string.confirm))
@@ -119,11 +130,18 @@ fun SettingPage(viewModel:Setting,
             }
         }
     }
+    LaunchedEffect(loginState) {
+        if (!loginState.isLoggedIn){
+            navController.navigate("LoginPage"){
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            }
+        }
+    }
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar = {
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(2,115,115)),
+                .background(Color(2, 115, 115)),
                 contentAlignment = Alignment.TopStart) {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(painter = painterResource(id = R.drawable.arrowback_foreground)

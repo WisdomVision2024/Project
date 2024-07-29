@@ -1,6 +1,9 @@
 package com.example.project
 
 import Data.HelpRequest
+import DataStore.LoginDataStore
+import DataStore.LoginState
+import ViewModels.AcceptUiState
 import ViewModels.HelpList
 import ViewModels.HelpUiState
 import androidx.compose.foundation.background
@@ -47,11 +50,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import assets.RetrofitInstance
 
 @Composable
-fun HelpListPage(viewModel:HelpList,navController: NavController) {
+fun HelpListPage(viewModel:HelpList,loginDataStore:LoginDataStore,navController: NavController) {
+
     val helpListState =viewModel.helpListState.collectAsState().value
+    val acceptUiState = viewModel.acceptUiState.collectAsState().value
+
+    val loginStateFlow = loginDataStore.loadLoginState()
+    val loginState by loginStateFlow.collectAsState(initial = LoginState(isLoggedIn = true))
+    val account = loginState.currentUser?.account
+
     var state by remember { mutableStateOf(false) }
+    var errorScreen by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf(" ") }
     LaunchedEffect (helpListState){
         when(helpListState){
             is HelpUiState.Success->{
@@ -61,14 +74,33 @@ fun HelpListPage(viewModel:HelpList,navController: NavController) {
         }
     }
     if (state){
-        SuccessScreen(viewModel = viewModel, navController = navController)
+        if (account != null) {
+            SuccessScreen(viewModel = viewModel, account=account,navController = navController)
+        }
     }
     else{
         ErrorScreen(viewModel = viewModel, navController = navController)
     }
+    LaunchedEffect(acceptUiState) {
+        when(acceptUiState){
+            is AcceptUiState.Success->{
+                val helpRequest=(acceptUiState as AcceptUiState.Success).helpRequest
+                navController.navigate("HelpPage/${helpRequest?.id}/${helpRequest?.name}" +
+                        "/${helpRequest?.description}/${helpRequest?.address}")
+            }
+            is AcceptUiState.Error->{
+                errorScreen=true
+                message= (acceptUiState as AcceptUiState.Error).message.toString()
+                }
+            else->{Unit}
+        }
+    }
+    if (errorScreen){
+        ErrorMessageScreen(errorMessage =message, onClose = {errorScreen=false} )
+    }
 }
 @Composable
-fun SuccessScreen(viewModel:HelpList,navController: NavController){
+fun SuccessScreen(viewModel:HelpList,account: String,navController: NavController){
     val helpListState = viewModel.helpListState.collectAsState().value as HelpUiState.Success
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar ={
@@ -90,7 +122,7 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
         {
             helpListState.helpList?.let { helpList ->
                 items(helpList) { helpRequest ->
-                    HelpItem(helpRequest, navController)
+                    HelpItem(viewModel,helpRequest, account = account,navController)
                 }
             }
         }
@@ -100,7 +132,8 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
 fun ErrorScreen(viewModel:HelpList,navController: NavController){
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar ={
-            Box(modifier = Modifier.fillMaxWidth()
+            Box(modifier = Modifier
+                .fillMaxWidth()
                 .background(color = Color(242, 231, 220)),
                 contentAlignment= Alignment.TopEnd)
             {
@@ -131,7 +164,7 @@ fun ErrorScreen(viewModel:HelpList,navController: NavController){
     }
 }
 @Composable
-fun HelpItem(helpRequest: HelpRequest,navController: NavController) {
+fun HelpItem(viewModel:HelpList,helpRequest: HelpRequest,account: String,navController: NavController) {
     var confirmScreenVisible by remember { mutableStateOf(false) }
     Column(
         verticalArrangement = Arrangement.Top,
@@ -171,12 +204,15 @@ fun HelpItem(helpRequest: HelpRequest,navController: NavController) {
         }
     }
     if (confirmScreenVisible){
-        ConfirmScreen(helpRequest = helpRequest, navController,onClose = {confirmScreenVisible=false})
+        ConfirmScreen(viewModel =viewModel,helpRequest = helpRequest, account = account,
+            navController,onClose = {confirmScreenVisible=false})
     }
 }
 @Composable
 fun ConfirmScreen(
+    viewModel: HelpList,
     helpRequest: HelpRequest,
+    account:String,
     navController: NavController,
     onClose: () -> Unit
 ) {
@@ -196,18 +232,19 @@ fun ConfirmScreen(
             val description=helpRequest.description
             val address=helpRequest.address
             Row {
-                Text(text = ":")
+                Text(text = stringResource(id = R.string.Client)+":")
                 Text(text = name)
             }
-            Text(text = ":")
+            Text(text = stringResource(id = R.string.Description)+":")
             Text(text = description)
             Row {
-                Text(text =":")
+                Text(text = stringResource(id = R.string.Location)+":")
                 Text(text = address)
             }
             Button(onClick = {
+                viewModel.acceptCommission(id,account)
                 onClose()
-                navController.navigate("HelpPage/${id}/${name}/${description}/${address}") },
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
@@ -222,5 +259,5 @@ fun ConfirmScreen(
 fun HelpItemPreview(){
     val helpRequest=HelpRequest("1","Lily","find my pen"," MeetingRoom no.3")
     val navController= rememberNavController()
-    HelpItem(helpRequest=helpRequest,navController)
+    HelpItem(viewModel = HelpList(RetrofitInstance.apiService),helpRequest=helpRequest,"123",navController)
 }

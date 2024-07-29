@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -372,7 +373,33 @@ fun ErrorMessageScreen(
     }
 }
 
-
+@Composable
+fun FinishScreen(
+    onClose: () -> Unit
+) {
+    Dialog(onDismissRequest = {onClose() }) {
+        Column(modifier = Modifier
+            .width(320.dp)
+            .height(240.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(242, 231, 220))
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        )
+        {
+            Text(text = stringResource(id = R.string.completed), fontSize = 20.sp, color = Color.White)
+            Text(text = stringResource(id = R.string.thank), fontSize = 20.sp, color = Color.White)
+            Button(onClick = {onClose()},
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
+            {
+                Text(text = stringResource(id = R.string.confirm), color = Color.White)
+            }
+        }
+    }
+}
 @Composable
 fun SingleSelectCheckbox(
     isChecked: Boolean,
@@ -405,19 +432,13 @@ fun Navigationbar(
     }
     val menuData = listOf(
         BottomNavItem(
-            stringResource(R.string.Route_RequestPage),
-            stringResource(R.string.request),
-            Icons.Filled.AddCircle)
-        ,
-        BottomNavItem(
             stringResource(R.string.Route_HomePage),
             stringResource(R.string.home_page),
-            Icons.Filled.Home)
-        ,
+            Icons.Filled.Home) ,
         BottomNavItem(
-            stringResource( R.string.Route_SettingPage),
-            stringResource(R.string.setting_page),
-            Icons.Filled.Settings)
+            stringResource(R.string.Route_RequestPage),
+            stringResource(R.string.request),
+            Icons.Filled.Person)
     )
     NavigationBar(containerColor = Color(3, 140, 127),
         contentColor = Color(0, 0, 0),
@@ -433,7 +454,7 @@ fun Navigationbar(
                 icon = {
                     Icon(
                         imageVector = bottomItemData.icon,
-                        contentDescription = "點選按鈕",
+                        contentDescription = "click",
                         tint = Color(0,0,0)
                     )
                 },

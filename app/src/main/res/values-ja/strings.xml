@@ -43,4 +43,6 @@
     <string name="Client">クライアント</string>
     <string name="Description">詳細説明</string>
     <string name="Location">位置</string>
+    <string name="completed">依頼者は委託が完了したことを確認しました。</string>
+    <string name="thank">助けてくれてありがとう</string>
 </resources>

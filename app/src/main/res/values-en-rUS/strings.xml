@@ -43,4 +43,6 @@
     <string name="Client">Client</string>
     <string name="Description">Detail description</string>
     <string name="Location">Location</string>
+    <string name="completed">Client has confirmed the comission is completed.</string>
+    <string name="thank">Thanks for you help</string>
 </resources>

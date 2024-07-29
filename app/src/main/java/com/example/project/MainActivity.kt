@@ -3,16 +3,15 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
-import ViewModels.BlueTooth
 import ViewModels.HelpList
 import ViewModels.Identified
+import ViewModels.PermissionState
 import provider.IdentifiedFactory
 import ViewModels.Setting
-import acitivity.getMacAddress
+import ViewModels.TTS
 import android.app.AlertDialog
 import android.app.Application
-import android.content.pm.PackageManager
-import provider.BluToothFactory
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,99 +27,113 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
+    private val identifiedViewModel: Identified by viewModels {
+        IdentifiedFactory(
+            application,
+            apiService
+        )
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         requestMultiplePermissions()
-
         setContent {
             val context=applicationContext
             val loginDataStore= remember { LoginDataStore(context)}
             val loginStateFlow = loginDataStore.loadLoginState()
             val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
             val navController = rememberNavController()
-            val bluetoothViewModel: BlueTooth = viewModel(factory = BluToothFactory(application))
+
             ProjectTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TestPage(blueTooth = bluetoothViewModel)
+                   Navigation(
+                       loginState = loginState,
+                       navController = navController,
+                       apiService = apiService,
+                       loginDataStore = loginDataStore,
+                       app =application
+                   )
+                }
+            }
+        }
+
+        identifiedViewModel.showPermissionRationale.observe(this) { show ->
+            if (show == true) {
+                showPermissionRationaleDialog()
+            }
+        }
+        lifecycleScope.launch {
+            identifiedViewModel.permissions.collect{ permissions->
+                when(permissions){
+                    PermissionState.RequestPermissionsAgain->{
+                        requestMultiplePermissions()
+                    }
+                    else->{Unit}
                 }
             }
         }
     }
-    private val identifiedViewModel: Identified by viewModels {
-        IdentifiedFactory(
-            application,
-            apiService,
-            navController = NavController(applicationContext)
-        )
-    }
+
+
     private val multiplePermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
             permissions ->
             val grantedPermissions = permissions.filterValues { it }
             val deniedPermissions = permissions.filterValues { !it }
-            if (deniedPermissions.isNotEmpty()) {
-                // 处理用户拒绝权限的情况
-                showPermissionDeniedDialog()
-            } else {
-                identifiedViewModel.checkPermissions(grantedPermissions, deniedPermissions)
-            }
+            identifiedViewModel.checkPermissions(grantedPermissions, deniedPermissions)
         }
+
     private fun requestMultiplePermissions() {
-        multiplePermissions.launch(
-            arrayOf(
-                android.Manifest.permission.CAMERA,
-                android.Manifest.permission.RECORD_AUDIO,
-                android.Manifest.permission.BLUETOOTH,
-                android.Manifest.permission.BLUETOOTH_ADMIN,
-                android.Manifest.permission.BLUETOOTH_CONNECT,
-                android.Manifest.permission.BLUETOOTH_SCAN,
-                android.Manifest.permission.BLUETOOTH_ADVERTISE,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
+        val permissionsToRequest = mutableListOf(
+            android.Manifest.permission.CAMERA,
+            android.Manifest.permission.READ_MEDIA_VIDEO,
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_ADVERTISE,
+            android.Manifest.permission.BLUETOOTH_CONNECT,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
+            permissionsToRequest.add(android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+        }
+        else{
+            permissionsToRequest.addAll(
+                listOf(
+                    android.Manifest.permission.READ_MEDIA_VIDEO,
+                    android.Manifest.permission.RECORD_AUDIO,
+                    android.Manifest.permission.READ_MEDIA_IMAGES
+                )
+
+                )
+        }
+        multiplePermissions.launch(permissionsToRequest.toTypedArray())
     }
-    private fun showPermissionDeniedDialog() {
+
+    private fun showPermissionRationaleDialog() {
         AlertDialog.Builder(this)
             .setTitle("權限請求")
-            .setMessage("app運作需要這些權限，請授予這些權限以繼續。")
-            .setPositiveButton(R.string.confirm) { dialog, _ ->
-                dialog.dismiss()
-                multiplePermissions.launch(
-                    arrayOf(
-                        android.Manifest.permission.CAMERA,
-                        android.Manifest.permission.RECORD_AUDIO,
-                        android.Manifest.permission.BLUETOOTH,
-                        android.Manifest.permission.BLUETOOTH_ADMIN,
-                        android.Manifest.permission.BLUETOOTH_SCAN,
-                        android.Manifest.permission.BLUETOOTH_ADVERTISE,
-                        android.Manifest.permission.BLUETOOTH_CONNECT,
-                        android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                        android.Manifest.permission.ACCESS_FINE_LOCATION,
-                        android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                    )
-                )
+            .setMessage("app需要一些權限来提供完整的功能。請授予所需的權限。")
+            .setPositiveButton("重試") { _, _ ->
+                identifiedViewModel.onPermissionRationaleShown()
+                identifiedViewModel.requestPermissionsAgain()
             }
-            .setNegativeButton(R.string.cancel) { dialog, _ ->
-                dialog.dismiss()
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                identifiedViewModel.onPermissionRationaleShown()
             }
-            .create()
             .show()
     }
 }
@@ -137,7 +150,6 @@ fun LoginPagePreview() {
         navController = navController,
         apiService = RetrofitInstance.apiService,
         loginDataStore =loginDataStore,
-        blueTooth = BlueTooth(Application()),
         app = Application()
     )
 }
@@ -157,11 +169,12 @@ fun HomePagePreview() {
     val context = LocalContext.current
     val navController = rememberNavController()
     val loginDataStore=LoginDataStore(context)
-    HomePage(androidViewModel = Identified(application = Application(),
-        blueTooth = BlueTooth(Application()),RetrofitInstance.apiService ),
-        blueTooth = BlueTooth(Application()),
-        viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+    HomePage(
+        androidViewModel = Identified(application = Application(),
+            apiService = RetrofitInstance.apiService),
         loginDataStore = loginDataStore,
+        viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+        tts = TTS(Application()),
         navController = navController )
 }
 
@@ -177,6 +190,8 @@ fun SettingPagePreview() {
 @Preview(showBackground = true)
 @Composable
 fun HelpListPagePreview(){
+    val context = LocalContext.current
     val navController = rememberNavController()
-    HelpListPage(viewModel = HelpList(RetrofitInstance.apiService),navController = navController)
+    val loginDataStore=LoginDataStore(context)
+    HelpListPage(viewModel = HelpList(RetrofitInstance.apiService),loginDataStore,navController = navController)
 }

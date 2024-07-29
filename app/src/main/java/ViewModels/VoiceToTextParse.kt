@@ -19,6 +19,9 @@ class VoiceToTextParse(
     private val _state= MutableStateFlow(VoiceToTextParseState())
     val state=_state.asStateFlow()
     private val recognizer=SpeechRecognizer.createSpeechRecognizer(app)
+    init {
+        Log.d("VoiceToTextParse", "VoiceToTextParse initialized with app: $app")
+    }
     fun startListening(){
         _state.update { VoiceToTextParseState() }
 

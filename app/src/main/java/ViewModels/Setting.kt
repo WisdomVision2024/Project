@@ -105,7 +105,7 @@ class Setting(private val apiService: ApiService,private val loginDataStore: Log
     fun logOut(){
         viewModelScope.launch(Dispatchers.IO){
             try {
-                loginDataStore.saveLoginState(LoginState())
+                loginDataStore.saveLoginState(LoginState(isLoggedIn = false))
                 Log.d("Log Out","Log Out Success")
                 _updateUiState.value=UpdateUiState.Success(null)
             }catch (e:Exception){

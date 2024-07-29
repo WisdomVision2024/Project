@@ -43,4 +43,6 @@
     <string name="Client">고객</string>
     <string name="Description">상세 설명</string>
     <string name="Location">위치</string>
+    <string name="completed">고객이 커미션이 완료되었음을 확인했습니다.</string>
+    <string name="thank">도와 주셔서 감사합니다</string>
 </resources>

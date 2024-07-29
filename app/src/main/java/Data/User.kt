@@ -25,10 +25,15 @@ data class Savedata(
     val isVisuallyImpaired:Boolean?
 )
 
+@Serializable
 data class IdentifiedData(
+    @SerializedName("T")
     val text:String?
 )
+
+@Serializable
 data class IdentifiedResponse(
+    @SerializedName("T")
     val ans:String?
 )
 
@@ -46,6 +51,7 @@ data class HelpResponse(
 
 data class AcceptCommissionResponse(
     val success: Boolean,
+    val helpRequest: HelpRequest?,
     val message: String?
 )
 
@@ -94,10 +100,7 @@ data class LoginResponse(
     @SerializedName("errorMessage")
     val errorMessage:String
 )
-data class LoginErrorResponse(
-    val success: Boolean,
-    val errorMessage: String
-)
+
 data class NameChangeRequest(
     @SerializedName("Name")
     val username: String,
@@ -120,4 +123,15 @@ data class EmailChangeRequest(
 data class UploadResponse(
     val success: Boolean,
     val errorMessage: String?
+)
+
+data class Distance(
+    val distance: String,
+    val errorMessage: String?
+)
+data class ArduinoRequire(
+    val command:String
+)
+data class ArduinoRequireResponse(
+    val success: Boolean
 )

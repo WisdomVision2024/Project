@@ -43,4 +43,6 @@
     <string name="Client">委託人</string>
     <string name="Description">詳細說明</string>
     <string name="Location">位置</string>
+    <string name="completed">委託人已確認委託完成</string>
+    <string name="thank">感謝您的協助</string>
 </resources>

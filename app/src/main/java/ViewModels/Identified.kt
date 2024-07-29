@@ -2,22 +2,22 @@ package ViewModels
 
 
 import Data.IdentifiedData
+import android.app.Activity
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.app.Application
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import assets.ApiService
 
-sealed class UploadState {
-    data object Initial : UploadState()
-    data class Success(val result: String?) : UploadState()
-    data class Error(val message: String) : UploadState()
-}
 sealed class HandleResult{
     data object Initial : HandleResult()
     data object Loading:HandleResult()
@@ -30,8 +30,17 @@ sealed class HandleResult{
     data object Upload:HandleResult()
     data object BlueTooth:HandleResult()
 }
+sealed class UploadState {
+    data object Initial : UploadState()
+    data class Success(val result: String?) : UploadState()
+    data class Error(val message: String) : UploadState()
+}
+
+sealed class PermissionState{
+    data object Initial : PermissionState()
+    data object RequestPermissionsAgain:PermissionState()
+}
 class Identified(application: Application,
-                 private val blueTooth: BlueTooth,
                  private val apiService: ApiService,
                  private val isPreview: Boolean = false,
                 ) : AndroidViewModel(application) {
@@ -48,9 +57,16 @@ class Identified(application: Application,
 
     private val _handleResult= MutableStateFlow<HandleResult>(HandleResult.Initial)
     val handleResult: StateFlow<HandleResult> = _handleResult
+
+    private val _permissions= MutableStateFlow<PermissionState>(PermissionState.Initial)
+    val permissions:StateFlow<PermissionState> = _permissions
+
+    private val _showPermissionRationale = MutableLiveData<Boolean>()
+    val showPermissionRationale: LiveData<Boolean> = _showPermissionRationale
     init {
         if (!isPreview) {
             viewModelScope.launch {
+                Log.d("Identified", "Identified ViewModel initialized with application: $application")
                 voiceToTextParse.state.collectLatest { newState ->
                     _state.value = newState
                     processRecognizedText(newState.spokenText)
@@ -75,12 +91,21 @@ class Identified(application: Application,
             // 有被拒绝的权限
             // 执行相应的操作，例如提示用户需要授予权限
             deniedPermissions.forEach { (permission, _) ->
+                _showPermissionRationale.value = true
                 Log.d("IdentifiedViewModel", "$permission is denied")
             }
         } else {
             // 所有权限都被授予
             Log.d("IdentifiedViewModel", "All permissions are granted")
         }
+    }
+
+    fun onPermissionRationaleShown() {
+        _showPermissionRationale.value = false
+    }
+
+    fun requestPermissionsAgain() {
+        _permissions.value=PermissionState.RequestPermissionsAgain
     }
 
     fun startListening() {
@@ -94,12 +119,13 @@ class Identified(application: Application,
         }
     }
 
-    private fun upLoad(text: String?) {
+    fun upLoad(text: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = apiService.identify(IdentifiedData(text))
                 if (response.isSuccessful) {
                     val ans= response.body()?.ans
+                    Log.d("identified response","$ans")
                     _uploadState.value=UploadState.Success(ans)
                 }
                 }catch (e:Exception)
@@ -111,6 +137,7 @@ class Identified(application: Application,
     }
 
     private fun processRecognizedText(text: String) {
+        _handleResult.value=HandleResult.Initial
         if (text!=""){
             when {
                 (text.contains("change", ignoreCase = true) &&text.contains("name", ignoreCase = true))||(
@@ -179,7 +206,7 @@ class Identified(application: Application,
                 }
                 text.contains("", ignoreCase = true)->{
                     _handleResult.value=HandleResult.BlueTooth
-                    blueTooth.sendData(text)
+                    upLoad(text)
                 }
                 else -> {
                     _handleResult.value=HandleResult.Upload

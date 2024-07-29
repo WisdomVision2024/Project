@@ -37,13 +37,15 @@ interface ApiService {
     suspend fun password(@Query("Phone")account:String?,@Body passwordChangeRequest: PasswordChangeRequest):Response<UploadResponse>
     @PUT("setting/newEmail")
     suspend fun email(@Query("Phone")account:String?,@Body emailChangeRequest: EmailChangeRequest): Response<UploadResponse>
-    @POST("identified")
+    @POST("gemini/")
     suspend fun identify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
     @POST("sendRequest")
     suspend fun sendRequest(@Body helpRequest: HelpRequest):Response<UploadResponse>
     @GET("getRequest")
     suspend fun getRequire():Response<HelpResponse>
     @PUT("acceptCommission")
-    suspend fun acceptCommission(@Query("id")id:String ):Response<AcceptCommissionResponse>
+    suspend fun acceptCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
+    @PUT("cancelCommission")
+    suspend fun cancelCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
 }
 
