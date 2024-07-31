@@ -1,14 +1,13 @@
 package ViewModels
 
 
+import Class.VoiceToTextParse
+import Class.VoiceToTextParseState
 import Data.IdentifiedData
-import android.app.Activity
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import android.app.Application
-import android.content.pm.PackageManager
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

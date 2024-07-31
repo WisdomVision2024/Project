@@ -125,13 +125,7 @@ data class UploadResponse(
     val errorMessage: String?
 )
 
-data class Distance(
-    val distance: String,
+data class UploadImageResponse(
+    val success: Boolean,
     val errorMessage: String?
-)
-data class ArduinoRequire(
-    val command:String
-)
-data class ArduinoRequireResponse(
-    val success: Boolean
 )

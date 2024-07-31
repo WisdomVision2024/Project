@@ -1,6 +1,6 @@
 package ViewModels
 
-import Data.ArduinoRequire
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import assets.ArduinoApi
@@ -30,33 +30,13 @@ class Arduino(private val arduinoApi: ArduinoApi):ViewModel() {
         viewModelScope.launch (Dispatchers.IO) {
             _arduinoState.value=ArduinoUi.Initial
             try {
+                Log.d("Arduino","try")
                 val response=arduinoApi.getDistance()
-                if (response.isSuccessful){
-                    val distance=response.body()?.distance
-                    _arduinoState.value=ArduinoUi.Success(distance)
-                }
-                else{
-                    val error=response.body()?.errorMessage
-                    _arduinoState.value=ArduinoUi.Error(error)
-                }
+                _arduinoState.value=ArduinoUi.Success(response)
             }catch (e:Exception)
             {
                 _arduinoState.value=ArduinoUi.Error("error:${e.message}")
-            }
-        }
-    }
-    fun requireArduino(command:String){
-        viewModelScope.launch {
-            _requireState.value=Require.Initial
-            try {
-                val arduinoRequire=ArduinoRequire(command)
-                val response=arduinoApi.require(arduinoRequire)
-                if (response.isSuccessful){
-                    val success=response.body()?.success
-                    _requireState.value=Require.Success(success)
-                }
-            }catch (e:Exception){
-                _requireState.value=Require.Error("error:${e.message}")
+                Log.d("Arduino","Error: ${e.message}")
             }
         }
     }

@@ -1,4 +1,4 @@
-package ViewModels
+package Class
 
 import android.app.Application
 import android.content.Intent

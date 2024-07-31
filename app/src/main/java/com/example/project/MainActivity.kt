@@ -3,6 +3,7 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import ViewModels.Arduino
 import ViewModels.HelpList
 import ViewModels.Identified
 import ViewModels.PermissionState
@@ -30,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import assets.ArduinoInstance
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
 import kotlinx.coroutines.launch
@@ -37,6 +39,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
+    private val arduinoApi by lazy { ArduinoInstance.arduinoApi }
     private val identifiedViewModel: Identified by viewModels {
         IdentifiedFactory(
             application,
@@ -59,13 +62,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   Navigation(
-                       loginState = loginState,
-                       navController = navController,
-                       apiService = apiService,
-                       loginDataStore = loginDataStore,
-                       app =application
-                   )
+                   Test(arduino = Arduino(arduinoApi), tts = TTS(application))
                 }
             }
         }
@@ -108,7 +105,13 @@ class MainActivity : ComponentActivity() {
             android.Manifest.permission.ACCESS_COARSE_LOCATION
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
-            permissionsToRequest.add(android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED)
+            permissionsToRequest.addAll(
+                listOf(
+                    android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
+                    android.Manifest.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER,
+                    android.Manifest.permission.MANAGE_DEVICE_POLICY_USB_DATA_SIGNALLING
+                )
+            )
         }
         else{
             permissionsToRequest.addAll(

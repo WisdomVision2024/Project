@@ -1,7 +1,9 @@
 package com.example.project
 
-import ViewModels.Identified
-import ViewModels.UploadState
+import ViewModels.Arduino
+import ViewModels.ArduinoUi
+import ViewModels.Require
+import ViewModels.TTS
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,8 +30,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+
 @Composable
-fun Test(viewModel:Identified){
+fun Test(arduino: Arduino,tts: TTS){
     var success by remember {
         mutableStateOf(false)
     }
@@ -39,15 +42,45 @@ fun Test(viewModel:Identified){
     var x by remember {
         mutableStateOf("")
     }
-    val state=viewModel.uploadState.collectAsState().value
+    var d by remember {
+        mutableStateOf("")
+    }
+    var errorScreen by remember {
+        mutableStateOf(false)
+    }
+    val state=arduino.requireState.collectAsState().value
+    val distance=arduino.arduinoState.collectAsState().value
     LaunchedEffect(state) {
         when(state){
-            is UploadState.Success->{
+            is Require.Success->{
                 success=true
-                x=state.result.toString()}
+                }
+            is Require.Error->{
+                success=false
+                x=state.message.toString()
+                errorScreen=true
+            }
             else->{Unit}
         }
     }
+    LaunchedEffect(distance) {
+        when(distance){
+            is ArduinoUi.Success->{
+                d=(distance as ArduinoUi.Success).message.toString()
+            }
+            else->{Unit}
+        }
+    }
+    if (errorScreen){
+        ErrorMessageScreen(errorMessage = x, onClose = { errorScreen=false })
+    }
+    if (d!=""){
+        val g=d.toLong()
+        if (g<100.0){
+            tts.speak("太近了")
+        }
+    }
+
     Column (modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center){
@@ -58,12 +91,12 @@ fun Test(viewModel:Identified){
                 Text(text = x, fontSize = 20.sp)
             }
         }
-        EditInputField(label = R.string.Description,
+        EditInputField(label  =R.string.Description,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             value = t,
             onValueChanged = { t = it })
         Spacer(modifier = Modifier.padding(20.dp))
-        Button(onClick = { viewModel.upLoad(t) }) {
+        Button(onClick = { arduino.getDistance()}){
             Text(text = stringResource(id = R.string.confirm))
         }
     }
