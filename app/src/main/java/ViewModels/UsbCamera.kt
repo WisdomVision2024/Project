@@ -2,6 +2,7 @@ package ViewModels
 
 import Class.UsbCameraManager
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
@@ -21,15 +22,21 @@ sealed class CameraState {
     data class Error(val message: String?) : CameraState()
 }
 class UsbCamera(application: Application):AndroidViewModel(application) {
-    private val usbCameraManager = UsbCameraManager(application)
-
+    private val usbCameraManager = UsbCameraManager(application.applicationContext)
     val imageLiveData: LiveData<ByteArray> get() = usbCameraManager.imageLiveData
 
     private val _cameraState=MutableStateFlow<CameraState>(CameraState.Initial)
     val cameraState:StateFlow<CameraState> = _cameraState
     init {
         usbCameraManager.initialize()
+        Log.d("CameraViewModel", "UsbCameraManager initialized")
     }
+
+    fun captureImage() {
+        usbCameraManager.captureImage()
+        Log.d("CameraViewModel", "captureImage called")
+    }
+
 
     fun startCapture() {
         usbCameraManager.initialize()

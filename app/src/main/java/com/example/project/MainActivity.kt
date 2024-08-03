@@ -3,6 +3,7 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import UsbPermissionTest
 import ViewModels.Arduino
 import ViewModels.HelpList
 import ViewModels.Identified
@@ -10,6 +11,7 @@ import ViewModels.PermissionState
 import provider.IdentifiedFactory
 import ViewModels.Setting
 import ViewModels.TTS
+import ViewModels.UsbCamera
 import android.app.AlertDialog
 import android.app.Application
 import android.os.Build
@@ -46,6 +48,7 @@ class MainActivity : ComponentActivity() {
             apiService
         )
     }
+    private val usbCamera:UsbCamera by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestMultiplePermissions()
@@ -55,14 +58,14 @@ class MainActivity : ComponentActivity() {
             val loginStateFlow = loginDataStore.loadLoginState()
             val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
             val navController = rememberNavController()
-
             ProjectTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                   Test(arduino = Arduino(arduinoApi), tts = TTS(application))
+                    val usbPermissionTest = UsbPermissionTest(this)
+                    usbPermissionTest.requestUsbPermission()
                 }
             }
         }

@@ -5,13 +5,14 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.usb.UsbConstants
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbDeviceConnection
 import android.hardware.usb.UsbEndpoint
 import android.hardware.usb.UsbInterface
 import android.hardware.usb.UsbManager
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CoroutineScope
@@ -26,8 +27,8 @@ class UsbCameraManager(private val context: Context) {
 
     companion object {
         private const val ACTION_USB_PERMISSION = "com.example.project.USB_PERMISSION"
-        private const val TARGET_VID = 0x1B3F // 供应商ID (VID)
-        private const val TARGET_PID = 0x2247 // 产品ID (PID)
+        private const val TARGET_VID = 6975 // 供应商ID (VID)
+        private const val TARGET_PID = 8775 // 产品ID (PID)
     }
 
     private val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
@@ -42,6 +43,7 @@ class UsbCameraManager(private val context: Context) {
     private val job = Job()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
+
     private val usbReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val action = intent.action
@@ -49,12 +51,15 @@ class UsbCameraManager(private val context: Context) {
                 synchronized(this) {
                     val device: UsbDevice? =
                         intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                        device?.apply {
-                            connectToDevice(this)
+                    Log.d("UsbCameraManager", "Device found: $usbDevice")
+                    if (device!=null){
+                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+                            device.apply {
+                                connectToDevice(this)
+                            }
+                        } else {
+                            Log.d("UsbCameraManager", "Permission denied for device $device")
                         }
-                    } else {
-                        Log.d("UsbCameraManager", "Permission denied for device $device")
                     }
                 }
             }
@@ -71,17 +76,20 @@ class UsbCameraManager(private val context: Context) {
         for (device in deviceList.values) {
             if (device.vendorId == TARGET_VID && device.productId == TARGET_PID) {
                 usbDevice = device
+                val name=device.deviceName
+                Log.d("Initialize","Success usbDevice:${name}")
                 break
             }
         }
 
         usbDevice?.let { device ->
             val intent = Intent(ACTION_USB_PERMISSION).apply {
-                setPackage(context.packageName)
+                putExtra(UsbManager.EXTRA_DEVICE,device)
             }
             val pendingIntent = PendingIntent.getBroadcast(context,
                 0, intent, PendingIntent.FLAG_IMMUTABLE)
             usbManager.requestPermission(device, pendingIntent)
+            Log.d("UsbCameraManager", "Permission request initiated for device: $device")
         }
     }
 
@@ -90,9 +98,38 @@ class UsbCameraManager(private val context: Context) {
         usbEndpoint = usbInterface?.getEndpoint(0)
         if (usbInterface != null && usbEndpoint != null) {
             usbDeviceConnection = usbManager.openDevice(device)
-            usbDeviceConnection?.claimInterface(usbInterface, true)
-            startCapture()
+            val claimed = usbDeviceConnection?.claimInterface(usbInterface, true) ?: false
+            if (claimed) {
+                Log.d("UsbCameraManager", "Device connected successfully")
+            } else {
+                Log.d("UsbCameraManager", "Failed to claim interface")
+            }
+        } else {
+            Log.d("UsbCameraManager", "Failed to get interface or endpoint")
         }
+    }
+    fun captureImage() {
+        if (usbDeviceConnection == null || usbEndpoint == null) {
+            Log.d("UsbCameraManager", "usbDeviceConnection or usbEndpoint is null")
+            return
+        }
+        usbDeviceConnection?.let { connection ->
+            usbEndpoint?.let { endpoint ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    val buffer = ByteBuffer.allocate(endpoint.maxPacketSize)
+                    val received = connection.bulkTransfer(endpoint, buffer.array(), buffer.capacity(), 1000)
+                    if (received > 0) {
+                        val imageData = ByteArray(received)
+                        buffer.get(imageData, 0, received)
+                        buffer.clear()
+                        _imageLiveData.postValue(imageData)
+                        Log.d("UsbCameraManager", "Image captured and posted to LiveData. Data size: $received bytes")
+                    } else {
+                        Log.d("UsbCameraManager", "Failed to capture image. Received bytes: $received")
+                    }
+                }
+            }
+        } ?: Log.d("UsbCameraManager", "usbDeviceConnection or usbEndpoint is null")
     }
 
     private fun startCapture() {
