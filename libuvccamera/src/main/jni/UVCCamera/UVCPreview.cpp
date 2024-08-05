@@ -352,35 +352,39 @@ int UVCPreview::startPreview() {
 }
 
 int UVCPreview::stopPreview() {
-	ENTER();
-	bool b = isRunning();
-	if (LIKELY(b)) {
-		mIsRunning = false;
-		pthread_cond_signal(&preview_sync);
-		pthread_cond_signal(&capture_sync);
-		if (pthread_join(capture_thread, NULL) != EXIT_SUCCESS) {
-			LOGW("UVCPreview::terminate capture thread: pthread_join failed");
-		}
-		if (pthread_join(preview_thread, NULL) != EXIT_SUCCESS) {
-			LOGW("UVCPreview::terminate preview thread: pthread_join failed");
-		}
-		clearDisplay();
-	}
-	clearPreviewFrame();
-	clearCaptureFrame();
-	pthread_mutex_lock(&preview_mutex);
-	if (mPreviewWindow) {
-		ANativeWindow_release(mPreviewWindow);
-		mPreviewWindow = NULL;
-	}
-	pthread_mutex_unlock(&preview_mutex);
-	pthread_mutex_lock(&capture_mutex);
-	if (mCaptureWindow) {
-		ANativeWindow_release(mCaptureWindow);
-		mCaptureWindow = NULL;
-	}
-	pthread_mutex_unlock(&capture_mutex);
-	RETURN(0, int);
+    ENTER();
+    bool b = isRunning();
+    if (LIKELY(b)) {
+        mIsRunning = false;
+        pthread_cond_signal(&preview_sync);
+        // 以下6行为改变的代码
+        if (mHasCaptureThread) {
+            pthread_cond_signal(&capture_sync);
+            if (pthread_join(capture_thread, NULL) != EXIT_SUCCESS) {
+                LOGW("UVCPreview::terminate capture thread: pthread_join failed");
+            }
+        }
+        // 以上6行为改变的代码
+        if (pthread_join(preview_thread, NULL) != EXIT_SUCCESS) {
+            LOGW("UVCPreview::terminate preview thread: pthread_join failed");
+        }
+        clearDisplay();
+    }
+    clearPreviewFrame();
+    clearCaptureFrame();
+    pthread_mutex_lock(&preview_mutex);
+    if (mPreviewWindow) {
+        ANativeWindow_release(mPreviewWindow);
+        mPreviewWindow = NULL;
+    }
+    pthread_mutex_unlock(&preview_mutex);
+    pthread_mutex_lock(&capture_mutex);
+    if (mCaptureWindow) {
+        ANativeWindow_release(mCaptureWindow);
+        mCaptureWindow = NULL;
+    }
+    pthread_mutex_unlock(&capture_mutex);
+    RETURN(0, int);
 }
 
 //**********************************************************************
@@ -517,9 +521,12 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 	uvc_error_t result = uvc_start_streaming_bandwidth(
 		mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
 
-	if (LIKELY(!result)) {
-		clearPreviewFrame();
-		pthread_create(&capture_thread, NULL, capture_thread_func, (void *)this);
+    mHasCaptureThread = false;
+    if (LIKELY(!result)) {
+        clearPreviewFrame();
+        if (pthread_create(&capture_thread, NULL, capture_thread_func, (void *)this) == 0) {
+            mHasCaptureThread = true;
+        }
 
 #if LOCAL_DEBUG
 		LOGI("Streaming...");
@@ -843,34 +850,41 @@ void UVCPreview::do_capture_surface(JNIEnv *env) {
 /**
 * call IFrameCallback#onFrame if needs
  */
+/**
+* call IFrameCallback#onFrame if needs
+ */
 void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
-	ENTER();
+    ENTER();
 
-	if (LIKELY(frame)) {
-		uvc_frame_t *callback_frame = frame;
-		if (mFrameCallbackObj) {
-			if (mFrameCallbackFunc) {
-				callback_frame = get_frame(callbackPixelBytes);
-				if (LIKELY(callback_frame)) {
-					int b = mFrameCallbackFunc(frame, callback_frame);
-					recycle_frame(frame);
-					if (UNLIKELY(b)) {
-						LOGW("failed to convert for callback frame");
-						goto SKIP;
-					}
-				} else {
-					LOGW("failed to allocate for callback frame");
-					callback_frame = frame;
-					goto SKIP;
-				}
-			}
-			jobject buf = env->NewDirectByteBuffer(callback_frame->data, callbackPixelBytes);
-			env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
-			env->ExceptionClear();
-			env->DeleteLocalRef(buf);
-		}
- SKIP:
-		recycle_frame(callback_frame);
-	}
-	EXIT();
+    if (LIKELY(frame)) {
+        uvc_frame_t *callback_frame = frame;
+        if (mFrameCallbackObj) {
+            if (mFrameCallbackFunc) {
+                callback_frame = get_frame(callbackPixelBytes);
+                if (LIKELY(callback_frame)) {
+                    int b = mFrameCallbackFunc(frame, callback_frame);
+                    recycle_frame(frame);
+                    if (UNLIKELY(b)) {
+                        LOGW("failed to convert for callback frame");
+                        goto SKIP;
+                    }
+                } else {
+                    LOGW("failed to allocate for callback frame");
+                    callback_frame = frame;
+                    goto SKIP;
+                }
+            }
+            jobject buf = env->NewDirectByteBuffer(callback_frame->data, callbackPixelBytes);
+            // 以下3行为改变的代码
+            if (iframecallback_fields.onFrame) {
+                env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
+            }
+            // 以上3行为改变的代码
+            env->ExceptionClear();
+            env->DeleteLocalRef(buf);
+        }
+        SKIP:
+        recycle_frame(callback_frame);
+    }
+    EXIT();
 }

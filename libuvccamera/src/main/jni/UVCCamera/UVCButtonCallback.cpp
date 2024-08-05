@@ -71,15 +71,24 @@ void UVCButtonCallback::notifyButtonCallback(JNIEnv* env, int button, int state)
 }
 
 void UVCButtonCallback::uvc_button_callback(int button, int state, void *user_ptr) {
+    UVCButtonCallback *buttonCallback = reinterpret_cast<UVCButtonCallback *>(user_ptr);
 
-	UVCButtonCallback *buttonCallback = reinterpret_cast<UVCButtonCallback *>(user_ptr);
+    JavaVM *vm = getVM();
+    JNIEnv *env;
+    bool isAttached = false;
 
-	JavaVM *vm = getVM();
-	JNIEnv *env;
-	// attach to JavaVM
-	vm->AttachCurrentThread(&env, NULL);
+    int status = vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+    if (status < 0) {
+        // attach to JavaVM
+        if (vm->AttachCurrentThread(&env, NULL)) {
+            return;
+        }
+        isAttached = true;
+    }
 
-	buttonCallback->notifyButtonCallback(env, button, state);
-	
-	vm->DetachCurrentThread();
+    buttonCallback->notifyButtonCallback(env, button, state);
+
+    if (isAttached) {
+        vm->DetachCurrentThread();
+    }
 }

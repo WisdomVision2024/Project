@@ -2290,13 +2290,16 @@ static int handle_iso_completion(struct usbi_transfer *itransfer,
 	int i;
 	enum libusb_transfer_status status = LIBUSB_TRANSFER_COMPLETED;
 
-	usbi_mutex_lock(&itransfer->lock);
-	for (i = 0; i < num_urbs; i++) {
-		if (urb == tpriv->iso_urbs[i]) {
-			urb_idx = i + 1;
-			break;
-		}
-	}
+    usbi_mutex_lock(&itransfer->lock);
+    for (i = 0; i < num_urbs; i++) {
+        if (tpriv->iso_urbs == NULL) {
+            break;
+        }
+        if (urb == tpriv->iso_urbs[i]) {
+            urb_idx = i + 1;
+            break;
+        }
+    }
 	if (urb_idx == 0) {
 		usbi_err(TRANSFER_CTX(transfer), "could not locate urb!");
 		usbi_mutex_unlock(&itransfer->lock);

@@ -51,6 +51,9 @@ android {
 }
 
 dependencies {
+    implementation (project(":libuvccamera"))
+    implementation(project(":usbCameraCommon"))
+
     val appcompat_version = "1.7.0"
 
     implementation("androidx.appcompat:appcompat:$appcompat_version")

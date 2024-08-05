@@ -51,16 +51,16 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.widget.CameraViewInterface;
 
+import com.example.usbCameraCommon.R;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -393,10 +393,11 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		public AbstractUVCCameraHandler getHandler() {
 			if (DEBUG) Log.v(TAG_THREAD, "getHandler:");
 			synchronized (mSync) {
-				if (mHandler == null)
-				try {
-					mSync.wait();
-				} catch (final InterruptedException e) {
+				if (mHandler == null){
+					try {
+						mSync.wait();
+					} catch (final InterruptedException e) {
+					}
 				}
 			}
 			return mHandler;
@@ -702,25 +703,21 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		 */
 		@SuppressWarnings("deprecation")
 		private void loadShutterSound(final Context context) {
-	    	// get system stream type using reflection
-	        int streamType;
-	        try {
-	            final Class<?> audioSystemClass = Class.forName("android.media.AudioSystem");
-	            final Field sseField = audioSystemClass.getDeclaredField("STREAM_SYSTEM_ENFORCED");
-	            streamType = sseField.getInt(null);
-	        } catch (final Exception e) {
-	        	streamType = AudioManager.STREAM_SYSTEM;	// set appropriate according to your app policy
-	        }
-	        if (mSoundPool != null) {
-	        	try {
-	        		mSoundPool.release();
-	        	} catch (final Exception e) {
-	        	}
-	        	mSoundPool = null;
-	        }
-	        // load shutter sound from resource
-		    mSoundPool = new SoundPool(2, streamType, 0);
-		    mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
+			// 使用公开的STREAM_SYSTEM作为音频流类型
+			int streamType = AudioManager.STREAM_SYSTEM; // 根据你的应用需求选择合适的音频流类型
+
+			if (mSoundPool != null) {
+				try {
+					mSoundPool.release();
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+				mSoundPool = null;
+			}
+
+			// 加载快门声音资源
+			mSoundPool = new SoundPool(2, AudioManager.STREAM_SYSTEM, 0);
+			mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
 		}
 
 		@Override

@@ -1,12 +1,18 @@
 package ViewModels
 
 import Class.UsbCameraManager
+import Class.UvcCameraManager
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.viewModelScope
+import assets.ApiService
 import assets.RetrofitInstance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,66 +27,27 @@ sealed class CameraState {
     data class Success(val status:String?) : CameraState()
     data class Error(val message: String?) : CameraState()
 }
-class UsbCamera(application: Application):AndroidViewModel(application) {
-    private val usbCameraManager = UsbCameraManager(application.applicationContext)
-    val imageLiveData: LiveData<ByteArray> get() = usbCameraManager.imageLiveData
+class UsbCamera(application: Application,apiService: ApiService):AndroidViewModel(application) {
+    val uvcCameraManager = UvcCameraManager(application.applicationContext,apiService)
 
-    private val _cameraState=MutableStateFlow<CameraState>(CameraState.Initial)
-    val cameraState:StateFlow<CameraState> = _cameraState
-    init {
-        usbCameraManager.initialize()
-        Log.d("CameraViewModel", "UsbCameraManager initialized")
+    fun initializeCamera() {
+        uvcCameraManager.captureImage()
     }
 
-    fun captureImage() {
-        usbCameraManager.captureImage()
-        Log.d("CameraViewModel", "captureImage called")
-    }
-
-
-    fun startCapture() {
-        usbCameraManager.initialize()
-    }
-
-    fun stopCapture() {
-        usbCameraManager.stopCapture()
-    }
-
-    fun uploadImage(imageData: ByteArray?) {
-        viewModelScope.launch {
-            val tempFile = File(getApplication<Application>().cacheDir, "temp_image.jpg")
-            val fos = FileOutputStream(tempFile)
-            fos.write(imageData)
-            fos.close()
-
-            // Create a RequestBody instance from the file
-            val requestFile = tempFile.asRequestBody("image/jpeg".toMediaType())
-            val body = MultipartBody.Part.createFormData("image", tempFile.name, requestFile)
-            // Upload the image
-            try {
-                val response = RetrofitInstance.apiService.uploadImage(body)
-                if (response.isSuccessful) {
-                    val status=response.body()?.status
-                    Log.d("upload","$status")
-                    val error=response.body()?.errorMessage
-                    Log.d("upload","$error")
-                    _cameraState.value=CameraState.Success(status)
-                } else {
-                    val status=response.body()?.status
-                    Log.d("upload","$status")
-                    val error=response.body()?.errorMessage
-                    Log.d("upload","$error")
-                    _cameraState.value=CameraState.Error(error)
-                }
-            } catch (e: Exception) {
-                _cameraState.value=CameraState.Error(e.message)
-                // Handle network error
-            }
+    private val job = Job()
+    private val scope = CoroutineScope(Dispatchers.IO + job)
+    fun captureAndUploadImage() {
+        scope.launch {
+            uvcCameraManager.captureImage()
         }
+    }
+
+    fun releaseCamera() {
+        uvcCameraManager.release()
     }
 
     override fun onCleared() {
         super.onCleared()
-        usbCameraManager.release()
+        releaseCamera()
     }
 }
