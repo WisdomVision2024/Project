@@ -18,7 +18,7 @@ import java.io.FileOutputStream
 
 sealed class CameraState {
     data object Initial : CameraState()
-    data class Success(val success:Boolean?) : CameraState()
+    data class Success(val status:String?) : CameraState()
     data class Error(val message: String?) : CameraState()
 }
 class UsbCamera(application: Application):AndroidViewModel(application) {
@@ -46,7 +46,7 @@ class UsbCamera(application: Application):AndroidViewModel(application) {
         usbCameraManager.stopCapture()
     }
 
-    fun uploadImage(imageData: ByteArray) {
+    fun uploadImage(imageData: ByteArray?) {
         viewModelScope.launch {
             val tempFile = File(getApplication<Application>().cacheDir, "temp_image.jpg")
             val fos = FileOutputStream(tempFile)
@@ -60,10 +60,16 @@ class UsbCamera(application: Application):AndroidViewModel(application) {
             try {
                 val response = RetrofitInstance.apiService.uploadImage(body)
                 if (response.isSuccessful) {
-                    val success=response.body()?.success
-                    _cameraState.value=CameraState.Success(success)
-                } else {
+                    val status=response.body()?.status
+                    Log.d("upload","$status")
                     val error=response.body()?.errorMessage
+                    Log.d("upload","$error")
+                    _cameraState.value=CameraState.Success(status)
+                } else {
+                    val status=response.body()?.status
+                    Log.d("upload","$status")
+                    val error=response.body()?.errorMessage
+                    Log.d("upload","$error")
                     _cameraState.value=CameraState.Error(error)
                 }
             } catch (e: Exception) {

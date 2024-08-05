@@ -9,10 +9,11 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        maven { url=uri("https://gitee.com/liuchaoya/libcommon/raw/master/repository/") }
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
         mavenCentral()
@@ -21,3 +22,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Project"
 include(":app")
+include ("usbCameraCommon")
+include (":libuvccamera")

@@ -126,6 +126,9 @@ data class UploadResponse(
 )
 
 data class UploadImageResponse(
-    val success: Boolean,
+    val success: Boolean?,
+    @SerializedName("status")
+    val status:String?,
+    @SerializedName("message")
     val errorMessage: String?
 )
