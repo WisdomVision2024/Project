@@ -42,7 +42,7 @@ class UsbCamera(application: Application,apiService: ApiService):AndroidViewMode
         }
     }
 
-    fun releaseCamera() {
+    private fun releaseCamera() {
         uvcCameraManager.release()
     }
 

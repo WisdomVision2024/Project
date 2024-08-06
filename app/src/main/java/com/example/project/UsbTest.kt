@@ -61,7 +61,8 @@ fun UsbTest(viewModel: UsbCamera,apiService: ApiService) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
         AndroidView(factory = { ctx ->
             TextureView(ctx).apply {
                 surfaceTextureListener = object : TextureView.SurfaceTextureListener {

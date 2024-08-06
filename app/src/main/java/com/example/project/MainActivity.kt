@@ -3,8 +3,6 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
-import UsbPermissionTest
-import ViewModels.Arduino
 import ViewModels.HelpList
 import ViewModels.Identified
 import ViewModels.PermissionState
@@ -31,12 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.ArduinoInstance
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
 import kotlinx.coroutines.launch
+import provider.UsbCameraFactory
 
 
 class MainActivity : ComponentActivity() {
@@ -48,7 +46,9 @@ class MainActivity : ComponentActivity() {
             apiService
         )
     }
-    private val usbCamera:UsbCamera by viewModels()
+    private val usbCamera:UsbCamera by viewModels {
+        UsbCameraFactory(application,apiService)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestMultiplePermissions()
@@ -64,8 +64,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val usbPermissionTest = UsbPermissionTest(this)
-                    usbPermissionTest.requestUsbPermission()
+                    UsbTest(viewModel = usbCamera, apiService = apiService)
                 }
             }
         }

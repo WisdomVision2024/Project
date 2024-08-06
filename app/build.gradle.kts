@@ -19,6 +19,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        multiDexEnabled=true
     }
 
     buildTypes {
@@ -48,6 +49,8 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    ndkVersion = "22.0.7026061"
+    buildToolsVersion = "34.0.0"
 }
 
 dependencies {

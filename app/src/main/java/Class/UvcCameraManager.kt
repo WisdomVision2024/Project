@@ -99,7 +99,8 @@ class UvcCameraManager(private val context: Context,private val apiService: ApiS
                 val stream = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 val imageData = stream.toByteArray()
-                uploadImage(imageData)
+                Log.d("imageData","$imageData")
+
             }, UVCCamera.PIXEL_FORMAT_RGBX)
         } ?: run {
             // Handle the case where the camera is not ready

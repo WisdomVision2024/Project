@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
 }
+val ndkVersion by extra("21.4.7075529")
 allprojects{
     repositories {
         google {
