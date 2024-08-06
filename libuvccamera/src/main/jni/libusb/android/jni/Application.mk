@@ -17,8 +17,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 #
 
-APP_ABI := armeabi-v7a arm64-v8a x86 x86_64
-APP_PLATFORM := android-33
+APP_ABI := all
+APP_PLATFORM := android-21
 
 # Workaround for MIPS toolchain linker being unable to find liblog dependency
 # of shared object in NDK versions at least up to r9.

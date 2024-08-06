@@ -55,10 +55,10 @@ android {
 			jni.srcDirs = []
 		}
 	}
-    ndkVersion '22.0.7026061'
+    ndkVersion ndkVersion
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
 	compileTask -> compileTask.dependsOn ndkBuild
 }
 
@@ -75,13 +75,13 @@ String getNdkBuildPath() {
 	return ndkBuildPath
 }
 
-task ndkBuild(type: Exec, description: 'Compile JNI source via NDK') {
+tasks.register('ndkBuild', Exec) {
 	println('executing ndkBuild')
 	def ndkBuildPath = getNdkBuildPath()
 	commandLine ndkBuildPath, '-j8', '-C', file('src/main').absolutePath
 }
 
-task ndkClean(type: Exec, description: 'clean JNI libraries') {
+tasks.register('ndkClean', Exec) {
 	println('executing ndkBuild clean')
 	def ndkBuildPath = getNdkBuildPath()
 	commandLine ndkBuildPath, 'clean', '-C', file('src/main').absolutePath
@@ -90,7 +90,7 @@ task ndkClean(type: Exec, description: 'clean JNI libraries') {
 clean.dependsOn ndkClean
 
 dependencies {
-    implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
+	api fileTree(dir: 'libs', include: ['*.jar'])
 
 	implementation "com.android.support:support-v4:28.0.0"
 	implementation "com.android.support:support-annotations:28.0.0"
