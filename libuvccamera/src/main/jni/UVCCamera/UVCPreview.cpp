@@ -520,7 +520,6 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 	uvc_frame_t *frame_mjpeg = NULL;
 	uvc_error_t result = uvc_start_streaming_bandwidth(
 		mDeviceHandle, ctrl, uvc_preview_frame_callback, (void *)this, requestBandwidth, 0);
-
     mHasCaptureThread = false;
     if (LIKELY(!result)) {
         clearPreviewFrame();
@@ -850,41 +849,36 @@ void UVCPreview::do_capture_surface(JNIEnv *env) {
 /**
 * call IFrameCallback#onFrame if needs
  */
-/**
-* call IFrameCallback#onFrame if needs
- */
 void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
-    ENTER();
+	ENTER();
 
-    if (LIKELY(frame)) {
-        uvc_frame_t *callback_frame = frame;
-        if (mFrameCallbackObj) {
-            if (mFrameCallbackFunc) {
-                callback_frame = get_frame(callbackPixelBytes);
-                if (LIKELY(callback_frame)) {
-                    int b = mFrameCallbackFunc(frame, callback_frame);
-                    recycle_frame(frame);
-                    if (UNLIKELY(b)) {
-                        LOGW("failed to convert for callback frame");
-                        goto SKIP;
-                    }
-                } else {
-                    LOGW("failed to allocate for callback frame");
-                    callback_frame = frame;
-                    goto SKIP;
-                }
-            }
-            jobject buf = env->NewDirectByteBuffer(callback_frame->data, callbackPixelBytes);
-            // 以下3行为改变的代码
+	if (LIKELY(frame)) {
+		uvc_frame_t *callback_frame = frame;
+		if (mFrameCallbackObj) {
+			if (mFrameCallbackFunc) {
+				callback_frame = get_frame(callbackPixelBytes);
+				if (LIKELY(callback_frame)) {
+					int b = mFrameCallbackFunc(frame, callback_frame);
+					recycle_frame(frame);
+					if (UNLIKELY(b)) {
+						LOGW("failed to convert for callback frame");
+						goto SKIP;
+					}
+				} else {
+					LOGW("failed to allocate for callback frame");
+					callback_frame = frame;
+					goto SKIP;
+				}
+			}
+			jobject buf = env->NewDirectByteBuffer(callback_frame->data, callbackPixelBytes);
             if (iframecallback_fields.onFrame) {
                 env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
             }
-            // 以上3行为改变的代码
-            env->ExceptionClear();
-            env->DeleteLocalRef(buf);
-        }
-        SKIP:
-        recycle_frame(callback_frame);
-    }
-    EXIT();
+			env->ExceptionClear();
+			env->DeleteLocalRef(buf);
+		}
+ SKIP:
+		recycle_frame(callback_frame);
+	}
+	EXIT();
 }

@@ -22,5 +22,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Project"
 include(":app")
-include ("usbCameraCommon")
-include (":libuvccamera")
+include(":libuvccamera")
+include(":usbCameraCommon")
+

@@ -23,6 +23,8 @@
 
 package com.serenegiant.usb;
 
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -42,9 +44,9 @@ import android.widget.CheckedTextView;
 import android.widget.Spinner;
 
 import com.example.libuvccamera.R;
+import com.serenegiant.usb.DeviceFilter;
+import com.serenegiant.usb.USBMonitor;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class CameraDialog extends DialogFragment {
 	private static final String TAG = CameraDialog.class.getSimpleName();

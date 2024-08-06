@@ -40,6 +40,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import com.example.usbCameraCommon.R;
 import com.serenegiant.encoder.MediaAudioEncoder;
 import com.serenegiant.encoder.MediaEncoder;
 import com.serenegiant.encoder.MediaMuxerWrapper;
@@ -51,16 +52,16 @@ import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.UVCCamera;
 import com.serenegiant.widget.CameraViewInterface;
 
-import com.example.usbCameraCommon.R;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -399,6 +400,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					} catch (final InterruptedException e) {
 					}
 				}
+
 			}
 			return mHandler;
 		}
@@ -654,18 +656,21 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			public void onPrepared(final MediaEncoder encoder) {
 				if (DEBUG) Log.v(TAG, "onPrepared:encoder=" + encoder);
 				mIsRecording = true;
-				if (encoder instanceof MediaVideoEncoder)
-				try {
-					mWeakCameraView.get().setVideoEncoder((MediaVideoEncoder)encoder);
-				} catch (final Exception e) {
-					Log.e(TAG, "onPrepared:", e);
+				if (encoder instanceof MediaVideoEncoder) {
+					try {
+						mWeakCameraView.get().setVideoEncoder((MediaVideoEncoder) encoder);
+					} catch (final Exception e) {
+						Log.e(TAG, "onPrepared:", e);
+					}
 				}
-				if (encoder instanceof MediaSurfaceEncoder)
-				try {
-					mWeakCameraView.get().setVideoEncoder((MediaSurfaceEncoder)encoder);
-					mUVCCamera.startCapture(((MediaSurfaceEncoder)encoder).getInputSurface());
-				} catch (final Exception e) {
-					Log.e(TAG, "onPrepared:", e);
+
+				if (encoder instanceof MediaSurfaceEncoder) {
+					try {
+						mWeakCameraView.get().setVideoEncoder((MediaSurfaceEncoder) encoder);
+						mUVCCamera.startCapture(((MediaSurfaceEncoder) encoder).getInputSurface());
+					} catch (final Exception e) {
+						Log.e(TAG, "onPrepared:", e);
+					}
 				}
 			}
 
@@ -703,7 +708,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		 */
 		@SuppressWarnings("deprecation")
 		private void loadShutterSound(final Context context) {
-			// 使用公开的STREAM_SYSTEM作为音频流类型
+	    	// get system stream type using reflection
 			int streamType = AudioManager.STREAM_SYSTEM; // 根据你的应用需求选择合适的音频流类型
 
 			if (mSoundPool != null) {
@@ -715,9 +720,9 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				mSoundPool = null;
 			}
 
-			// 加载快门声音资源
-			mSoundPool = new SoundPool(2, AudioManager.STREAM_SYSTEM, 0);
-			mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
+			// load shutter sound from resource
+		    mSoundPool = new SoundPool(2, streamType, 0);
+		    mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
 		}
 
 		@Override

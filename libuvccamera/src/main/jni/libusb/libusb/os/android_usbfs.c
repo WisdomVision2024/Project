@@ -2116,12 +2116,16 @@ static int discard_urbs(struct usbi_transfer *itransfer, int first, int last_plu
 
 static void free_iso_urbs(struct android_transfer_priv *tpriv) {
 	int i;
-	for (i = 0; i < tpriv->num_urbs; i++) {
-		struct usbfs_urb *urb = tpriv->iso_urbs[i];
-		if (UNLIKELY(!urb))
-			break;
-		free(urb);
-	}
+    for (i = 0; i < num_urbs; i++) {
+        if (tpriv->iso_urbs == NULL){
+            break;
+        }
+        if (urb == tpriv->iso_urbs[i]) {
+            urb_idx = i + 1;
+            break;
+        }
+    }
+
 
 	free(tpriv->iso_urbs);
 	tpriv->iso_urbs = NULL;
@@ -2725,12 +2729,12 @@ static int handle_iso_completion(struct libusb_device_handle *handle,	// XXX add
 	enum libusb_transfer_status status = LIBUSB_TRANSFER_COMPLETED;
 
 	usbi_mutex_lock(&itransfer->lock);
-    for (i = 0; i < num_urbs; i++) {
-        if (tpriv->iso_urbs != NULL && urb == tpriv->iso_urbs[i]) {
-            urb_idx = i + 1;
-            break;
-        }
-    }
+	for (i = 0; i < num_urbs; i++) {
+		if (urb == tpriv->iso_urbs[i]) {
+			urb_idx = i + 1;
+			break;
+		}
+	}
 	if (UNLIKELY(urb_idx == 0)) {
 		usbi_err(TRANSFER_CTX(transfer), "could not locate urb!");	// crash 2014/09/29 SIGSEGV/SEGV_MAPERR
 		usbi_mutex_unlock(&itransfer->lock);

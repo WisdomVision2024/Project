@@ -832,7 +832,7 @@
     <string name="abc_shareactionprovider_share_with">Share with</string>
     <string name="abc_shareactionprovider_share_with_application">Share with <ns1:g example="Mail" id="application_name">%s</ns1:g></string>
     <string name="abc_toolbar_collapse_description">Collapse</string>
-    <string name="app_name" translatable="false">encoder</string>
+    <string name="app_name">encoder</string>
     <string name="camera">Camera</string>
     <string name="color_picker_cancel">Cancel</string>
     <string name="color_picker_default_title">Select a Color</string>

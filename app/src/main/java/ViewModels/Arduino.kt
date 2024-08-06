@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 
 sealed class ArduinoUi{
     data object Initial:ArduinoUi()
+    data object Loading:ArduinoUi()
     data class Success(val message: String?):ArduinoUi()
     data class Error(val message:String?):ArduinoUi()
 }
@@ -19,6 +20,7 @@ sealed class Require{
     data class Success(val success: Boolean?):Require()
     data class Error(val message:String?):Require()
 }
+
 class Arduino(private val arduinoApi: ArduinoApi):ViewModel() {
 
     private val _arduinoState= MutableStateFlow<ArduinoUi>(ArduinoUi.Initial)
@@ -32,6 +34,7 @@ class Arduino(private val arduinoApi: ArduinoApi):ViewModel() {
             try {
                 Log.d("Arduino","try")
                 val response=arduinoApi.getDistance()
+                Log.d("Arduino", "Response: $response")
                 _arduinoState.value=ArduinoUi.Success(response)
             }catch (e:Exception)
             {

@@ -71,9 +71,9 @@ private:
 	int previewFormat;
 	size_t previewBytes;
 //
-	volatile bool mIsCapturing;
+    volatile bool mIsCapturing;
     volatile bool mHasCaptureThread;
-	ANativeWindow *mCaptureWindow;
+    ANativeWindow *mCaptureWindow;
 	pthread_t capture_thread;
 	pthread_mutex_t capture_mutex;
 	pthread_cond_t capture_sync;

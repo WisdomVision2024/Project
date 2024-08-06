@@ -3,6 +3,7 @@ package com.example.project
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import ViewModels.Arduino
 import ViewModels.HelpList
 import ViewModels.Identified
 import ViewModels.PermissionState
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
             apiService
         )
     }
-    private val usbCamera:UsbCamera by viewModels {
+    private val usbCamera: UsbCamera by viewModels {
         UsbCameraFactory(application,apiService)
     }
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -66,19 +66,15 @@ fun Test(arduino: Arduino,tts: TTS){
     LaunchedEffect(distance) {
         when(distance){
             is ArduinoUi.Success->{
+                success=true
                 d=(distance as ArduinoUi.Success).message.toString()
+                tts.speak(d)
             }
-            else->{Unit}
+            else->{success=false}
         }
     }
     if (errorScreen){
-        ErrorMessageScreen(errorMessage = x, onClose = { errorScreen=false })
-    }
-    if (d!=""){
-        val g=d.toLong()
-        if (g<100.0){
-            tts.speak("太近了")
-        }
+        ErrorMessageScreen(errorMessage = t, onClose = { errorScreen=false })
     }
 
     Column (modifier = Modifier.fillMaxSize(),
@@ -88,7 +84,7 @@ fun Test(arduino: Arduino,tts: TTS){
             .size(200.dp)
             .background(Color(2, 115, 115))){
             if (success){
-                Text(text = x, fontSize = 20.sp)
+                Text(text = d, fontSize = 20.sp)
             }
         }
         EditInputField(label  =R.string.Description,
