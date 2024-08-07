@@ -8,19 +8,15 @@ import Data.HelpResponse
 import Data.IdentifiedData
 import Data.IdentifiedResponse
 import Data.LoginRequest
-import Data.LoginResponse
 import Data.NameChangeRequest
 import Data.PasswordChangeRequest
 import Data.SignupRequest
-import Data.SignupResponse
 import Data.UploadImageResponse
 import Data.UploadResponse
 import okhttp3.MultipartBody
 import okhttp3.ResponseBody
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -53,6 +49,6 @@ interface ApiService {
     suspend fun cancelCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
     @Multipart
     @POST("bytearray/")
-    suspend fun uploadImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
+    suspend fun uploadImage(@Part image: MultipartBody): Response<UploadImageResponse?>
 }
 

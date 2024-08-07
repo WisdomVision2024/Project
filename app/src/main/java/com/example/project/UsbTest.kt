@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import assets.ApiService
 import com.serenegiant.usb.UVCCamera
@@ -47,52 +48,22 @@ import provider.UsbCameraFactory
 
 @OptIn(DelicateCoroutinesApi::class)
 @Composable
-fun UsbTest(viewModel: UsbCamera,apiService: ApiService) {
+fun UsbTest(viewModel: UsbCamera, apiService: ApiService) {
     val context = LocalContext.current
-    val cameraViewModel: UsbCamera = viewModel(factory = UsbCameraFactory(context.applicationContext as Application,
-        apiService))
     var isCameraInitialized by remember { mutableStateOf(false) }
 
     // Initialize camera when the composable is first loaded
     LaunchedEffect(Unit) {
         if (!isCameraInitialized) {
-            cameraViewModel.initializeCamera()
+            viewModel.initializeCamera()
             isCameraInitialized = true
         }
     }
-
-    Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally) {
-        AndroidView(factory = { ctx ->
-            TextureView(ctx).apply {
-                surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-                        val previewSurface = Surface(surface)
-                        GlobalScope.launch(Dispatchers.IO) {
-                            cameraViewModel.uvcCameraManager.setPreviewDisplay(previewSurface)
-                        }
-                    }
-
-                    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
-
-                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                        return true
-                    }
-
-                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-                }
-            }
-        }, modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(Color.Black))
-
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            cameraViewModel.captureAndUploadImage()
+            viewModel.captureAndUploadImage()
         }) {
             Text(text = "Capture Image")
         }
     }
-}

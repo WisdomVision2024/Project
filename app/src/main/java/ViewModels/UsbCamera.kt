@@ -28,7 +28,7 @@ sealed class CameraState {
     data class Error(val message: String?) : CameraState()
 }
 class UsbCamera(application: Application,apiService: ApiService):AndroidViewModel(application) {
-    val uvcCameraManager = UvcCameraManager(application.applicationContext,apiService)
+    private val uvcCameraManager = UvcCameraManager(application.applicationContext,apiService)
 
     fun initializeCamera() {
         uvcCameraManager.captureImage()

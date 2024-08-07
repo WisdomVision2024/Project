@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    UsbTest(viewModel = usbCamera, apiService = apiService)
+                    Test(Arduino(arduinoApi),TTS(application))
                 }
             }
         }

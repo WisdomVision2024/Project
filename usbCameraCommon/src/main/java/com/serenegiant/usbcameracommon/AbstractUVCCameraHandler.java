@@ -678,27 +678,28 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			public void onStopped(final MediaEncoder encoder) {
 				if (DEBUG) Log.v(TAG_THREAD, "onStopped:encoder=" + encoder);
 				if ((encoder instanceof MediaVideoEncoder)
-					|| (encoder instanceof MediaSurfaceEncoder))
-				try {
-					mIsRecording = false;
-					final Activity parent = mWeakParent.get();
-					mWeakCameraView.get().setVideoEncoder(null);
-					synchronized (mSync) {
-						if (mUVCCamera != null) {
-							mUVCCamera.stopCapture();
+					|| (encoder instanceof MediaSurfaceEncoder)){
+					try {
+						mIsRecording = false;
+						final Activity parent = mWeakParent.get();
+						mWeakCameraView.get().setVideoEncoder(null);
+						synchronized (mSync) {
+							if (mUVCCamera != null) {
+								mUVCCamera.stopCapture();
+							}
 						}
-					}
-					final String path = encoder.getOutputPath();
-					if (!TextUtils.isEmpty(path)) {
-						mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_MEDIA_UPDATE, path), 1000);
-					} else {
-						final boolean released = (mHandler == null) || mHandler.mReleased;
-						if (released || parent == null || parent.isDestroyed()) {
-							handleRelease();
+						final String path = encoder.getOutputPath();
+						if (!TextUtils.isEmpty(path)) {
+							mHandler.sendMessageDelayed(mHandler.obtainMessage(MSG_MEDIA_UPDATE, path), 1000);
+						} else {
+							final boolean released = (mHandler == null) || mHandler.mReleased;
+							if (released || parent == null || parent.isDestroyed()) {
+								handleRelease();
+							}
 						}
+					} catch (final Exception e) {
+						Log.e(TAG, "onPrepared:", e);
 					}
-				} catch (final Exception e) {
-					Log.e(TAG, "onPrepared:", e);
 				}
 			}
 		};
