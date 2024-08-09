@@ -1,11 +1,15 @@
 package com.example.project
 
+import Class.CameraView
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Arduino
+import ViewModels.Camera
+import ViewModels.CameraViewModel
 import ViewModels.HelpList
 import ViewModels.Identified
+import ViewModels.Login
 import ViewModels.PermissionState
 import provider.IdentifiedFactory
 import ViewModels.Setting
@@ -15,8 +19,10 @@ import android.app.AlertDialog
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,14 +35,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import assets.ArduinoInstance
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
+import com.serenegiant.usb.USBMonitor
+import com.serenegiant.usbcameracommon.UVCCameraHandler
 import kotlinx.coroutines.launch
+import provider.PhoneCameraFactor
 import provider.UsbCameraFactory
-
+import com.serenegiant.widget.CameraViewInterface as CameraViewInterface
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
@@ -50,22 +61,38 @@ class MainActivity : ComponentActivity() {
     private val usbCamera: UsbCamera by viewModels {
         UsbCameraFactory(application,apiService)
     }
+
+    val viewModel: CameraViewModel by viewModels { PhoneCameraFactor(application) }
+    val takePhotoLauncher =
+        registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                viewModel.imageUri.value?.let { uri ->
+                    viewModel.uploadPhoto(uri,applicationContext)
+                }
+            } else {
+                Log.d("MainActivity", "Photo capture failed")
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestMultiplePermissions()
+
+
         setContent {
             val context=applicationContext
             val loginDataStore= remember { LoginDataStore(context)}
             val loginStateFlow = loginDataStore.loadLoginState()
             val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
             val navController = rememberNavController()
+
             ProjectTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Test(Arduino(arduinoApi),TTS(application))
+                    PhoneCameraTest(context = context, activity = this, cameraViewModel = viewModel)
+
                 }
             }
         }
@@ -86,7 +113,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
     private val multiplePermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -155,6 +181,7 @@ fun LoginPagePreview() {
         loginState = loginState,
         navController = navController,
         apiService = RetrofitInstance.apiService,
+        arduinoApi = ArduinoInstance.arduinoApi,
         loginDataStore =loginDataStore,
         app = Application()
     )
@@ -180,6 +207,7 @@ fun HomePagePreview() {
             apiService = RetrofitInstance.apiService),
         loginDataStore = loginDataStore,
         viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+        arduino = Arduino(ArduinoInstance.arduinoApi),
         tts = TTS(Application()),
         navController = navController )
 }

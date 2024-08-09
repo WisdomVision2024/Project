@@ -26,8 +26,6 @@ class Arduino(private val arduinoApi: ArduinoApi):ViewModel() {
     private val _arduinoState= MutableStateFlow<ArduinoUi>(ArduinoUi.Initial)
     val arduinoState: StateFlow<ArduinoUi> = _arduinoState
 
-    private val _requireState= MutableStateFlow<Require>(Require.Initial)
-    val requireState:StateFlow<Require> = _requireState
     fun getDistance(){
         viewModelScope.launch (Dispatchers.IO) {
             _arduinoState.value=ArduinoUi.Initial

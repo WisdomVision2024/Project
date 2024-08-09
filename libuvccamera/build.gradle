@@ -55,7 +55,7 @@ android {
 			jni.srcDirs = []
 		}
 	}
-	ndkVersion ndkVersion
+	ndkVersion '25.1.8937393'
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -84,7 +84,9 @@ public class MediaVideoEncoder extends MediaEncoder implements IVideoEncoder {
 
 	@Override
 	protected void prepare() throws IOException {
-		if (DEBUG) Log.i(TAG, "prepare: ");
+		if (DEBUG){
+			Log.i(TAG, "prepare: ");
+		}
         mTrackIndex = -1;
         mMuxerStarted = mIsEOS = false;
 

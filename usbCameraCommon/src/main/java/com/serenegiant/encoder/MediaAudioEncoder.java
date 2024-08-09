@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -35,6 +37,9 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.util.Log;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class MediaAudioEncoder extends MediaEncoder implements IAudioEncoder {
 	private static final boolean DEBUG = true;	// TODO set false on release
@@ -54,7 +59,7 @@ public class MediaAudioEncoder extends MediaEncoder implements IAudioEncoder {
 
 	@Override
 	protected void prepare() throws IOException {
-		if (DEBUG) Log.v(TAG, "prepare:");
+		if (DEBUG) {Log.v(TAG, "prepare:");}
         mTrackIndex = -1;
         mMuxerStarted = mIsEOS = false;
         // prepare MediaCodec for AAC encoding of audio data from inernal mic.

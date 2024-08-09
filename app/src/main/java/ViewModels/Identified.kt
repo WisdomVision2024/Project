@@ -27,7 +27,7 @@ sealed class HandleResult{
     data object PasswordChange:HandleResult()
     data object EmailChange:HandleResult()
     data object Upload:HandleResult()
-    data object BlueTooth:HandleResult()
+    data object Arduino:HandleResult()
 }
 sealed class UploadState {
     data object Initial : UploadState()
@@ -203,9 +203,10 @@ class Identified(application: Application,
                     _handleResult.value=HandleResult.NavigateSetting
                     Log.d("HandleResult","NavigateSetting")
                 }
-                text.contains("", ignoreCase = true)->{
-                    _handleResult.value=HandleResult.BlueTooth
-                    upLoad(text)
+                text.contains("distance", ignoreCase = true)||
+                        text.contains("距離", ignoreCase = true)
+                ->{
+                    _handleResult.value=HandleResult.Arduino
                 }
                 else -> {
                     _handleResult.value=HandleResult.Upload

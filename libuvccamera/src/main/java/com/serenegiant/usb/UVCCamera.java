@@ -340,22 +340,23 @@ public class UVCCamera {
 
 	public static List<Size> getSupportedSize(final int type, final String supportedSize) {
 		final List<Size> result = new ArrayList<Size>();
-		if (!TextUtils.isEmpty(supportedSize))
-		try {
-			final JSONObject json = new JSONObject(supportedSize);
-			final JSONArray formats = json.getJSONArray("formats");
-			final int format_nums = formats.length();
-			for (int i = 0; i < format_nums; i++) {
-				final JSONObject format = formats.getJSONObject(i);
-				if(format.has("type") && format.has("size")) {
-					final int format_type = format.getInt("type");
-					if ((format_type == type) || (type == -1)) {
-						addSize(format, format_type, 0, result);
+		if (!TextUtils.isEmpty(supportedSize)){
+			try {
+				final JSONObject json = new JSONObject(supportedSize);
+				final JSONArray formats = json.getJSONArray("formats");
+				final int format_nums = formats.length();
+				for (int i = 0; i < format_nums; i++) {
+					final JSONObject format = formats.getJSONObject(i);
+					if(format.has("type") && format.has("size")) {
+						final int format_type = format.getInt("type");
+						if ((format_type == type) || (type == -1)) {
+							addSize(format, format_type, 0, result);
+						}
 					}
 				}
+			} catch (final JSONException e) {
+				e.printStackTrace();
 			}
-		} catch (final JSONException e) {
-			e.printStackTrace();
 		}
 		return result;
 	}

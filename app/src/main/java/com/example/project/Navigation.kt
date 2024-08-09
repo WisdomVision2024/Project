@@ -3,6 +3,7 @@ package com.example.project
 
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import ViewModels.Arduino
 import ViewModels.Help
 import ViewModels.HelpList
 import ViewModels.Identified
@@ -18,11 +19,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import assets.ApiService
+import assets.ArduinoApi
 
 @Composable
 fun Navigation(loginState: LoginState,
                navController: NavHostController,
                apiService: ApiService,
+               arduinoApi: ArduinoApi,
                loginDataStore: LoginDataStore,
                app: Application
 ) {
@@ -51,12 +54,19 @@ fun Navigation(loginState: LoginState,
                     navController = navController)
             }
         }
+        composable(route="StartPage"){
+            StartPage(
+                loginState = loginState,
+                navController = navController
+            )
+        }
         composable(route = "HomePage") {
             HomePage(
                 androidViewModel = Identified(app,  apiService),
                 viewModel = Setting(apiService,loginDataStore),
                 loginDataStore = loginDataStore,
                 tts = TTS(app),
+                arduino = Arduino(arduinoApi),
                 navController = navController
             )
         }

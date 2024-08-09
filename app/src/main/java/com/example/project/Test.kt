@@ -48,21 +48,9 @@ fun Test(arduino: Arduino,tts: TTS){
     var errorScreen by remember {
         mutableStateOf(false)
     }
-    val state=arduino.requireState.collectAsState().value
+
     val distance=arduino.arduinoState.collectAsState().value
-    LaunchedEffect(state) {
-        when(state){
-            is Require.Success->{
-                success=true
-                }
-            is Require.Error->{
-                success=false
-                x=state.message.toString()
-                errorScreen=true
-            }
-            else->{Unit}
-        }
-    }
+
     LaunchedEffect(distance) {
         when(distance){
             is ArduinoUi.Success->{

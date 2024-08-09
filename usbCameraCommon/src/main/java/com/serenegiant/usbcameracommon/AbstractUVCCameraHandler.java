@@ -40,6 +40,8 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import androidx.annotation.NonNull;
+
 import com.example.usbCameraCommon.R;
 import com.serenegiant.encoder.MediaAudioEncoder;
 import com.serenegiant.encoder.MediaEncoder;
@@ -54,14 +56,13 @@ import com.serenegiant.widget.CameraViewInterface;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -70,13 +71,13 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	private static final String TAG = "AbsUVCCameraHandler";
 
 	public interface CameraCallback {
-		public void onOpen();
-		public void onClose();
-		public void onStartPreview();
-		public void onStopPreview();
-		public void onStartRecording();
-		public void onStopRecording();
-		public void onError(final Exception e);
+		void onOpen();
+		void onClose();
+		void onStartPreview();
+		void onStopPreview();
+		void onStartRecording();
+		void onStopRecording();
+		void onError(final Exception e);
 	}
 
 	private static final int MSG_OPEN = 0;
@@ -184,7 +185,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					// therefore this method will take a time to execute
 					try {
 						thread.mSync.wait();
-					} catch (final InterruptedException e) {
+					} catch (final InterruptedException ignored) {
 					}
 				}
 			}
@@ -293,7 +294,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 	}
 
 	@Override
-	public void handleMessage(final Message msg) {
+	public void handleMessage(@NonNull final Message msg) {
 		final CameraThread thread = mWeakThread.get();
 		if (thread == null) return;
 		switch (msg.what) {
@@ -337,15 +338,16 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		private final WeakReference<CameraViewInterface> mWeakCameraView;
 		private final int mEncoderType;
 		private final Set<CameraCallback> mCallbacks = new CopyOnWriteArraySet<CameraCallback>();
-		private int mWidth, mHeight, mPreviewMode;
-		private float mBandwidthFactor;
+		private final int mWidth;
+        private final int mHeight;
+        private final int mPreviewMode;
+		private final float mBandwidthFactor;
 		private boolean mIsPreviewing;
 		private boolean mIsRecording;
 		/**
 		 * shutter sound
 		 */
 		private SoundPool mSoundPool;
-		private int mSoundId;
 		private AbstractUVCCameraHandler mHandler;
 		/**
 		 * for accessing UVC camera
@@ -363,10 +365,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 		 * @param parent parent Activity
 		 * @param cameraView for still capturing
 		 * @param encoderType 0: use MediaSurfaceEncoder, 1: use MediaVideoEncoder, 2: use MediaVideoBufferEncoder
-		 * @param width
-		 * @param height
 		 * @param format either FRAME_FORMAT_YUYV(0) or FRAME_FORMAT_MJPEG(1)
-		 * @param bandwidthFactor
 		 */
 		CameraThread(final Class<? extends AbstractUVCCameraHandler> clazz,
 			final Activity parent, final CameraViewInterface cameraView,
@@ -397,7 +396,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				if (mHandler == null){
 					try {
 						mSync.wait();
-					} catch (final InterruptedException e) {
+					} catch (final InterruptedException ignored) {
 					}
 				}
 
@@ -518,7 +517,6 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			if (DEBUG) Log.v(TAG_THREAD, "handleCaptureStill:");
 			final Activity parent = mWeakParent.get();
 			if (parent == null) return;
-			mSoundPool.play(mSoundId, 0.2f, 0.2f, 0, 0, 1.0f);	// play shutter sound
 			try {
 				final Bitmap bitmap = mWeakCameraView.get().captureStillImage();
 				// get buffered output stream for saving a captured still image as a file on external storage.
@@ -527,17 +525,15 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				final File outputFile = TextUtils.isEmpty(path)
 					? MediaMuxerWrapper.getCaptureFile(Environment.DIRECTORY_DCIM, ".png")
 					: new File(path);
-				final BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outputFile));
-				try {
-					try {
-						bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
-						os.flush();
-						mHandler.sendMessage(mHandler.obtainMessage(MSG_MEDIA_UPDATE, outputFile.getPath()));
-					} catch (final IOException e) {
-					}
-				} finally {
-					os.close();
-				}
+                assert outputFile != null;
+                try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(outputFile.toPath()))) {
+                    try {
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+                        os.flush();
+                        mHandler.sendMessage(mHandler.obtainMessage(MSG_MEDIA_UPDATE, outputFile.getPath()));
+                    } catch (final IOException ignored) {
+                    }
+                }
 			} catch (final Exception e) {
 				callOnError(e);
 			}
@@ -561,11 +557,9 @@ abstract class AbstractUVCCameraHandler extends Handler {
 					new MediaSurfaceEncoder(muxer, getWidth(), getHeight(), mMediaEncoderListener);
 					break;
 				}
-				if (true) {
-					// for audio capturing
-					new MediaAudioEncoder(muxer, mMediaEncoderListener);
-				}
-				muxer.prepare();
+                // for audio capturing
+                new MediaAudioEncoder(muxer, mMediaEncoderListener);
+                muxer.prepare();
 				muxer.startRecording();
 				if (videoEncoder != null) {
 					mUVCCamera.setFrameCallback(mIFrameCallback, UVCCamera.PIXEL_FORMAT_NV21);
@@ -646,7 +640,7 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			mCallbacks.clear();
 			if (!mIsRecording) {
 				mHandler.mReleased = true;
-				Looper.myLooper().quit();
+				Objects.requireNonNull(Looper.myLooper()).quit();
 			}
 			if (DEBUG) Log.v(TAG_THREAD, "handleRelease:finished");
 		}
@@ -716,14 +710,14 @@ abstract class AbstractUVCCameraHandler extends Handler {
 				try {
 					mSoundPool.release();
 				} catch (final Exception e) {
-					e.printStackTrace();
+					Log.e("loadShutterSound","e");
 				}
 				mSoundPool = null;
 			}
 
 			// load shutter sound from resource
 		    mSoundPool = new SoundPool(2, streamType, 0);
-		    mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
+			int mSoundId = mSoundPool.load(context, R.raw.camera_click, 1);
 		}
 
 		@Override
@@ -733,16 +727,11 @@ abstract class AbstractUVCCameraHandler extends Handler {
 			try {
 				final Constructor<? extends AbstractUVCCameraHandler> constructor = mHandlerClass.getDeclaredConstructor(CameraThread.class);
 				handler = constructor.newInstance(this);
-			} catch (final NoSuchMethodException e) {
-				Log.w(TAG, e);
-			} catch (final IllegalAccessException e) {
-				Log.w(TAG, e);
-			} catch (final InstantiationException e) {
-				Log.w(TAG, e);
-			} catch (final InvocationTargetException e) {
+			} catch (final NoSuchMethodException | IllegalAccessException | InstantiationException |
+                           InvocationTargetException e) {
 				Log.w(TAG, e);
 			}
-			if (handler != null) {
+            if (handler != null) {
 				synchronized (mSync) {
 					mHandler = handler;
 					mSync.notifyAll();

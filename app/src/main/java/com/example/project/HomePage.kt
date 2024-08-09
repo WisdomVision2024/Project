@@ -3,6 +3,8 @@ package com.example.project
 
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import ViewModels.Arduino
+import ViewModels.ArduinoUi
 import ViewModels.HandleResult
 import ViewModels.Identified
 import ViewModels.Setting
@@ -20,9 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
@@ -48,11 +48,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomePage(
     androidViewModel: Identified,
     loginDataStore:LoginDataStore,
+    arduino: Arduino,
     tts:TTS,
     viewModel: Setting,
     navController: NavController
@@ -71,8 +73,10 @@ fun HomePage(
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
 
-    var uploadResponseState by remember { mutableStateOf(false) }
+    var responseState by remember { mutableStateOf(false) }
     var response by remember { mutableStateOf("")  }
+
+    val distance=arduino.arduinoState.collectAsState().value
 
     val text=state.spokenText.ifEmpty { "" }
 
@@ -83,6 +87,9 @@ fun HomePage(
             is HandleResult.NameChange -> nameChangeScreenVisible = true
             is HandleResult.PasswordChange -> passwordChangeScreenVisible = true
             is HandleResult.EmailChange -> emailChangeScreenVisible = true
+            is HandleResult.Arduino->{
+                arduino.getDistance()
+            }
             else -> { Unit }
         }
     }
@@ -90,7 +97,7 @@ fun HomePage(
         when(uploadState){
             is UploadState.Success->{
                 response=(uploadState as UploadState.Success).result.toString()
-                uploadResponseState=true
+                responseState=true
                 tts.speak(response)
             }
             is UploadState.Error->{
@@ -98,6 +105,26 @@ fun HomePage(
                 response=(uploadState as UploadState.Error).message
             }
             else->{Unit}
+        }
+    }
+    LaunchedEffect(state) {
+        if (state.isSpeaking){
+            delay(30000)
+            androidViewModel.stopListening()
+        }
+        else{
+            Unit
+        }
+    }
+
+    LaunchedEffect(distance){
+        when(distance){
+            is ArduinoUi.Success->{
+                responseState=true
+                response=(distance as ArduinoUi.Success).message.toString()
+                tts.speak(response)
+            }
+            else->{responseState=false}
         }
     }
 
@@ -173,7 +200,7 @@ fun HomePage(
                             .background(color = Color(242, 231, 220))
                     ) {
                         item {
-                            if (uploadResponseState){
+                            if (responseState){
                                 Text(text = response)
                             }
                         }
@@ -181,6 +208,8 @@ fun HomePage(
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(
                         onClick = {
+                            response=""
+                            responseState=false
                             if (state.isSpeaking) {
                                 androidViewModel.stopListening()
                                 Log.d("voiceToTextState","Stop")

@@ -1,6 +1,8 @@
 package ViewModels
 
 import android.app.Application
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,10 +18,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
-class Camera(private val application: Application,
-             private val usbMonitor: USBMonitor,
-             private val uvcCameraHandler: UVCCameraHandler,
-             private val onDeviceConnectListener: USBMonitor.OnDeviceConnectListener,
+class Camera(
+    private val application: Application,
+    private val uvcCameraHandler: UVCCameraHandler,
     private val apiService: ApiService
 ): AndroidViewModel(application) {
 
@@ -28,21 +29,21 @@ class Camera(private val application: Application,
 
     fun captureImage(){
         val timestamp = System.currentTimeMillis().toString()
+        Log.d("Camera", "Capturing image with timestamp: $timestamp")
         val tempFile = File(application.cacheDir, "captured_image_$timestamp.png")
         uvcCameraHandler.captureStill(tempFile.absolutePath)
-        uploadImage(tempFile)
+        Log.d("Camera","$tempFile")
+
     }
-    private fun uploadImage(file: File){
-        val byteArray = file.readBytes()
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart(
-                "file", file.name,
-                byteArray.toRequestBody("image/png".toMediaTypeOrNull(), 0, byteArray.size)
-            )
-            .build()
-        viewModelScope.launch {
-            val response = RetrofitInstance.apiService.uploadImage(requestBody)
+    private fun uploadImage(uri:Uri,context:Context){
+        val inputStream = context.contentResolver.openInputStream(uri)
+        inputStream?.let {
+            val byteArray = it.readBytes()
+            val requestBody = byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull(), 0, byteArray.size)
+            val part = MultipartBody.Part.createFormData("file", "filename.jpg", requestBody)
+            val file = File(uri.path!!)
+            viewModelScope.launch {
+            val response = apiService.uploadImage(part)
             try {
                 if (response.isSuccessful) {
                     val status=response.body()?.status
@@ -62,6 +63,6 @@ class Camera(private val application: Application,
             // Handle network error
             }
         }
-        file.delete()
+            file.delete()
     }
-}
+}}

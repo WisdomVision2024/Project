@@ -49,6 +49,6 @@ interface ApiService {
     suspend fun cancelCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
     @Multipart
     @POST("bytearray/")
-    suspend fun uploadImage(@Part image: MultipartBody): Response<UploadImageResponse?>
+    suspend fun uploadImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
 }
 
