@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 import org.w3c.dom.Text
 import java.io.File
+import java.util.Objects
 
 data class User(
     @SerializedName("Phone")
@@ -131,5 +132,16 @@ data class UploadImageResponse(
     @SerializedName("status")
     val status:String?,
     @SerializedName("message")
-    val errorMessage: String?
+    val errorMessage: String?,
+    @SerializedName("counts")
+    val counts:Counts,
+    @SerializedName("results")
+    val results:List<Results>
+)
+
+data class Counts(
+    val counts:String?
+)
+data class Results(
+    val results: List<String?>
 )

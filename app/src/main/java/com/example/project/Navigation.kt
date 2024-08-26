@@ -12,7 +12,14 @@ import ViewModels.Setting
 import ViewModels.Signup
 import ViewModels.TTS
 import android.app.Application
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,18 +36,24 @@ fun Navigation(loginState: LoginState,
                loginDataStore: LoginDataStore,
                app: Application
 ) {
+    val animationSpec: FiniteAnimationSpec<IntOffset> = spring(
+        stiffness = Spring.StiffnessMediumLow,
+        visibilityThreshold = IntOffset.VisibilityThreshold
+    )
     NavHost(navController = navController,
-        startDestination = if (loginState.isLoggedIn) {
-        if (loginState.currentUser?.isVisuallyImpaired == true) {
-            "HomePage"
-        } else {
-            "HelpListPage"
-        }
-    } else {
-        "LoginPage"
-    }) {
+        startDestination ="StartPage") {
         if (!loginState.isLoggedIn) {
-            composable(route = "LoginPage") {
+            composable(route = "LoginPage",
+                enterTransition = {  slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = animationSpec
+                ) },
+                exitTransition = { slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = animationSpec
+                )
+                }
+            ) {
                 LoginPage(
                     viewModel = Login(
                         apiService,
@@ -49,18 +62,49 @@ fun Navigation(loginState: LoginState,
                     navController = navController,
                 )
             }
-            composable(route = "SignupPage") {
+            composable(route = "SignupPage",
+                enterTransition = {  slideInHorizontally(
+                    initialOffsetX = { fullWidth -> fullWidth },
+                    animationSpec = animationSpec
+                ) },
+                exitTransition = { slideOutHorizontally(
+                    targetOffsetX = { fullWidth -> -fullWidth },
+                    animationSpec = animationSpec
+                )
+                }
+            )  {
                 SignupPage(viewModel = Signup(apiService,loginDataStore),
                     navController = navController)
             }
         }
-        composable(route="StartPage"){
+        composable(route="StartPage",
+            enterTransition = {  slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = animationSpec
+            ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
+            )
+            }
+        )
+        {
             StartPage(
                 loginState = loginState,
                 navController = navController
             )
         }
-        composable(route = "HomePage") {
+        composable(route = "HomePage",
+            enterTransition = {  slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = animationSpec
+            ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
+            )
+            }
+        ) {
             HomePage(
                 androidViewModel = Identified(app,  apiService),
                 viewModel = Setting(apiService,loginDataStore),
@@ -70,7 +114,17 @@ fun Navigation(loginState: LoginState,
                 navController = navController
             )
         }
-        composable(route = "SettingPage")
+        composable(route = "SettingPage",
+            enterTransition = {  slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = animationSpec
+            ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
+            )
+            }
+        )
         {
             SettingPage(
                 viewModel = Setting(
@@ -80,11 +134,30 @@ fun Navigation(loginState: LoginState,
                 navController = navController
             )
         }
-        composable(route = "HelpListPage") {
+        composable(route = "HelpListPage",
+            enterTransition = {  slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = animationSpec
+            ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
+            )
+            }
+        )  {
             HelpListPage(viewModel = HelpList(apiService),loginDataStore,navController = navController)
         }
         composable(
             route = "HelpPage/{id}/{name}/{description}/{address}",
+            enterTransition = {  slideInHorizontally(
+                initialOffsetX = { fullWidth -> fullWidth },
+                animationSpec = animationSpec
+            ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
+            )
+            },
             arguments = listOf(
                 navArgument("id"){type= NavType.StringType},
                 navArgument("name") { type = NavType.StringType },

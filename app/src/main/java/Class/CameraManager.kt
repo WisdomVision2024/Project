@@ -1,33 +1,28 @@
 package Class
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.graphics.ImageFormat
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.CaptureFailure
+import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.TotalCaptureResult
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
 import android.icu.text.SimpleDateFormat
+import android.media.Image
 import android.media.ImageReader
-import android.net.Uri
 import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
-import androidx.core.app.ActivityCompat
+import android.view.Surface
 import androidx.core.content.FileProvider
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.viewModelScope
 import assets.ApiService
-import assets.RetrofitInstance
-import com.example.project.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -36,122 +31,212 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
+import java.util.concurrent.ArrayBlockingQueue
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
-class CameraManager(private val context: Context, private val activity: MainActivity,
+class CameraManager(private val context: Context,
+                    private val imageFormat: Int,
                     private val apiService: ApiService) {
 
-    private lateinit var cameraDevice: CameraDevice
-    private lateinit var captureSession: CameraCaptureSession
-    private lateinit var imageReader: ImageReader
-    private var handler: Handler
-
-    private val _imageUri = MutableLiveData<Uri?>()
-    val imageUri: LiveData<Uri?> = _imageUri
-
-    init {
-        val handlerThread = HandlerThread("CameraThread")
-        handlerThread.start()
-        handler = Handler(handlerThread.looper)
+    private val cameraManager: CameraManager by lazy {
+        context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
 
-    fun startCamera() {
-        val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        try {
-            val cameraId = cameraManager.cameraIdList[0] // 使用後置相機
-            val cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId)
-
-            imageReader = ImageReader.newInstance(640, 480, ImageFormat.JPEG, 2)
-            imageReader.setOnImageAvailableListener({ reader ->
-                val image = reader.acquireLatestImage()
-                val buffer = image.planes[0].buffer
-                val bytes = ByteArray(buffer.capacity())
-                buffer.get(bytes)
-                saveImage(bytes)
-                image.close()
-            }, handler)
-
-            if (ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-               ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA),0)
-                return
-            }
-            cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) {
-                    cameraDevice = camera
-                    startCaptureSession()
-                }
-
-                override fun onDisconnected(camera: CameraDevice) {
-                    cameraDevice.close()
-                }
-
-                override fun onError(camera: CameraDevice, error: Int) {
-                    cameraDevice.close()
-                }
-            }, handler)
-
-        } catch (e: CameraAccessException) {
-            Log.e("CameraCaptureManager", "CameraAccessException: ${e.message}")
+    // 獲取後置相機ID
+    private val cameraId: String by lazy {
+        cameraManager.cameraIdList.first { id ->
+            val characteristics = cameraManager.getCameraCharacteristics(id)
+            characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK
         }
     }
 
-    private fun startCaptureSession() {
-        val captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-        captureRequestBuilder.addTarget(imageReader.surface)
+    private val characteristics: CameraCharacteristics by lazy {
+        cameraManager.getCameraCharacteristics(cameraId)
+    }
 
-        val outputConfiguration = OutputConfiguration(imageReader.surface)
+    private lateinit var imageReader: ImageReader
+    private val cameraThread = HandlerThread("CameraThread").apply { start() }
+    private val cameraHandler = Handler(cameraThread.looper)
 
-        // 创建一个单线程的 Executor
-        val executor: Executor = Executors.newSingleThreadExecutor()
+    private lateinit var camera: CameraDevice
+    private lateinit var session: CameraCaptureSession
 
-        val sessionConfiguration = SessionConfiguration(
-            SessionConfiguration.SESSION_REGULAR,
-            listOf(outputConfiguration),
-            executor,  // 替换为 Executor
-            object : CameraCaptureSession.StateCallback() {
-                override fun onConfigured(session: CameraCaptureSession) {
-                    captureSession = session
-                    scheduleRepeatingCapture()
+    private val imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
+    private val imageReaderHandler = Handler(imageReaderThread.looper)
+
+    suspend fun initializeCamera() {
+        Log.d("CameraManager", "Initializing camera")
+        // 打開後置相機
+        camera = openCamera(cameraManager, cameraId, cameraHandler)
+        Log.d("CameraManager", "Camera opened: $cameraId")
+
+        // 初始化ImageReader
+        val size = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+            .getOutputSizes(imageFormat).maxByOrNull { it.height * it.width }!!
+        imageReader = ImageReader.newInstance(size.width, size.height, imageFormat,2)
+        Log.d("CameraManager", "ImageReader initialized with size: ${size.width}x${size.height}")
+
+        // 不需要預覽Surface，只需設置ImageReader的Surface
+        val targets = listOf(imageReader.surface)
+
+        session = createCaptureSession(camera, targets, cameraHandler)
+        Log.d("CameraManager", "Capture session created")
+    }
+
+    private suspend fun openCamera(
+        cameraManager: CameraManager,
+        cameraId: String,
+        cameraHandler: Handler
+    ): CameraDevice = suspendCoroutine { cont ->
+        try {
+            Log.d("CameraManager", "Attempting to open camera: $cameraId")
+            cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    // 相機成功打開，返回 CameraDevice
+                    Log.d("CameraManager", "Camera opened successfully: $cameraId")
+                    cont.resume(camera)
                 }
 
-                override fun onConfigureFailed(session: CameraCaptureSession) {
-                    Log.e("CameraCaptureManager", "onConfigureFailed: Configuration failed")
+                override fun onDisconnected(camera: CameraDevice) {
+                    // 相機設備已經斷開連接
+                    Log.e("CameraManager", "Camera disconnected: $cameraId")
+                    cont.resumeWithException(CameraAccessException(CameraAccessException.CAMERA_DISCONNECTED))
                 }
+
+                override fun onError(camera: CameraDevice, error: Int) {
+                    Log.e("CameraManager", "Error opening camera: $cameraId, error: $error")
+                    // 處理相機打開時發生的錯誤
+                    val exception = when (error) {
+                        ERROR_CAMERA_IN_USE -> CameraAccessException(CameraAccessException.CAMERA_IN_USE)
+                        ERROR_MAX_CAMERAS_IN_USE -> CameraAccessException(CameraAccessException.MAX_CAMERAS_IN_USE)
+                        ERROR_CAMERA_DISABLED -> CameraAccessException(CameraAccessException.CAMERA_DISABLED)
+                        ERROR_CAMERA_DEVICE -> CameraAccessException(CameraAccessException.CAMERA_ERROR)
+                        ERROR_CAMERA_SERVICE -> CameraAccessException(CameraAccessException.CAMERA_DISCONNECTED)
+                        else -> Exception("未知錯誤: $error")
+                    }
+                    cont.resumeWithException(exception)
+                }
+            }, cameraHandler)
+        } catch (e: CameraAccessException) {
+            Log.e("CameraManager", "Camera access exception: ${e.message}")
+            cont.resumeWithException(e)
+        } catch (e: SecurityException) {
+            Log.e("CameraManager", "Security exception: ${e.message}")
+            cont.resumeWithException(e)
+        }
+    }
+
+    private suspend fun createCaptureSession(
+        camera: CameraDevice,
+        targets: List<Surface>,
+        cameraHandler: Handler
+    ):  CameraCaptureSession = suspendCoroutine { cont ->
+        try {
+            Log.d("CameraManager", "Creating capture session")
+            val outputConfigurations = targets.map { OutputConfiguration(it) }
+            val sessionConfiguration = SessionConfiguration(
+                /* sessionType = */ SessionConfiguration.SESSION_REGULAR,
+                /* outputs = */ outputConfigurations,
+                /* executor = */ { command -> cameraHandler.post(command) },
+                /* cb = */ object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        Log.d("CameraManager", "Capture session configured")
+                        cont.resume(session)
+                    }
+
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        Log.e("CameraManager", "Capture session configuration failed")
+                        cont.resumeWithException(CameraAccessException(CameraAccessException.CAMERA_ERROR))
+                    }
+                }
+            )
+
+            camera.createCaptureSession(sessionConfiguration)
+        } catch (e: CameraAccessException) {
+            Log.e("CameraManager", "Camera access exception: ${e.message}")
+            cont.resumeWithException(e)
+        }
+    }
+
+
+    private suspend fun takePhoto(): File = suspendCoroutine { cont ->
+
+        try {
+            Log.d("CameraManager", "Taking photo")
+            // 清空 ImageReader 的緩衝區
+            while (imageReader.acquireNextImage() != null) {
+                imageReader.acquireNextImage().close()
             }
-        )
 
-        cameraDevice.createCaptureSession(sessionConfiguration)
-    }
+            // 創建一個新的圖像隊列
+            val imageQueue = ArrayBlockingQueue<Image>(1)
+            imageReader.setOnImageAvailableListener({ reader ->
+                val image = reader.acquireNextImage()
+                imageQueue.add(image)
+                Log.d("CameraManager", "Image available")
+            }, cameraHandler)
 
-    private fun scheduleRepeatingCapture() {
-        val captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-        captureRequestBuilder.addTarget(imageReader.surface)
-
-        handler.post(object : Runnable {
-            override fun run() {
-                try {
-                    captureSession.capture(captureRequestBuilder.build(), object : CameraCaptureSession.CaptureCallback() {},
-                        handler)
-                } catch (e: CameraAccessException) {
-                    Log.e("CameraCaptureManager", "CameraAccessException during capture: ${e.message}")
-                }
-                handler.postDelayed(this, 1000) // 每秒捕捉一次
+            // 創建捕獲請求，用來捕獲靜態圖像
+            val captureRequest =
+                camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+                addTarget(imageReader.surface)
             }
-        })
+
+            // 執行捕獲操作
+            session.capture(captureRequest.build(), object : CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureCompleted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    result: TotalCaptureResult
+                ) {
+                    super.onCaptureCompleted(session, request, result)
+                    Log.d("CameraManager", "Capture completed")
+
+                    // 從隊列中取出圖像
+                    val image = imageQueue.take()
+
+                    // 保存圖像為文件
+                    val buffer = image.planes[0].buffer
+                    val bytes = ByteArray(buffer.remaining())
+                    buffer.get(bytes)
+                    val photoFile = saveImage(bytes)
+                    Log.d("CameraManager", "Image saved: ${photoFile.absolutePath}")
+                    // 釋放圖像資源
+                    image.close()
+                    // 將結果返回
+                    cont.resume(photoFile)
+                }
+
+                override fun onCaptureFailed(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    failure: CaptureFailure
+                ) {
+                    super.onCaptureFailed(session, request, failure)
+                    Log.e("CameraManager", "Capture failed")
+                    cont.resumeWithException(RuntimeException("Capture failed"))
+                }
+            }, cameraHandler)
+
+        } catch (e: Exception) {
+            Log.e("CameraManager", "Exception during capture: ${e.message}")
+            cont.resumeWithException(e)
+        }
     }
 
-    private fun saveImage(bytes: ByteArray) {
-        val file = createImageFile()
-        FileOutputStream(file).use { it.write(bytes) }
-        Log.d("CameraCaptureManager", "Image saved: ${file.absolutePath}")
+    suspend fun photo():File{
+        return takePhoto()
     }
 
-    private fun createImageFile(): File {
+    fun closeCamera() {
+        camera.close()
+        cameraThread.quitSafely()
+        imageReaderThread.quitSafely()
+    }
+
+    private fun saveImage(bytes: ByteArray) :File{
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmm_ss", Locale.US).format(Date())
         val storageDir: File = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val file=File.createTempFile(
@@ -159,45 +244,8 @@ class CameraManager(private val context: Context, private val activity: MainActi
             ".jpg",
             storageDir
         )
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.file_provider", file)
-        Log.d("takePhoto","$uri")
-        _imageUri.value = uri
+        FileOutputStream(file).use { it.write(bytes) }
+        Log.d("CameraManager", "Image saved: ${file.absolutePath}")
         return file
     }
-
-    fun stopCamera() {
-        captureSession.close()
-        cameraDevice.close()
-        imageReader.close()
-    }
-
-    fun uploadPhoto(context: Context) {
-        val uri= imageUri.value
-        val inputStream = uri?.let { context.contentResolver.openInputStream(it) }
-        inputStream?.let {
-            val byteArray = it.readBytes()
-            val requestBody = byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull(), 0, byteArray.size)
-            Log.d("upload","$requestBody")
-            val part = MultipartBody.Part.createFormData("file", "filename.jpg", requestBody)
-            Log.d("upload","$part")
-            val file = File(uri.path!!)
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val response = RetrofitInstance.apiService.uploadImage(part)
-                    if (response.isSuccessful) {
-                        val status=response.body()?.status
-                        Log.d("upload","$status")
-                        val error=response.body()?.errorMessage
-                        Log.d("upload","$error")
-                        // 上传成功，删除本地文件
-                        file.delete()
-                    }
-                } catch (e: Exception) {
-                    Log.d("upload","$e")
-                    file.delete()
-                }
-            }
-        }
-    }
-
 }
