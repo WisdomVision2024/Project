@@ -40,7 +40,7 @@ interface ApiService {
     @POST("gemini/")
     suspend fun identify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
     @POST("sendRequest")
-    suspend fun sendRequest(@Body helpRequest: HelpRequest):Response<UploadResponse>
+    suspend fun sendRequest(@Body helpRequest: IdentifiedData):Response<IdentifiedResponse>
     @GET("getRequest")
     suspend fun getRequire():Response<HelpResponse>
     @PUT("acceptCommission")

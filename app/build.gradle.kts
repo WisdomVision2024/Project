@@ -65,6 +65,7 @@ dependencies {
     implementation(project(":libuvccamera"))
     implementation(project(":usbCameraCommon"))
     implementation ("com.serenegiant:common:4.1.1")
+    implementation(libs.androidx.work.runtime.ktx)
     val appcompat_version = "1.7.0"
 
     implementation("androidx.appcompat:appcompat:$appcompat_version")

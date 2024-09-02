@@ -8,11 +8,13 @@ import ViewModels.Arduino
 import ViewModels.CameraViewModel
 import ViewModels.HelpList
 import ViewModels.Identified
+import ViewModels.Login
 import ViewModels.PermissionState
 import provider.IdentifiedFactory
 import ViewModels.Setting
 import ViewModels.TTS
 import ViewModels.UsbCamera
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.Application
 import android.graphics.ImageFormat
@@ -23,28 +25,48 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.ArduinoInstance
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
 import kotlinx.coroutines.launch
 import provider.PhoneCameraFactor
+import provider.TTSFactor
 import provider.UsbCameraFactory
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
-    /*private val arduinoApi by lazy { ArduinoInstance.arduinoApi }
+    private val arduinoApi by lazy { ArduinoInstance.arduinoApi }
 
     private val identifiedViewModel: Identified by viewModels {
         IdentifiedFactory(
@@ -52,21 +74,21 @@ class MainActivity : ComponentActivity() {
            apiService
         )
     }
-    private val usbCamera: UsbCamera by viewModels {
-        UsbCameraFactory(application,apiService)
-    }*/
+
+    private val tts:TTS by viewModels{
+        TTSFactor(application)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        //requestMultiplePermissions()
-
+        requestMultiplePermissions()
 
         setContent {
             val context = applicationContext
-            //val loginDataStore= remember { LoginDataStore(context)}
-            // val loginStateFlow = loginDataStore.loadLoginState()
-            // val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
-            //val navController = rememberNavController()
+            val loginDataStore= remember { LoginDataStore(context)}
+            val loginStateFlow = loginDataStore.loadLoginState()
+            val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
+            val navController = rememberNavController()
 
             ProjectTheme {
                 // A surface container using the 'background' color from the theme
@@ -80,16 +102,22 @@ class MainActivity : ComponentActivity() {
                             imageFormat = ImageFormat.JPEG,
                             apiService
                         )
-                    PhoneCameraTest(
-                        context = applicationContext,
+                    HomePage(
+                        context=context,
                         activity = this@MainActivity,
-                        cameraViewModel = CameraViewModel(application, cameraManager)
+                        androidViewModel = identifiedViewModel,
+                        loginDataStore = loginDataStore,
+                        arduino = Arduino(arduinoApi),
+                        tts = tts,
+                        viewModel = Setting(apiService, loginDataStore),
+                        cameraViewModel = CameraViewModel(application,loginState,cameraManager),
+                        navController = navController
                     )
                 }
             }
         }
 
-        /* identifiedViewModel.showPermissionRationale.observe(this) { show ->
+        identifiedViewModel.showPermissionRationale.observe(this) { show ->
             if (show == true) {
                 showPermissionRationaleDialog()
             }
@@ -119,11 +147,11 @@ class MainActivity : ComponentActivity() {
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_MEDIA_VIDEO,
             android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.BLUETOOTH_SCAN,
-            android.Manifest.permission.BLUETOOTH_ADVERTISE,
-            android.Manifest.permission.BLUETOOTH_CONNECT,
             android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            android.Manifest.permission.POST_NOTIFICATIONS,
+            android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
             permissionsToRequest.addAll(
@@ -160,25 +188,26 @@ class MainActivity : ComponentActivity() {
             }
             .show()
             }
-    }*/
     }
+
+@Preview(showBackground = true)
+@Composable
+fun StartPreview() {
+    val loginDataStore = LoginDataStore(LocalContext.current)
+    val navController = rememberNavController()
+    val loginStateFlow = loginDataStore.loadLoginState()
+    val loginState by loginStateFlow.collectAsState(initial = LoginState(false))
+    StartPage(loginState = loginState, navController =navController )
 }
 
 @Preview(showBackground = true)
 @Composable
-fun LoginPagePreview() {
-    val navController = rememberNavController()
+fun LoginPagePreview(){
     val loginDataStore = LoginDataStore(LocalContext.current)
-    val loginStateFlow = loginDataStore.loadLoginState()
-    val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
-    Navigation(
-        loginState = loginState,
-        navController = navController,
-        apiService = RetrofitInstance.apiService,
-        arduinoApi = ArduinoInstance.arduinoApi,
-        loginDataStore =loginDataStore,
-        app = Application()
-    )
+    val navController = rememberNavController()
+    LoginPage(viewModel = Login(
+        RetrofitInstance.apiService,loginDataStore
+    ), navController = navController)
 }
 
 @Preview(showBackground = true)
@@ -196,13 +225,26 @@ fun HomePagePreview() {
     val context = LocalContext.current
     val navController = rememberNavController()
     val loginDataStore=LoginDataStore(context)
+    val loginStateFlow = loginDataStore.loadLoginState()
+    val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
+    val apiService=RetrofitInstance.apiService
+    val cameraManager =
+        CameraManager(
+            context,
+            imageFormat = ImageFormat.JPEG,
+            apiService
+        )
+    val application=Application()
     HomePage(
+        context=context,
+        activity = MainActivity(),
         androidViewModel = Identified(application = Application(),
             apiService = RetrofitInstance.apiService),
         loginDataStore = loginDataStore,
         viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
         arduino = Arduino(ArduinoInstance.arduinoApi),
         tts = TTS(Application()),
+        cameraViewModel = CameraViewModel(application,loginState,cameraManager),
         navController = navController )
 }
 
@@ -220,6 +262,14 @@ fun SettingPagePreview() {
 fun HelpListPagePreview(){
     val context = LocalContext.current
     val navController = rememberNavController()
-    val loginDataStore=LoginDataStore(context)
-    HelpListPage(viewModel = HelpList(RetrofitInstance.apiService),loginDataStore,navController = navController)
+    HelpListPage(context,viewModel = HelpList(RetrofitInstance.apiService),
+        MainActivity(),navController = navController)
 }
+
+@Preview(showBackground = true)
+@Composable
+fun Introduce2Preview(){
+    val navController = rememberNavController()
+    IntroducePage_2(navController = navController)
+}
+

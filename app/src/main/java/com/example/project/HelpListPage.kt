@@ -1,32 +1,22 @@
 package com.example.project
 
-import Data.HelpRequest
-import DataStore.LoginDataStore
-import DataStore.LoginState
-import ViewModels.AcceptUiState
+import Class.DataCheckWorker
 import ViewModels.HelpList
 import ViewModels.HelpUiState
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -38,73 +28,56 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import assets.RetrofitInstance
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 @Composable
-fun HelpListPage(viewModel:HelpList,loginDataStore:LoginDataStore,navController: NavController) {
+fun HelpListPage(context: Context,
+                 viewModel:HelpList,
+                 activity: Activity,
+                 navController: NavController) {
+    LaunchedEffect (Unit){
+        if (ContextCompat.checkSelfPermission(context,android.Manifest.permission.POST_NOTIFICATIONS)
+            !=PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(activity,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),0)}
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+            !=PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(activity,
+                arrayOf(android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS),1)}
+        setupWorkManager(context)
+    }
+    SuccessScreen(viewModel = viewModel, navController =navController )
+}
 
-    val helpListState =viewModel.helpListState.collectAsState().value
-    val acceptUiState = viewModel.acceptUiState.collectAsState().value
-
-    val loginStateFlow = loginDataStore.loadLoginState()
-    val loginState by loginStateFlow.collectAsState(initial = LoginState(isLoggedIn = true))
-    val account = loginState.currentUser?.account
-
-    var state by remember { mutableStateOf(false) }
-    var errorScreen by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf(" ") }
-    LaunchedEffect (helpListState){
-        when(helpListState){
-            is HelpUiState.Success->{
-                state=true
-            }
-            else ->{Unit}
-        }
-    }
-    if (state){
-        if (account != null) {
-            SuccessScreen(viewModel = viewModel, account=account,navController = navController)
-        }
-    }
-    else{
-        ErrorScreen(viewModel = viewModel, navController = navController)
-    }
-    LaunchedEffect(acceptUiState) {
-        when(acceptUiState){
-            is AcceptUiState.Success->{
-                val helpRequest=(acceptUiState as AcceptUiState.Success).helpRequest
-                navController.navigate("HelpPage/${helpRequest?.id}/${helpRequest?.name}" +
-                        "/${helpRequest?.description}/${helpRequest?.address}")
-            }
-            is AcceptUiState.Error->{
-                errorScreen=true
-                message= (acceptUiState as AcceptUiState.Error).message.toString()
-                }
-            else->{Unit}
-        }
-    }
-    if (errorScreen){
-        ErrorMessageScreen(errorMessage =message, onClose = {errorScreen=false} )
-    }
+private fun setupWorkManager(context: Context) {
+    // 創建 PeriodicWorkRequest，設置為每分鐘檢查一次新數據
+    val workRequest = PeriodicWorkRequestBuilder<DataCheckWorker>(1, TimeUnit.MINUTES)
+        .build()
+    // 啟動 WorkManager 任務
+    WorkManager.getInstance(context).enqueue(workRequest)
 }
 @Composable
-fun SuccessScreen(viewModel:HelpList,account: String,navController: NavController){
-    val helpListState = viewModel.helpListState.collectAsState().value as HelpUiState.Success
+fun SuccessScreen(viewModel:HelpList,navController: NavController){
+    val helpState = viewModel.helpListState.collectAsState().value
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar ={
-            Box(modifier = Modifier.fillMaxWidth(),
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(242, 231, 220)),
                 contentAlignment= Alignment.TopEnd)
             {
                 IconButton(onClick = { navController.navigate("SettingPage") }
@@ -117,13 +90,39 @@ fun SuccessScreen(viewModel:HelpList,account: String,navController: NavControlle
             }
         }
     )
-    { padding->
-        LazyColumn(modifier = Modifier.padding(padding))
-        {
-            helpListState.helpList?.let { helpList ->
-                items(helpList) { helpRequest ->
-                    HelpItem(viewModel,helpRequest, account = account,navController)
+    {  padding ->
+        when (helpState) {
+            is HelpUiState.Success -> {
+                // 获取成功状态下的数据
+                val name = (helpState as HelpUiState.Success).helpList?.name
+                val address =  (helpState as HelpUiState.Success).helpList?.address
+                val description =  (helpState as HelpUiState.Success).helpList?.description
+
+                Column(
+                    modifier = Modifier
+                        .padding(padding)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(242, 231, 220),
+                                    Color(255, 255, 255),
+                                    Color(169, 217, 208)
+                                )
+                            )
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // 显示数据，如果非空
+                    name?.let { Text(text = it, fontSize = 12.sp) }
+                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                    address?.let { Text(text = it, fontSize = 12.sp) }
+                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                    description?.let { Text(text = it, fontSize = 12.sp) }
+                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
                 }
+            }
+            else->{
+                ErrorScreen(viewModel = viewModel, navController = navController)
             }
         }
     }
@@ -151,10 +150,24 @@ fun ErrorScreen(viewModel:HelpList,navController: NavController){
         Box(modifier = Modifier
             .padding(padding)
             .fillMaxSize()
-            .background(color = Color(242, 231, 220)),
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(242, 231, 220),
+                        Color(255, 255, 255),
+                        Color(169, 217, 208)
+                    )
+                )
+            ),
             contentAlignment = Alignment.Center)
         {
-            IconButton(onClick = { viewModel.getHelpList() }) {
+            Text(text = stringResource(id = R.string.no_help),
+                fontSize = 24.sp,
+                fontFamily = FontFamily.Serif,
+                fontStyle = FontStyle.Normal,
+                color = Color.Black
+                )
+            IconButton(onClick = { viewModel.getHelp() }) {
                 Icon(imageVector = Icons.Filled.Refresh,
                     contentDescription = "refresh",
                     tint = Color.Black,
@@ -163,101 +176,5 @@ fun ErrorScreen(viewModel:HelpList,navController: NavController){
         }
     }
 }
-@Composable
-fun HelpItem(viewModel:HelpList,helpRequest: HelpRequest,account: String,navController: NavController) {
-    var confirmScreenVisible by remember { mutableStateOf(false) }
-    Column(
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = AbsoluteAlignment.Left,
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(width = 4.dp, color = Color(2, 115, 115))
-            .background(Color(169, 217, 208))
-            .padding(8.dp)
-            .clickable { confirmScreenVisible = true }
-    ) {
-        Text(
-            text = helpRequest.name,
-            fontSize = 16.sp, color = Color.Black,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(242, 231, 220), shape = RoundedCornerShape(12.dp))
-            .size(50.dp)
-            .clip(RoundedCornerShape(12.dp)),
-            ) {
-            Column (
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = AbsoluteAlignment.Left,
-                modifier = Modifier.padding(4.dp)
-            )
-            {
-                Text(
-                    text = stringResource(id = R.string.Description)+" :", fontSize = 8.sp,
-                )
-                Text(
-                    text = helpRequest.description, fontSize = 12.sp
-                )
-            }
 
-        }
-    }
-    if (confirmScreenVisible){
-        ConfirmScreen(viewModel =viewModel,helpRequest = helpRequest, account = account,
-            navController,onClose = {confirmScreenVisible=false})
-    }
-}
-@Composable
-fun ConfirmScreen(
-    viewModel: HelpList,
-    helpRequest: HelpRequest,
-    account:String,
-    navController: NavController,
-    onClose: () -> Unit
-) {
-    Dialog(onDismissRequest = {onClose() }) {
-        Column(modifier = Modifier
-            .width(320.dp)
-            .height(400.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
-            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
-            horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            val id=helpRequest.id
-            val name=helpRequest.name
-            val description=helpRequest.description
-            val address=helpRequest.address
-            Row {
-                Text(text = stringResource(id = R.string.Client)+":")
-                Text(text = name)
-            }
-            Text(text = stringResource(id = R.string.Description)+":")
-            Text(text = description)
-            Row {
-                Text(text = stringResource(id = R.string.Location)+":")
-                Text(text = address)
-            }
-            Button(onClick = {
-                viewModel.acceptCommission(id,account)
-                onClose()
-                },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(Color.Red),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
-            {
-                Text(text = stringResource(id = R.string.confirm), color = Color.White)
-            }
-        }
-    }
-}
-@Preview(showBackground = true)
-@Composable
-fun HelpItemPreview(){
-    val helpRequest=HelpRequest("1","Lily","find my pen"," MeetingRoom no.3")
-    val navController= rememberNavController()
-    HelpItem(viewModel = HelpList(RetrofitInstance.apiService),helpRequest=helpRequest,"123",navController)
-}
+

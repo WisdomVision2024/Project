@@ -216,7 +216,7 @@ fun SignupPage(
         when (state) {
             is SignupUiState.Success -> {
                 val destination =
-                    if (isVisuallyImpaired) "HomePage" else "HelpListPage"
+                    if (isVisuallyImpaired) "Introduce1" else "Introduce2"
                         navController.navigate(destination) {
                             Log.d("SignupNavigation","success")
                             popUpTo("LoginPage") {

@@ -20,12 +20,12 @@ import assets.ApiService
 sealed class HandleResult{
     data object Initial : HandleResult()
     data object Loading:HandleResult()
-    data object NavigateRequest:HandleResult()
-    data object NavigateSetting:HandleResult()
     data object LanguageChange:HandleResult()
     data object NameChange:HandleResult()
     data object PasswordChange:HandleResult()
     data object EmailChange:HandleResult()
+    data object NeedHelp:HandleResult()
+    data object Focus:HandleResult()
     data object Upload:HandleResult()
     data object Arduino:HandleResult()
 }
@@ -34,14 +34,18 @@ sealed class UploadState {
     data class Success(val result: String?) : UploadState()
     data class Error(val message: String) : UploadState()
 }
-
+sealed class SendState {
+    data object Initial : SendState()
+    data class Success(val result: String?) : SendState()
+    data class Error(val message: String) : SendState()
+}
 sealed class PermissionState{
     data object Initial : PermissionState()
     data object RequestPermissionsAgain:PermissionState()
 }
 class Identified(application: Application,
                  private val apiService: ApiService,
-                 private val isPreview: Boolean = false,
+                 private val isPreview: Boolean = false
                 ) : AndroidViewModel(application) {
 
     private val voiceToTextParse = VoiceToTextParse(application)
@@ -53,6 +57,9 @@ class Identified(application: Application,
 
     private val _uploadState = MutableStateFlow<UploadState>(UploadState.Initial)
     val uploadState: StateFlow<UploadState> = _uploadState
+
+    private val _sendState = MutableStateFlow<SendState>(SendState.Initial)
+    val sendState: StateFlow<SendState> = _sendState
 
     private val _handleResult= MutableStateFlow<HandleResult>(HandleResult.Initial)
     val handleResult: StateFlow<HandleResult> = _handleResult
@@ -118,7 +125,7 @@ class Identified(application: Application,
         }
     }
 
-    fun upLoad(text: String?) {
+    private fun upLoad(text: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val response = apiService.identify(IdentifiedData(text))
@@ -132,6 +139,21 @@ class Identified(application: Application,
                 _uploadState.value=UploadState.Error( "Response body is null")
                 Log.e("HomeViewModel", "Response body is null")
                 }
+        }
+    }
+
+    private fun needHelp(text: String?){
+        viewModelScope.launch {
+            try {
+                val response=apiService.sendRequest(IdentifiedData(text))
+                if (response.isSuccessful){
+                    val ans=response.body()?.ans
+                    _sendState.value=SendState.Success(ans)
+                }
+            }catch (e:Exception){
+                _sendState.value=SendState.Error(e.toString())
+                Log.e("HomeViewModel","send Help error :$e")
+            }
         }
     }
 
@@ -192,16 +214,18 @@ class Identified(application: Application,
                         text.contains("助けが必要", ignoreCase = true)||
                         text.contains("도움이 필요하다", ignoreCase = true)
                 ->{
-                    _handleResult.value=HandleResult.NavigateRequest
+                    _handleResult.value=HandleResult.NeedHelp
                     Log.d("HandleResult","NeedHelp")
                 }
-                text.contains("setting", ignoreCase = true)||
-                        text.contains("設定", ignoreCase = true)||
+                text.contains("focus on", ignoreCase = true)||
+                        text.contains("關注", ignoreCase = true)||
                         text.contains("paramètre", ignoreCase = true)||
-                        text.contains("설정", ignoreCase = true)
+                        text.contains("焦点を当てる", ignoreCase = true)||
+                        text.contains("에 집중하다", ignoreCase = true)
                 -> {
-                    _handleResult.value=HandleResult.NavigateSetting
-                    Log.d("HandleResult","NavigateSetting")
+                    _handleResult.value=HandleResult.Focus
+                    upLoad(text)
+                    Log.d("HandleResult","focus")
                 }
                 text.contains("distance", ignoreCase = true)||
                         text.contains("距離", ignoreCase = true)

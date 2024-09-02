@@ -1,9 +1,11 @@
 package com.example.project
 
 
+import Class.CameraManager
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Arduino
+import ViewModels.CameraViewModel
 import ViewModels.Help
 import ViewModels.HelpList
 import ViewModels.Identified
@@ -11,7 +13,9 @@ import ViewModels.Login
 import ViewModels.Setting
 import ViewModels.Signup
 import ViewModels.TTS
+import android.app.Activity
 import android.app.Application
+import android.content.Context
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
@@ -29,12 +33,16 @@ import assets.ApiService
 import assets.ArduinoApi
 
 @Composable
-fun Navigation(loginState: LoginState,
-               navController: NavHostController,
-               apiService: ApiService,
-               arduinoApi: ArduinoApi,
-               loginDataStore: LoginDataStore,
-               app: Application
+fun Navigation(
+    context: Context,
+    activity: Activity,
+    cameraManager: CameraManager,
+    loginState: LoginState,
+    navController: NavHostController,
+    apiService: ApiService,
+    arduinoApi: ArduinoApi,
+    loginDataStore: LoginDataStore,
+    app: Application
 ) {
     val animationSpec: FiniteAnimationSpec<IntOffset> = spring(
         stiffness = Spring.StiffnessMediumLow,
@@ -106,11 +114,14 @@ fun Navigation(loginState: LoginState,
             }
         ) {
             HomePage(
+                context = context,
+                activity=activity,
                 androidViewModel = Identified(app,  apiService),
                 viewModel = Setting(apiService,loginDataStore),
                 loginDataStore = loginDataStore,
                 tts = TTS(app),
                 arduino = Arduino(arduinoApi),
+                cameraViewModel = CameraViewModel(app,loginState,cameraManager),
                 navController = navController
             )
         }
@@ -145,31 +156,32 @@ fun Navigation(loginState: LoginState,
             )
             }
         )  {
-            HelpListPage(viewModel = HelpList(apiService),loginDataStore,navController = navController)
+            HelpListPage(context,viewModel = HelpList(apiService),
+                activity = activity,navController = navController)
         }
-        composable(
-            route = "HelpPage/{id}/{name}/{description}/{address}",
-            enterTransition = {  slideInHorizontally(
-                initialOffsetX = { fullWidth -> fullWidth },
-                animationSpec = animationSpec
-            ) },
+        composable("Introduce1", enterTransition = {  slideInHorizontally(
+            initialOffsetX = { fullWidth -> fullWidth },
+            animationSpec = animationSpec
+        ) },
             exitTransition = { slideOutHorizontally(
                 targetOffsetX = { fullWidth -> -fullWidth },
                 animationSpec = animationSpec
             )
-            },
-            arguments = listOf(
-                navArgument("id"){type= NavType.StringType},
-                navArgument("name") { type = NavType.StringType },
-                navArgument("description") { type = NavType.StringType },
-                navArgument("address") { type = NavType.StringType }
+            }
+        )  {
+            IntroducePage_1(tts = TTS(app), navController = navController)
+        }
+        composable("Introduce2", enterTransition = {  slideInHorizontally(
+            initialOffsetX = { fullWidth -> fullWidth },
+            animationSpec = animationSpec
+        ) },
+            exitTransition = { slideOutHorizontally(
+                targetOffsetX = { fullWidth -> -fullWidth },
+                animationSpec = animationSpec
             )
-        ) { backStackEntry ->
-            val id=backStackEntry.arguments?.getString("id")?:""
-            val name = backStackEntry.arguments?.getString("name") ?: ""
-            val description = backStackEntry.arguments?.getString("description") ?: ""
-            val address = backStackEntry.arguments?.getString("address") ?: ""
-            HelpPage(id=id,name = name, description = description, address = address,Help(),navController = navController)
+            }
+        )  {
+            IntroducePage_2( navController = navController)
         }
     }
 }

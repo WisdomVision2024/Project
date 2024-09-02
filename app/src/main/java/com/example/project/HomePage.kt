@@ -5,11 +5,17 @@ import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Arduino
 import ViewModels.ArduinoUi
+import ViewModels.CameraViewModel
 import ViewModels.HandleResult
 import ViewModels.Identified
+import ViewModels.SendState
 import ViewModels.Setting
 import ViewModels.TTS
 import ViewModels.UploadState
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -33,6 +39,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,27 +48,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
+import okhttp3.internal.wait
 
 @Composable
 fun HomePage(
+    context: Context,
+    activity: Activity,
     androidViewModel: Identified,
     loginDataStore:LoginDataStore,
     arduino: Arduino,
     tts:TTS,
     viewModel: Setting,
+    cameraViewModel: CameraViewModel,
     navController: NavController
 ) {
     val handleState by androidViewModel.handleResult.collectAsState()
     val uploadState =androidViewModel.uploadState.collectAsState().value
     val state by androidViewModel.state.collectAsState()
+    val sendState =androidViewModel.sendState.collectAsState().value
 
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(isLoggedIn = true))
@@ -73,13 +88,32 @@ fun HomePage(
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
 
+    var isFocus by remember { mutableStateOf(false) }
+    var common by remember { mutableStateOf(false) }
+
     var responseState by remember { mutableStateOf(false) }
     var response by remember { mutableStateOf("")  }
 
     val distance=arduino.arduinoState.collectAsState().value
-
+    val hint1= stringResource(id = R.string.hint1)
+    val hint2= stringResource(id = R.string.hint2)
+    val wait= stringResource(id = R.string.wait)
     val text=state.spokenText.ifEmpty { "" }
 
+    DisposableEffect(Unit) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(activity, // 当前的活动
+                arrayOf(Manifest.permission.CAMERA), // 要请求的权限列表
+                0)
+        }
+        else{
+            cameraViewModel.initialize()
+        }
+        onDispose {
+            cameraViewModel.stopTakingPhotos()
+        }
+    }
 
     LaunchedEffect(handleState) {
         when (handleState) {
@@ -87,6 +121,17 @@ fun HomePage(
             is HandleResult.NameChange -> nameChangeScreenVisible = true
             is HandleResult.PasswordChange -> passwordChangeScreenVisible = true
             is HandleResult.EmailChange -> emailChangeScreenVisible = true
+            is HandleResult.Focus->{
+                isFocus=true
+            }
+            is HandleResult.Upload->{
+                tts.speak(hint1)
+                common=true
+            }
+            is HandleResult.NeedHelp->{
+                tts.speak(hint2)
+                common=true
+            }
             is HandleResult.Arduino->{
                 arduino.getDistance()
             }
@@ -107,13 +152,19 @@ fun HomePage(
             else->{Unit}
         }
     }
+    LaunchedEffect (sendState){
+        when(sendState){
+            is SendState.Success->{
+                response=(sendState as SendState.Success).result.toString()
+            }
+            else->{Unit}
+        }
+    }
+
     LaunchedEffect(state) {
         if (state.isSpeaking){
             delay(30000)
             androidViewModel.stopListening()
-        }
-        else{
-            Unit
         }
     }
 
@@ -126,6 +177,19 @@ fun HomePage(
             }
             else->{responseState=false}
         }
+    }
+
+    LaunchedEffect(isFocus) {
+        delay(3000)
+        cameraViewModel.focusTakingPhotos()
+        delay(5000)
+        tts.speak(wait)
+    }
+    LaunchedEffect (common){
+        delay(3000)
+        cameraViewModel.commonTakingPhotos()
+        delay(5000)
+        tts.speak(wait)
     }
 
     if (errorScreen){
@@ -156,7 +220,9 @@ fun HomePage(
 
     Scaffold(modifier = Modifier.fillMaxSize(),
         topBar ={
-            Box(modifier = Modifier.fillMaxWidth(),
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(255, 255, 255)),
                 contentAlignment= Alignment.TopEnd)
             {
                 IconButton(onClick = { navController.navigate("SettingPage") })
@@ -176,16 +242,25 @@ fun HomePage(
             Column(
                 Modifier
                     .padding(padding)
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(255, 255, 255),
+                                Color(255, 255, 255),
+                                Color(169, 217, 208)
+                            )
+                        )
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.padding(20.dp))
-                Text(
-                    text = text,
-                    fontSize = 20.sp,
-                    textAlign = TextAlign.Justify,
-                    modifier = Modifier.padding(20.dp)
-                )
+                Box(modifier = Modifier.padding(20.dp)) {
+                    Text(
+                        text = text,
+                        fontSize = 20.sp,
+                        textAlign = TextAlign.Justify,
+                    )
+                }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
@@ -196,7 +271,7 @@ fun HomePage(
                     LazyColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .size(320.dp, 320.dp)
+                            .size(320.dp, 340.dp)
                             .background(color = Color(242, 231, 220))
                     ) {
                         item {
@@ -205,36 +280,43 @@ fun HomePage(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(
-                        onClick = {
-                            response=""
-                            responseState=false
-                            if (state.isSpeaking) {
-                                androidViewModel.stopListening()
-                                Log.d("voiceToTextState","Stop")
+                    Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.BottomCenter) {
+                        Button(
+                            onClick = {
+                                if (state.isSpeaking) {
+                                    androidViewModel.stopListening()
+                                    Log.d("voiceToTextState", "Stop")
+                                } else {
+                                    if (isFocus){
+                                        cameraViewModel.stopTakingPhotos()
+                                    }
+                                    response = ""
+                                    common=false
+                                    isFocus=false
+                                    responseState = false
+                                    androidViewModel.startListening()
+                                    Log.d("VoiceToTextState", "Start")
+                                }
+                            },
+                            shape = CircleShape,
+                            colors = ButtonDefaults.buttonColors(Color(255, 0, 0)),
+                            elevation = ButtonDefaults.buttonElevation(4.dp),
+                            modifier = Modifier.size(96.dp)
+                        )
+                        {
+                            if (!state.isSpeaking) {
+                                Icon(
+                                    painter =
+                                    painterResource(id = R.drawable.mic_foreground),
+                                    contentDescription = "Start"
+                                )
                             } else {
-                                androidViewModel.startListening()
-                                Log.d("VoiceToTextState","Start")
+                                Icon(
+                                    painter = painterResource(id = R.drawable.square_foreground),
+                                    contentDescription = "Stop"
+                                )
                             }
-                        },
-                        shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(Color(255, 0, 0)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier.size(96.dp)
-                    )
-                    {
-                        if (!state.isSpeaking) {
-                            Icon(
-                                painter =
-                                painterResource(id = R.drawable.mic_foreground),
-                                contentDescription = "Start"
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(id = R.drawable.square_foreground),
-                                contentDescription = "Stop"
-                            )
                         }
                     }
                     Spacer(modifier =Modifier.padding(40.dp))

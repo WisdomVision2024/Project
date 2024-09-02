@@ -42,12 +42,12 @@ data class IdentifiedResponse(
 data class HelpRequest(
     val id:String,
     val name:String,
-    val description:String,
+    val description:String?,
     val address:String
 )
 
 data class HelpResponse(
-    val request: List<HelpRequest>?,
+    val request: HelpRequest?,
     val errorMessage: String?
 )
 

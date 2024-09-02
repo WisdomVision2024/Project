@@ -1,6 +1,7 @@
 package ViewModels
 
 import Class.CameraManager
+import DataStore.LoginState
 import android.app.Application
 import android.content.Context
 import android.net.Uri
@@ -28,7 +29,7 @@ import java.util.Date
 import java.util.Locale
 
 
-class CameraViewModel(val app: Application,
+class CameraViewModel(val app: Application,private val loginState: LoginState,
                       private val cameraManager: CameraManager) : AndroidViewModel(app) {
 
     private var timerJob: Job? = null
@@ -41,15 +42,13 @@ class CameraViewModel(val app: Application,
             try {
                 // 初始化相機
                 cameraManager.initializeCamera()
-                // 初始化成功後開始拍照
-                startTakingPhotos()
             } catch (e: Exception) {
                 Log.e("CameraViewModel", "Failed to initialize camera: $e")
             }
         }
     }
 
-    fun startTakingPhotos(interval: Long = 1000L) {
+    fun focusTakingPhotos(interval: Long = 1000L) {
         val context= app.applicationContext
         timerJob = viewModelScope.launch {
             while (isActive) {
@@ -65,6 +64,24 @@ class CameraViewModel(val app: Application,
         }
     }
 
+    fun commonTakingPhotos(interval: Long = 1000L, duration: Long = 5000L) {
+        val context = app.applicationContext
+        timerJob = viewModelScope.launch {
+            val endTime = System.currentTimeMillis() + duration
+            while (isActive && System.currentTimeMillis() < endTime) {
+                try {
+                    // 每秒拍照並上傳
+                    val photo = cameraManager.photo()
+                    uploadPhoto(photo, context)
+                } catch (e: Exception) {
+                    Log.e("CameraViewModel", "Error during photo capture/upload: $e")
+                }
+                delay(interval)
+            }
+            stopTakingPhotos()
+        }
+    }
+
     fun stopTakingPhotos() {
         timerJob?.cancel()
         viewModelScope.launch {
@@ -75,12 +92,16 @@ class CameraViewModel(val app: Application,
     private fun uploadPhoto(file: File, context: Context) {
         viewModelScope.launch(Dispatchers.IO) {
             val uri = FileProvider.getUriForFile(context, "com.example.project.file_provider", file)
+            val timeStamp: String = android.icu.text.SimpleDateFormat("yyyyMMdd_HHmm_ss", Locale.US)
+                .format(Date())
+            val userName:String=loginState.currentUser.toString()
+            val fileName=userName+"_"+timeStamp+".jpg"
             val inputStream = uri?.let { context.contentResolver.openInputStream(it) }
             inputStream?.let {
                 val byteArray = it.readBytes()
                 val requestBody = byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull(), 0, byteArray.size)
                 Log.d("upload","$requestBody")
-                val part = MultipartBody.Part.createFormData("file", "filename.jpg", requestBody)
+                val part = MultipartBody.Part.createFormData(userName, fileName, requestBody)
                 Log.d("upload","$part")
                 try {
                     val response = apiService.uploadImage(part)
