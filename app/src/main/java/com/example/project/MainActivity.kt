@@ -1,6 +1,7 @@
 package com.example.project
 
 import Class.CameraManager
+import Class.WebSocketManager
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
@@ -13,56 +14,32 @@ import ViewModels.PermissionState
 import provider.IdentifiedFactory
 import ViewModels.Setting
 import ViewModels.TTS
-import ViewModels.UsbCamera
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.Application
 import android.graphics.ImageFormat
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import assets.ArduinoInstance
 import assets.RetrofitInstance
 import com.example.project.ui.theme.ProjectTheme
 import kotlinx.coroutines.launch
-import provider.PhoneCameraFactor
-import provider.TTSFactor
-import provider.UsbCameraFactory
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     private val apiService by lazy { RetrofitInstance.apiService }
@@ -75,19 +52,15 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    private val tts:TTS by viewModels{
-        TTSFactor(application)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestMultiplePermissions()
-
         setContent {
             val context = applicationContext
             val loginDataStore= remember { LoginDataStore(context)}
             val loginStateFlow = loginDataStore.loadLoginState()
-            val loginState by loginStateFlow.collectAsState(initial = LoginState(false, null))
+            val loginState by loginStateFlow.collectAsState(
+                initial = LoginState(false, null))
             val navController = rememberNavController()
 
             ProjectTheme {
@@ -96,23 +69,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     val cameraManager =
                         CameraManager(
                             context,
                             imageFormat = ImageFormat.JPEG,
                             apiService
                         )
-                    HomePage(
-                        context=context,
-                        activity = this@MainActivity,
-                        androidViewModel = identifiedViewModel,
-                        loginDataStore = loginDataStore,
-                        arduino = Arduino(arduinoApi),
-                        tts = tts,
-                        viewModel = Setting(apiService, loginDataStore),
-                        cameraViewModel = CameraViewModel(application,loginState,cameraManager),
-                        navController = navController
-                    )
+                   IntroducePage_1(tts = TTS(application), navController = navController)
                 }
             }
         }
@@ -146,19 +110,12 @@ class MainActivity : ComponentActivity() {
         val permissionsToRequest = mutableListOf(
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_MEDIA_VIDEO,
-            android.Manifest.permission.RECORD_AUDIO,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-            android.Manifest.permission.POST_NOTIFICATIONS,
-            android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
+            android.Manifest.permission.RECORD_AUDIO
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
             permissionsToRequest.addAll(
                 listOf(
-                    android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED,
-                    android.Manifest.permission.MANAGE_DEVICE_POLICY_USB_FILE_TRANSFER,
-                    android.Manifest.permission.MANAGE_DEVICE_POLICY_USB_DATA_SIGNALLING
+                    android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
                 )
             )
         }
@@ -176,10 +133,52 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showPermissionRationaleDialog() {
+        val systemLocale = Locale.getDefault().toLanguageTag()
+        val title:String
+        val message:String
+        val positive:String
+
+        when (systemLocale) {
+            "en" -> {
+                title = "Permission Request"
+                message = "The app needs some permissions to provide full functionality. " +
+                        "Please grant the necessary permissions."
+                positive = "Retry"
+            }
+            "fr" -> {
+                title = "Demande d'autorisation"
+                message = "L'application a besoin de certaines autorisations pour " +
+                        "fournir toutes les fonctionnalités. Veuillez accorder les " +
+                        "autorisations nécessaires."
+                positive = "Réessayer"
+            }
+            "ja" -> {
+                title = "許可リクエスト"
+                message = "アプリは完全な機能を提供するためにいくつかの許可が必要です。必要な許可を与えてください。"
+                positive = "再試行"
+            }
+            "ko" -> {
+                title = "허가 요청"
+                message = "앱이 전체 기능을 제공하기 위해 몇 가지 권한이 필요합니다. 필요한 권한을 부여하세요."
+                positive = "다시 시도"
+            }
+            "zh-TW" -> {
+                title = "權限請求"
+                message = "應用程序需要一些權限來提供完整功能。請授予必要的權限。"
+                positive = "重試"
+            }
+            else -> {
+                title = "Permission Request"
+                message = "The app needs some permissions to provide full functionality. " +
+                        "Please grant the necessary permissions."
+                positive = "Retry"
+            }
+        }
+
         AlertDialog.Builder(this)
-            .setTitle("權限請求")
-            .setMessage("app需要一些權限来提供完整的功能。請授予所需的權限。")
-            .setPositiveButton("重試") { _, _ ->
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton(positive) { _, _ ->
                 identifiedViewModel.onPermissionRationaleShown()
                 identifiedViewModel.requestPermissionsAgain()
             }
@@ -262,7 +261,7 @@ fun SettingPagePreview() {
 fun HelpListPagePreview(){
     val context = LocalContext.current
     val navController = rememberNavController()
-    HelpListPage(context,viewModel = HelpList(RetrofitInstance.apiService),
+    HelpListPage(context,viewModel = HelpList(RetrofitInstance.apiService, WebSocketManager(context)),
         MainActivity(),navController = navController)
 }
 

@@ -57,7 +57,7 @@
     <string name="introduce2">當您的手機收到通知時，代表有視障者需要幫助，且您是距離最近的協助者，進入APP即可知道視障者的姓名與所在地，還請您盡量迅速地到達非視障者的所在地並提供協助。</string>
     <string name="introduce_isV5">"緊急協助功能 當問題中包含「需要幫助」這個關鍵字（如「我需要幫助，我迷路了」），APP將啟動相機辨識您的位置。請將手機鏡頭對準地面並保持穩定約5秒。我們將會把您的需求和所在位置發送給最近的協助者。當確認有協助者即將前來時，APP會以語音告知「xxx即將前往並提供協助，請稍候」，同時結果也會顯示在回答框中。 "</string>
     <string name="introduce_isV6">說明到此為止，您可以點擊右下角按鈕進入主頁面開始使用APP。</string>
-    <string name="introduce_isV7">如有功能疑問，可點擊畫面中間的按鈕再次聆聽說明。若之後需要重複聆聽說明，請前往設定頁中的幫助按鈕，並選擇視障者類別。感謝您的詳細聆聽。</string>
+    <string name="introduce_isV7">如有功能疑問，可點擊畫面中的按鈕再次聆聽說明。若之後需要重複聆聽說明，請前往設定頁中的幫助按鈕。感謝您的詳細聆聽。</string>
     <string name="introduce3">您好，歡迎使用Wisdom Vision！在本頁面中有7個按鈕，分別是全部的介紹、主畫面按鈕功能介紹、一般辨識功能介紹、持續辨識功能介紹、緊急協助功能介紹和功能疑問介紹，您可根據自己的時間選擇聆聽適合您的介紹。如果您對說明不感興趣或已知道Wisdom Vision使用方法，可以點擊右下角按鈕進入主頁面開始使用APP。</string>
     <string name="common_I">一般辨識功能</string>
     <string name="continue_I">持續辨識功能</string>
@@ -65,4 +65,6 @@
     <string name="questionI">功能疑問</string>
     <string name="all_I">全部的介紹</string>
     <string name="button_I">主畫面按鈕功能</string>
+    <string name="permission_request">權限請求</string>
+    <string name="introduce4">如果您稍後需要再次查看說明，請前往設定頁面中的「說明」按鈕，並點擊。感謝您的詳細觀看。</string>
 </resources>

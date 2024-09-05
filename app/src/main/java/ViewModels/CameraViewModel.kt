@@ -78,7 +78,7 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
                 }
                 delay(interval)
             }
-            stopTakingPhotos()
+            cancel()
         }
     }
 
@@ -87,6 +87,10 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
         viewModelScope.launch {
             cameraManager.closeCamera()
         }
+    }
+
+    fun cancel(){
+        timerJob?.cancel()
     }
 
     private fun uploadPhoto(file: File, context: Context) {
@@ -101,7 +105,7 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
                 val byteArray = it.readBytes()
                 val requestBody = byteArray.toRequestBody("image/jpeg".toMediaTypeOrNull(), 0, byteArray.size)
                 Log.d("upload","$requestBody")
-                val part = MultipartBody.Part.createFormData(userName, fileName, requestBody)
+                val part = MultipartBody.Part.createFormData("file", fileName, requestBody)
                 Log.d("upload","$part")
                 try {
                     val response = apiService.uploadImage(part)

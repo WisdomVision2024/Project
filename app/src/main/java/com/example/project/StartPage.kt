@@ -91,10 +91,11 @@ fun StartPage(
             fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(bottom = 20.dp)
         )
     }
-    
-    if (time) {
-        navController.navigate(distance) {
-            popUpTo("StartPage") { inclusive = true }
+    LaunchedEffect(time) {
+        if (time) {
+            navController.navigate(distance) {
+                popUpTo("StartPage") { inclusive = true }
+            }
         }
     }
 }

@@ -3,11 +3,10 @@ package provider
 import Class.CameraManager
 import DataStore.LoginState
 import ViewModels.CameraViewModel
-import ViewModels.UsbCamera
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import assets.ApiService
+
 
 class PhoneCameraFactor (private val application: Application,
                          private val cameraManager: CameraManager,

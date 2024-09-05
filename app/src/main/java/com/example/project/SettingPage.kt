@@ -55,6 +55,8 @@ fun SettingPage(viewModel:Setting,
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
     val updateState = viewModel.updateState.collectAsState().value
     val account = loginState.currentUser?.account
+    val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
+    val route=if (isVisuallyImpaired == true) "Introduce1" else "Introduce2"
     var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
@@ -231,7 +233,7 @@ fun SettingPage(viewModel:Setting,
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { /*TODO*/ },
+                        onClick = { navController.navigate(route) },
                         modifier = Modifier
                             .size(300.dp, 44.dp)
                     )

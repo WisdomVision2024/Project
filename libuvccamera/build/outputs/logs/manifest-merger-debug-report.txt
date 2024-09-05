@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml:2:13-83
-INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml:2:13-83
+ADDED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml:2:13-83
+INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml:2:13-83
 	package
-		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml
+		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml
 	xmlns:android
-		ADDED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml:2:23-81
+		ADDED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml:2:23-81
 uses-sdk
-INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml reason: use-sdk injection requested
-INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml
-INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml
+INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml reason: use-sdk injection requested
+INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml
+INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml
 	android:targetSdkVersion
-		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml
+		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml
 	android:minSdkVersion
-		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest7004743302834105577.xml
+		INJECTED from D:\Project\libuvccamera\build\intermediates\tmp\ProcessLibraryManifest\debug\tempAndroidManifest17730175903812512065.xml

@@ -59,7 +59,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
-import okhttp3.internal.wait
 
 @Composable
 fun HomePage(
@@ -111,7 +110,10 @@ fun HomePage(
             cameraViewModel.initialize()
         }
         onDispose {
-            cameraViewModel.stopTakingPhotos()
+            if (isFocus){
+                cameraViewModel.stopTakingPhotos()
+                isFocus=false
+            }
         }
     }
 
@@ -161,13 +163,6 @@ fun HomePage(
         }
     }
 
-    LaunchedEffect(state) {
-        if (state.isSpeaking){
-            delay(30000)
-            androidViewModel.stopListening()
-        }
-    }
-
     LaunchedEffect(distance){
         when(distance){
             is ArduinoUi.Success->{
@@ -180,16 +175,20 @@ fun HomePage(
     }
 
     LaunchedEffect(isFocus) {
-        delay(3000)
-        cameraViewModel.focusTakingPhotos()
-        delay(5000)
-        tts.speak(wait)
+        if(isFocus){
+            Log.d("Focus","true")
+            cameraViewModel.focusTakingPhotos()
+            tts.speak(wait)
+            delay(5000)
+        }
     }
     LaunchedEffect (common){
-        delay(3000)
-        cameraViewModel.commonTakingPhotos()
-        delay(5000)
-        tts.speak(wait)
+        if (common){
+            Log.d("Common","true")
+            cameraViewModel.commonTakingPhotos()
+            tts.speak(wait)
+            delay(5000)
+        }
     }
 
     if (errorScreen){
@@ -218,7 +217,16 @@ fun HomePage(
             onClose = {emailChangeScreenVisible=false})
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize(),
+    Scaffold(modifier = Modifier.fillMaxSize()
+        .background(
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                Color(255, 255, 255),
+                Color(255, 255, 255),
+                Color(169, 217, 208)
+            )
+        )
+    ),
         topBar ={
             Box(modifier = Modifier
                 .fillMaxWidth()
@@ -242,16 +250,7 @@ fun HomePage(
             Column(
                 Modifier
                     .padding(padding)
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(255, 255, 255),
-                                Color(255, 255, 255),
-                                Color(169, 217, 208)
-                            )
-                        )
-                    ),
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(modifier = Modifier.padding(20.dp)) {
@@ -271,16 +270,17 @@ fun HomePage(
                     LazyColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .size(320.dp, 340.dp)
+                            .size(320.dp, 360.dp)
                             .background(color = Color(242, 231, 220))
                     ) {
                         item {
                             if (responseState){
-                                Text(text = response)
+                                Text(text = response, fontSize = 12.sp)
                             }
                         }
                     }
-                    Box(modifier = Modifier.fillMaxSize(),
+                    Spacer(modifier = Modifier.padding(12.dp))
+                    Box(modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.BottomCenter) {
                         Button(
                             onClick = {
@@ -288,15 +288,11 @@ fun HomePage(
                                     androidViewModel.stopListening()
                                     Log.d("voiceToTextState", "Stop")
                                 } else {
-                                    if (isFocus){
-                                        cameraViewModel.stopTakingPhotos()
-                                    }
-                                    response = ""
-                                    common=false
-                                    isFocus=false
-                                    responseState = false
                                     androidViewModel.startListening()
                                     Log.d("VoiceToTextState", "Start")
+                                    if (isFocus){
+                                        cameraViewModel.cancel()
+                                    }
                                 }
                             },
                             shape = CircleShape,

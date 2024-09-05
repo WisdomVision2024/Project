@@ -7,6 +7,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,10 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -50,15 +47,8 @@ fun HelpListPage(context: Context,
                  activity: Activity,
                  navController: NavController) {
     LaunchedEffect (Unit){
-        if (ContextCompat.checkSelfPermission(context,android.Manifest.permission.POST_NOTIFICATIONS)
-            !=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(activity,
-                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),0)}
-        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-            !=PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(activity,
-                arrayOf(android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS),1)}
-        setupWorkManager(context)
+        requestPermissionsIfNeeded(context, activity)
+        viewModel.startWebSocket()
     }
     SuccessScreen(viewModel = viewModel, navController =navController )
 }
@@ -69,6 +59,20 @@ private fun setupWorkManager(context: Context) {
         .build()
     // 啟動 WorkManager 任務
     WorkManager.getInstance(context).enqueue(workRequest)
+}
+private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
+    val permissionsToRequest = mutableListOf<String>()
+
+    if (ContextCompat.checkSelfPermission(
+            context,
+            android.Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) {
+        permissionsToRequest.add(android.Manifest.permission.POST_NOTIFICATIONS)
+    }
+    if (permissionsToRequest.isNotEmpty()) {
+        ActivityCompat.requestPermissions(activity, permissionsToRequest.toTypedArray(), 0)
+    }
 }
 @Composable
 fun SuccessScreen(viewModel:HelpList,navController: NavController){
@@ -93,7 +97,6 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
     {  padding ->
         when (helpState) {
             is HelpUiState.Success -> {
-                // 获取成功状态下的数据
                 val name = (helpState as HelpUiState.Success).helpList?.name
                 val address =  (helpState as HelpUiState.Success).helpList?.address
                 val description =  (helpState as HelpUiState.Success).helpList?.description
@@ -105,8 +108,7 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
                             brush = Brush.verticalGradient(
                                 colors = listOf(
                                     Color(242, 231, 220),
-                                    Color(255, 255, 255),
-                                    Color(169, 217, 208)
+                                    Color(255, 255, 255)
                                 )
                             )
                         ),
@@ -147,31 +149,33 @@ fun ErrorScreen(viewModel:HelpList,navController: NavController){
         }
     )
     { padding->
-        Box(modifier = Modifier
+        Column(modifier = Modifier
             .padding(padding)
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color(242, 231, 220),
-                        Color(255, 255, 255),
-                        Color(169, 217, 208)
+                        Color(255, 255, 255)
                     )
                 )
             ),
-            contentAlignment = Alignment.Center)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center)
         {
             Text(text = stringResource(id = R.string.no_help),
                 fontSize = 24.sp,
                 fontFamily = FontFamily.Serif,
                 fontStyle = FontStyle.Normal,
-                color = Color.Black
-                )
+                color = Color.Black,
+                modifier = Modifier.padding(12.dp)
+            )
             IconButton(onClick = { viewModel.getHelp() }) {
-                Icon(imageVector = Icons.Filled.Refresh,
-                    contentDescription = "refresh",
-                    tint = Color.Black,
-                    modifier = Modifier.size(50.dp))
+                    Icon(imageVector = Icons.Filled.Refresh,
+                        contentDescription = "refresh",
+                        tint = Color.Black,
+                        modifier = Modifier.size(50.dp)
+                    )
             }
         }
     }

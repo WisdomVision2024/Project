@@ -374,8 +374,8 @@ fun ErrorMessageScreen(
 }
 
 @Composable
-fun FinishScreen(
-    onClose: () -> Unit
+fun HelpScreen(
+    onClose: () -> Unit,
 ) {
     Dialog(onDismissRequest = {onClose() }) {
         Column(modifier = Modifier
@@ -388,8 +388,9 @@ fun FinishScreen(
             verticalArrangement = Arrangement.Center
         )
         {
-            Text(text = stringResource(id = R.string.completed), fontSize = 20.sp, color = Color.White)
-            Text(text = stringResource(id = R.string.thank), fontSize = 20.sp, color = Color.White)
+            Row {
+
+            }
             Button(onClick = {onClose()},
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(Color.Red),

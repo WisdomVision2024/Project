@@ -2,11 +2,11 @@ package com.example.project
 
 
 import Class.CameraManager
+import Class.WebSocketManager
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Arduino
 import ViewModels.CameraViewModel
-import ViewModels.Help
 import ViewModels.HelpList
 import ViewModels.Identified
 import ViewModels.Login
@@ -25,10 +25,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.IntOffset
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import assets.ApiService
 import assets.ArduinoApi
 
@@ -37,6 +35,7 @@ fun Navigation(
     context: Context,
     activity: Activity,
     cameraManager: CameraManager,
+    webSocketManager: WebSocketManager,
     loginState: LoginState,
     navController: NavHostController,
     apiService: ApiService,
@@ -50,8 +49,8 @@ fun Navigation(
     )
     NavHost(navController = navController,
         startDestination ="StartPage") {
-        if (!loginState.isLoggedIn) {
-            composable(route = "LoginPage",
+
+        composable(route = "LoginPage",
                 enterTransition = {  slideInHorizontally(
                     initialOffsetX = { fullWidth -> fullWidth },
                     animationSpec = animationSpec
@@ -84,7 +83,7 @@ fun Navigation(
                 SignupPage(viewModel = Signup(apiService,loginDataStore),
                     navController = navController)
             }
-        }
+
         composable(route="StartPage",
             enterTransition = {  slideInHorizontally(
                 initialOffsetX = { fullWidth -> fullWidth },
@@ -119,7 +118,7 @@ fun Navigation(
                 androidViewModel = Identified(app,  apiService),
                 viewModel = Setting(apiService,loginDataStore),
                 loginDataStore = loginDataStore,
-                tts = TTS(app),
+                tts =TTS(app),
                 arduino = Arduino(arduinoApi),
                 cameraViewModel = CameraViewModel(app,loginState,cameraManager),
                 navController = navController
@@ -156,7 +155,7 @@ fun Navigation(
             )
             }
         )  {
-            HelpListPage(context,viewModel = HelpList(apiService),
+            HelpListPage(context,viewModel = HelpList(apiService,webSocketManager),
                 activity = activity,navController = navController)
         }
         composable("Introduce1", enterTransition = {  slideInHorizontally(

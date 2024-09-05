@@ -215,6 +215,7 @@ class Identified(application: Application,
                         text.contains("도움이 필요하다", ignoreCase = true)
                 ->{
                     _handleResult.value=HandleResult.NeedHelp
+                    needHelp(text)
                     Log.d("HandleResult","NeedHelp")
                 }
                 text.contains("focus on", ignoreCase = true)||

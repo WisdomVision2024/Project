@@ -46,7 +46,7 @@ fun PhoneCameraTest(context: Context,activity: Activity,
         }
     }
     Column(modifier = Modifier.background(Color.LightGray)) {
-        Button(onClick = { cameraViewModel.commonTakingPhotos()}) {
+        Button(onClick = { cameraViewModel.focusTakingPhotos()}) {
         }
     }
 }
