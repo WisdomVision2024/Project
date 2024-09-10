@@ -39,16 +39,24 @@ interface ApiService {
     suspend fun email(@Query("Phone")account:String?,@Body emailChangeRequest: EmailChangeRequest): Response<UploadResponse>
     @POST("gemini/")
     suspend fun identify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
-    @POST("sendRequest")
-    suspend fun sendRequest(@Body helpRequest: IdentifiedData):Response<IdentifiedResponse>
-    @GET("getRequest")
+    @POST("focus/")
+    suspend fun focusIdentify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
+    @GET("getunity/")
+    suspend fun sendRequest():Response<IdentifiedResponse>
+    @GET("unity/")
     suspend fun getRequire():Response<HelpResponse>
     @PUT("acceptCommission")
     suspend fun acceptCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
     @PUT("cancelCommission")
     suspend fun cancelCommission(@Query("id")id:String, @Query ("Phone")account: String ):Response<AcceptCommissionResponse>
     @Multipart
-    @POST("yolo/")
+    @POST("object/")
     suspend fun uploadImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
+    @Multipart
+    @POST("continue/")
+    suspend fun uploadFocusImage(@Part image: MultipartBody.Part): Response<IdentifiedResponse?>
+    @Multipart
+    @POST("help/")
+    suspend fun uploadHelpImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
 }
 

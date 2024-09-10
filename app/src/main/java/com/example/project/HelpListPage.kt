@@ -1,8 +1,10 @@
 package com.example.project
 
 import Class.DataCheckWorker
+import DataStore.LoginDataStore
 import ViewModels.HelpList
 import ViewModels.HelpUiState
+import ViewModels.Setting
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -25,6 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -45,21 +51,19 @@ import java.util.concurrent.TimeUnit
 fun HelpListPage(context: Context,
                  viewModel:HelpList,
                  activity: Activity,
+                 setting: Setting,
+                 loginDataStore: LoginDataStore,
                  navController: NavController) {
     LaunchedEffect (Unit){
         requestPermissionsIfNeeded(context, activity)
         viewModel.startWebSocket()
     }
-    SuccessScreen(viewModel = viewModel, navController =navController )
+    SuccessScreen(viewModel = viewModel,
+        setting=setting,
+        loginDataStore = loginDataStore,
+        navController =navController )
 }
 
-private fun setupWorkManager(context: Context) {
-    // 創建 PeriodicWorkRequest，設置為每分鐘檢查一次新數據
-    val workRequest = PeriodicWorkRequestBuilder<DataCheckWorker>(1, TimeUnit.MINUTES)
-        .build()
-    // 啟動 WorkManager 任務
-    WorkManager.getInstance(context).enqueue(workRequest)
-}
 private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
     val permissionsToRequest = mutableListOf<String>()
 
@@ -75,8 +79,18 @@ private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
     }
 }
 @Composable
-fun SuccessScreen(viewModel:HelpList,navController: NavController){
+fun SuccessScreen(viewModel:HelpList,
+                  setting: Setting,
+                  loginDataStore: LoginDataStore,
+                  navController: NavController){
+    var isSettingPageVisibility by remember { mutableStateOf(false) }
     val helpState = viewModel.helpListState.collectAsState().value
+
+    if (isSettingPageVisibility){
+        SettingPage(viewModel = setting,
+            loginDataStore,
+            onClose = {isSettingPageVisibility=false},navController )
+    }
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar ={
             Box(modifier = Modifier
@@ -84,7 +98,7 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
                 .background(Color(242, 231, 220)),
                 contentAlignment= Alignment.TopEnd)
             {
-                IconButton(onClick = { navController.navigate("SettingPage") }
+                IconButton(onClick = { isSettingPageVisibility=true }
                 ) {
                     Icon(imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_page),
@@ -124,13 +138,27 @@ fun SuccessScreen(viewModel:HelpList,navController: NavController){
                 }
             }
             else->{
-                ErrorScreen(viewModel = viewModel, navController = navController)
+                ErrorScreen(viewModel = viewModel,
+                    setting = setting,
+                    loginDataStore = loginDataStore,
+                    navController = navController)
             }
         }
     }
 }
 @Composable
-fun ErrorScreen(viewModel:HelpList,navController: NavController){
+fun ErrorScreen(viewModel:HelpList,
+                setting: Setting,
+                loginDataStore: LoginDataStore,
+                navController: NavController){
+    var isSettingPageVisibility by remember { mutableStateOf(false) }
+
+    if (isSettingPageVisibility){
+        SettingPage(viewModel = setting,
+            loginDataStore,
+            onClose = {isSettingPageVisibility=false},navController )
+    }
+
     Scaffold (modifier = Modifier.fillMaxSize(),
         topBar ={
             Box(modifier = Modifier

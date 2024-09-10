@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
 }
-val ndkVersion by extra("25.1.8937393")
 allprojects{
     repositories {
         google {
@@ -15,7 +14,6 @@ allprojects{
         }
         mavenCentral()
         gradlePluginPortal()
-        maven { url=uri("https://gitee.com/liuchaoya/libcommon/raw/master/repository/") }
     }
 }
 

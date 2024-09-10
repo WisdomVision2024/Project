@@ -76,7 +76,19 @@ class MainActivity : ComponentActivity() {
                             imageFormat = ImageFormat.JPEG,
                             apiService
                         )
-                   IntroducePage_1(tts = TTS(application), navController = navController)
+                    val webSocketManager=WebSocketManager(context)
+                    Navigation(
+                        context=context,
+                        activity = this@MainActivity,
+                        cameraManager = cameraManager,
+                        webSocketManager = webSocketManager,
+                        loginState=loginState,
+                        navController = navController,
+                        apiService=apiService,
+                        arduinoApi = arduinoApi,
+                        loginDataStore=loginDataStore,
+                        app = application
+                    )
                 }
             }
         }
@@ -253,21 +265,33 @@ fun SettingPagePreview() {
     val context=LocalContext.current
     val navController = rememberNavController()
     val loginDataStore=LoginDataStore(context)
+    var isVisibility :Boolean=true
     SettingPage(viewModel = Setting(RetrofitInstance.apiService,loginDataStore)
-        ,loginDataStore,navController)
+        , onClose = {isVisibility=false},
+        loginDataStore = loginDataStore,
+        navController = navController
+    )
 }
 @Preview(showBackground = true)
 @Composable
 fun HelpListPagePreview(){
     val context = LocalContext.current
+    val loginDataStore=LoginDataStore(context)
     val navController = rememberNavController()
-    HelpListPage(context,viewModel = HelpList(RetrofitInstance.apiService, WebSocketManager(context)),
-        MainActivity(),navController = navController)
+    HelpListPage(context,
+        viewModel = HelpList(RetrofitInstance.apiService,
+            WebSocketManager(context)),
+        MainActivity(),
+        setting = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+        loginDataStore = loginDataStore,
+        navController = navController)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun Introduce2Preview(){
+    val context=LocalContext.current
+    val loginDataStore=LoginDataStore(context)
     val navController = rememberNavController()
     IntroducePage_2(navController = navController)
 }

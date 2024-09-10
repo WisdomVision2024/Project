@@ -4,6 +4,8 @@ import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Setting
 import ViewModels.UpdateUiState
+import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -49,6 +54,7 @@ import androidx.navigation.NavController
 @Composable
 fun SettingPage(viewModel:Setting,
                 loginDataStore: LoginDataStore,
+                onClose: () -> Unit,
                 navController: NavController)
 {
     val loginStateFlow = loginDataStore.loadLoginState()
@@ -57,30 +63,58 @@ fun SettingPage(viewModel:Setting,
     val account = loginState.currentUser?.account
     val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
     val route=if (isVisuallyImpaired == true) "Introduce1" else "Introduce2"
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var logOutScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
+    val distance=
+        if (isVisuallyImpaired==true) { "HomePage" }else { "HelpListPage" }
+
+    var nav by remember { mutableStateOf(false) }
+    LaunchedEffect(nav) {
+        Log.d("SettingPage", "LaunchedEffect triggered: $nav")
+        if (nav) {
+            try {
+                Log.d("SettingPage", "nav: $distance")
+                val currentDestination = navController.currentDestination
+                if (currentDestination == null) {
+                    Log.e("NavigationError", "Current destination is null")
+                } else {
+                    if (currentDestination.route != distance) {
+                        Log.d("SettingPage", "Navigating to: $distance from ${currentDestination.route}")
+                        navController.navigate(route = distance)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("NavigationError", "Navigation failed", e)
+            }
+            nav = false
+        }
+    }
+
     LaunchedEffect(updateState) {
         when(updateState){
             is UpdateUiState.Error->{
-                message=updateState.message
+                message=(updateState as UpdateUiState.Error).message
                 errorScreen=true
             }
             else->{Unit}
         }
     }
-    if (errorScreen){
-        ErrorMessageScreen(errorMessage = message, onClose = {errorScreen=false})
-    }
-    if (isLanguageChangeScreenVisible) {
-        LanguageChangeScreen(
-            onClose = {isLanguageChangeScreenVisible=false}
-        )
+
+    LaunchedEffect(loginState) {
+        if (!loginState.isLoggedIn){
+            navController.navigate("LoginPage"){
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            }
         }
+    }
+    if (errorScreen){
+        ErrorMessageScreen(message) { errorScreen=false}
+    }
+
     if (nameChangeScreenVisible){
         NameChangeScreen(
             viewModel = viewModel,
@@ -132,35 +166,28 @@ fun SettingPage(viewModel:Setting,
             }
         }
     }
-    LaunchedEffect(loginState) {
-        if (!loginState.isLoggedIn){
-            navController.navigate("LoginPage"){
-                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-            }
-        }
-    }
-    Scaffold (modifier = Modifier.fillMaxSize(),
-        topBar = {
-            Box(modifier = Modifier
+    Dialog(onDismissRequest = {}) {
+        Surface(
+            modifier = Modifier.clip(RoundedCornerShape(4.dp))
+                .border(width = 8.dp, color = Color(2, 115, 115),
+                    shape = RoundedCornerShape(4.dp))
                 .fillMaxWidth()
-                .background(Color(2, 115, 115)),
-                contentAlignment = Alignment.TopStart) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(painter = painterResource(id = R.drawable.arrowback_foreground)
-                        , contentDescription = stringResource(id = R.string.back),
-                        tint = Color.White)
+        )
+        {
+            Box(
+                modifier = Modifier
+                    .background(color = Color(242, 231, 220)),
+                contentAlignment = Alignment.TopEnd) {
+                IconButton(onClick = { onClose() })
+                {
+                    Icon(
+                        painter = painterResource(R.drawable.close2_foreground)
+                        , contentDescription = stringResource(id = R.string.cancel))
                 }
             }
-        }
-       )
-    { padding ->
-        Surface()
-        {
             LazyColumn(
                 modifier = Modifier
-                    .background(color = Color(242, 231, 220))
-                    .padding(padding)
-                    .fillMaxSize(),
+                    .background(color = Color(242, 231, 220)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
@@ -168,18 +195,19 @@ fun SettingPage(viewModel:Setting,
                     Text(
                         stringResource(id = R.string.user_setting),
                         fontSize = 28.sp,
-                        textAlign = TextAlign.Start
+                        textAlign = TextAlign.Start,
+                        color = Color.Black
                     )
                     Spacer(modifier = Modifier.padding(8.dp))
                     Button(shape = RoundedCornerShape(8.dp),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         colors = ButtonDefaults.buttonColors(Color(3,140,127)),
-                        modifier = Modifier.size(300.dp, 40.dp),
+                        modifier = Modifier.size(280.dp, 40.dp),
                         onClick = {nameChangeScreenVisible=true})
                     {
                         Text(
                             text = stringResource(id = R.string.change_user_name),
-                            fontSize = 18.sp
+                            fontSize = 18.sp, color = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
@@ -187,12 +215,12 @@ fun SettingPage(viewModel:Setting,
                         colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
-                            .size(300.dp, 44.dp),
+                            .size(280.dp, 44.dp),
                         onClick = { passwordChangeScreenVisible=true})
                     {
                         Text(
                             text = stringResource(id = R.string.change_password),
-                            fontSize = 18.sp
+                            fontSize = 18.sp, color = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
@@ -200,34 +228,21 @@ fun SettingPage(viewModel:Setting,
                         colors = ButtonDefaults.buttonColors(Color(3,140,127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
-                            .size(300.dp, 44.dp),
+                            .size(280.dp, 44.dp),
                         onClick = { emailChangeScreenVisible=true})
                     {
                         Text(
                             text = stringResource(id = R.string.change_email),
-                            fontSize = 18.sp
+                            fontSize = 18.sp, color = Color.White
                         )
                     }
                     Spacer(modifier = Modifier.padding(30.dp))
                     Text(
                         stringResource(id = R.string.other_set),
                         fontSize = 28.sp,
-                        textAlign = TextAlign.Start
+                        textAlign = TextAlign.Start,
+                        color = Color.Black
                     )
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier
-                            .size(300.dp, 44.dp),
-                        onClick = {isLanguageChangeScreenVisible=true})
-                    {
-                        Text(
-                            text = stringResource(id = R.string.change_language),
-                            fontSize = 18.sp
-                        )
-                    }
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
@@ -235,11 +250,13 @@ fun SettingPage(viewModel:Setting,
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = { navController.navigate(route) },
                         modifier = Modifier
-                            .size(300.dp, 44.dp)
+                            .size(280.dp, 44.dp)
                     )
                     {
-                        Text(text = stringResource(id = R.string.help),
-                            fontSize = 18.sp)
+                        Text(
+                            text = stringResource(id = R.string.help),
+                            fontSize = 18.sp, color = Color.White
+                        )
                     }
                     Spacer(modifier = Modifier.padding(24.dp))
                     Button(
@@ -248,12 +265,15 @@ fun SettingPage(viewModel:Setting,
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         onClick = { logOutScreenVisible=true },
                         modifier = Modifier
-                            .size(300.dp, 44.dp)
+                            .size(280.dp, 44.dp)
                     )
                     {
-                        Text(text = stringResource(id = R.string.log_out),
-                            fontSize = 18.sp)
+                        Text(
+                            text = stringResource(id = R.string.log_out),
+                            fontSize = 18.sp, color = Color.White
+                        )
                     }
+                    Spacer(modifier = Modifier.padding(24.dp))
                 }
             }
         }

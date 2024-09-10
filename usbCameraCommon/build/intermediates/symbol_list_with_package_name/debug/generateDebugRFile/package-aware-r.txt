@@ -1,3 +1,0 @@
-com.example.usbCameraCommon
-raw camera_click
-string app_name

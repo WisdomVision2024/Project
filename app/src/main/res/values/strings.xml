@@ -55,7 +55,7 @@
     <string name="Client">Client</string>
     <string name="Description">Detail description</string>
     <string name="Location">Location</string>
-    <string name="completed">Client has confirmed the comission is completed.</string>
+    <string name="completed">Client has confirmed the commission is completed.</string>
     <string name="thank">Thanks for you help</string>
     <string name="hint1">We will identify it for you, please stay still for five seconds.</string>
     <string name="hint2">Please point the camera towards the ground and remain still for five seconds.</string>

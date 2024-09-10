@@ -27,11 +27,12 @@ class VoiceToTextParse(
 
         if (!SpeechRecognizer.isRecognitionAvailable(app)){
             _state.update {
-                it.copy(error="Recognition is available.")
+                it.copy(error = "Recognition is available.")
             }
         }
 
         val systemLocale = Locale.getDefault().toLanguageTag()
+        Log.d("VoiceToTextParse","systemLocale=$systemLocale")
         val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(
                 RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -82,11 +83,13 @@ class VoiceToTextParse(
     }
 
     override fun onError(error: Int) {
-        if (error==SpeechRecognizer.ERROR_CLIENT){return}
-        _state.update {
-            it.copy(
-                error="Error: $error"
-            )
+        if (error != SpeechRecognizer.ERROR_CLIENT) {
+            Log.e("VoiceToTextParse", "Speech recognition error code: $error")
+            _state.update {
+                it.copy(
+                    error = "Error: $error"
+                )
+            }
         }
     }
 

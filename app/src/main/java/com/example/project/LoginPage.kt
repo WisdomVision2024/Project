@@ -51,20 +51,18 @@ fun LoginPage(viewModel: Login,
     var loginTriggered by remember { mutableStateOf(false) }
     var errorMessageScreenVisible by remember { mutableStateOf(false) }
     var errorMessage by remember{ mutableStateOf("") }
-
+    var destination by remember{ mutableStateOf("") }
     LoginContent(
         account = account,
         onAccountChange = { account = it },
         password = password,
         onPasswordChange = { password = it },
         onLoginClick = {
-            loginTriggered = true
             viewModel.login(account, password)
         },
         onSignupClick = { navController.navigate("SignupPage") }
     )
-    LaunchedEffect(state, loginTriggered) {
-        if (loginTriggered) {
+    LaunchedEffect(state) {
             Log.d("state", "Connect")
             when (state) {
                 is LoginUiState.OtherError -> {
@@ -72,16 +70,12 @@ fun LoginPage(viewModel: Login,
                     scaffoldState.snackbarHostState.showSnackbar(message)
                     Log.d("Error", message)
                 }
-
                 is LoginUiState.Success -> {
-                    val destination =
+                    destination =
                         if ((state as LoginUiState.Success).isVisuallyImpaired == true)
                             "HomePage" else "HelpListPage"
-                    navController.navigate(route = destination) {
-                        // 设置 popUpTo 以确保用户不能返回到 LoginPage
-                        popUpTo("LoginPage") { inclusive = true }
-                    }
-                    Log.d("Login success", "navigate success")
+                    Log.d("Login","destination:$destination")
+                    loginTriggered=true
                 }
 
                 is LoginUiState.Error -> {
@@ -95,8 +89,14 @@ fun LoginPage(viewModel: Login,
                     Unit
                 }
             }
-            // 重置 loginTriggered 状态，以避免重复触发登录操作
-            loginTriggered = false
+        }
+    LaunchedEffect(loginTriggered) {
+        if (loginTriggered) {
+            navController.navigate(route = destination) {
+                popUpTo("LoginPage") { inclusive = true }
+            }
+            loginTriggered = false  // 防止重複觸發
+            Log.d("Login success", "navigate success")
         }
     }
     if (errorMessageScreenVisible){

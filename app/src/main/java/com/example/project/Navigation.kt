@@ -115,7 +115,7 @@ fun Navigation(
             HomePage(
                 context = context,
                 activity=activity,
-                androidViewModel = Identified(app,  apiService),
+                androidViewModel = Identified(app,apiService),
                 viewModel = Setting(apiService,loginDataStore),
                 loginDataStore = loginDataStore,
                 tts =TTS(app),
@@ -141,6 +141,7 @@ fun Navigation(
                     apiService,loginDataStore
                 ),
                 loginDataStore,
+                onClose = {},
                 navController = navController
             )
         }
@@ -155,8 +156,12 @@ fun Navigation(
             )
             }
         )  {
-            HelpListPage(context,viewModel = HelpList(apiService,webSocketManager),
-                activity = activity,navController = navController)
+            HelpListPage(context,
+                viewModel = HelpList(apiService,webSocketManager),
+                activity = activity,
+                setting = Setting(apiService, loginDataStore),
+                loginDataStore,
+                navController = navController)
         }
         composable("Introduce1", enterTransition = {  slideInHorizontally(
             initialOffsetX = { fullWidth -> fullWidth },
@@ -180,7 +185,7 @@ fun Navigation(
             )
             }
         )  {
-            IntroducePage_2( navController = navController)
+            IntroducePage_2(navController = navController)
         }
     }
 }

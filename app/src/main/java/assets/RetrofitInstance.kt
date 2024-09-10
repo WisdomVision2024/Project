@@ -19,8 +19,8 @@ val logging = HttpLoggingInterceptor().apply {
 
 // 配置 OkHttpClient 並添加 HttpLoggingInterceptor
 private val client = OkHttpClient.Builder()
-    .connectTimeout(10, TimeUnit.SECONDS) // 連接超時為10秒
-    .readTimeout(10, TimeUnit.SECONDS)    // 讀取超時為10秒
+    .connectTimeout(10, TimeUnit.MINUTES) // 連接超時為10秒
+    .readTimeout(10, TimeUnit.MINUTES)    // 讀取超時為10秒
     .addInterceptor(logging)
     .build()
 

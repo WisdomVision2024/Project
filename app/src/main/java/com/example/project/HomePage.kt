@@ -6,6 +6,7 @@ import DataStore.LoginState
 import ViewModels.Arduino
 import ViewModels.ArduinoUi
 import ViewModels.CameraViewModel
+import ViewModels.FocusState
 import ViewModels.HandleResult
 import ViewModels.Identified
 import ViewModels.SendState
@@ -18,8 +19,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -58,7 +61,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
-import kotlinx.coroutines.delay
 
 @Composable
 fun HomePage(
@@ -72,11 +74,11 @@ fun HomePage(
     cameraViewModel: CameraViewModel,
     navController: NavController
 ) {
+    var isSettingPageVisibility by remember { mutableStateOf(false) }
     val handleState by androidViewModel.handleResult.collectAsState()
     val uploadState =androidViewModel.uploadState.collectAsState().value
     val state by androidViewModel.state.collectAsState()
-    val sendState =androidViewModel.sendState.collectAsState().value
-
+    val focus = cameraViewModel.uploadState.collectAsState().value
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(isLoggedIn = true))
     val account = loginState.currentUser?.account
@@ -88,9 +90,11 @@ fun HomePage(
     var errorScreen by remember { mutableStateOf(false) }
 
     var isFocus by remember { mutableStateOf(false) }
-    var common by remember { mutableStateOf(false) }
-
+    val common by remember { mutableStateOf(false) }
+    var needHelp by remember { mutableStateOf(false) }
     var responseState by remember { mutableStateOf(false) }
+    var buttonClick by remember { mutableStateOf(true) }
+
     var response by remember { mutableStateOf("")  }
 
     val distance=arduino.arduinoState.collectAsState().value
@@ -104,11 +108,15 @@ fun HomePage(
             != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(activity, // 当前的活动
                 arrayOf(Manifest.permission.CAMERA), // 要请求的权限列表
-                0)
-        }
+                0)}
         else{
             cameraViewModel.initialize()
         }
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(activity, // 当前的活动
+                arrayOf(Manifest.permission.RECORD_AUDIO), // 要请求的权限列表
+                1)}
         onDispose {
             if (isFocus){
                 cameraViewModel.stopTakingPhotos()
@@ -119,7 +127,6 @@ fun HomePage(
 
     LaunchedEffect(handleState) {
         when (handleState) {
-            is HandleResult.LanguageChange -> isLanguageChangeScreenVisible = true
             is HandleResult.NameChange -> nameChangeScreenVisible = true
             is HandleResult.PasswordChange -> passwordChangeScreenVisible = true
             is HandleResult.EmailChange -> emailChangeScreenVisible = true
@@ -127,12 +134,12 @@ fun HomePage(
                 isFocus=true
             }
             is HandleResult.Upload->{
-                tts.speak(hint1)
-                common=true
+                cameraViewModel.commonTakingPhotos()
+                tts.speak(wait)
             }
             is HandleResult.NeedHelp->{
                 tts.speak(hint2)
-                common=true
+                needHelp=true
             }
             is HandleResult.Arduino->{
                 arduino.getDistance()
@@ -140,26 +147,37 @@ fun HomePage(
             else -> { Unit }
         }
     }
+
+    LaunchedEffect(focus) {
+        when(focus){
+            is FocusState.Success->{
+                response=(focus as FocusState.Success).result.toString()
+                responseState=true
+                tts.speak(response)
+            }
+            else->{Unit}
+        }
+    }
+
     LaunchedEffect(uploadState) {
         when(uploadState){
             is UploadState.Success->{
                 response=(uploadState as UploadState.Success).result.toString()
                 responseState=true
                 tts.speak(response)
+                buttonClick=true
             }
             is UploadState.Error->{
                 errorScreen=true
                 response=(uploadState as UploadState.Error).message
+                buttonClick=true
             }
-            else->{Unit}
-        }
-    }
-    LaunchedEffect (sendState){
-        when(sendState){
-            is SendState.Success->{
-                response=(sendState as SendState.Success).result.toString()
+            is UploadState.Loading->{
+                buttonClick=false
             }
-            else->{Unit}
+            else->{
+                buttonClick=true
+            }
         }
     }
 
@@ -176,29 +194,36 @@ fun HomePage(
 
     LaunchedEffect(isFocus) {
         if(isFocus){
-            Log.d("Focus","true")
+            Log.d("HomePage","Focus true")
             cameraViewModel.focusTakingPhotos()
-            tts.speak(wait)
-            delay(5000)
         }
     }
     LaunchedEffect (common){
         if (common){
-            Log.d("Common","true")
-            cameraViewModel.commonTakingPhotos()
-            tts.speak(wait)
-            delay(5000)
+            Log.d("HomePage","Common true")
         }
+    }
+
+    LaunchedEffect (needHelp){
+        if (needHelp){
+            tts.speak(hint2)
+            Log.d("HomePage","needHelp true")
+            cameraViewModel.helpTakingPhotos()
+            tts.speak(wait)
+            androidViewModel.getUnity()
+        }
+    }
+
+    if (isSettingPageVisibility){
+        SettingPage(viewModel = viewModel,
+            loginDataStore,
+            onClose = {isSettingPageVisibility=false},navController )
     }
 
     if (errorScreen){
         ErrorMessageScreen(errorMessage = response, onClose = {errorScreen=false})
     }
-    if (isLanguageChangeScreenVisible) {
-        LanguageChangeScreen(
-            onClose = {isLanguageChangeScreenVisible=false}
-        )
-    }
+
     if (nameChangeScreenVisible){
         NameChangeScreen(
             viewModel = viewModel,
@@ -217,23 +242,14 @@ fun HomePage(
             onClose = {emailChangeScreenVisible=false})
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()
-        .background(
-        brush = Brush.verticalGradient(
-            colors = listOf(
-                Color(255, 255, 255),
-                Color(255, 255, 255),
-                Color(169, 217, 208)
-            )
-        )
-    ),
+    Scaffold(modifier = Modifier.fillMaxSize(),
         topBar ={
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(255, 255, 255)),
                 contentAlignment= Alignment.TopEnd)
             {
-                IconButton(onClick = { navController.navigate("SettingPage") })
+                IconButton(onClick = { isSettingPageVisibility=true })
                 {
                     Icon(imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_page),
@@ -250,7 +266,16 @@ fun HomePage(
             Column(
                 Modifier
                     .padding(padding)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(255, 255, 255),
+                                Color(255, 255, 255),
+                                Color(169, 217, 208)
+                            )
+                        )
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(modifier = Modifier.padding(20.dp)) {
@@ -258,6 +283,7 @@ fun HomePage(
                         text = text,
                         fontSize = 20.sp,
                         textAlign = TextAlign.Justify,
+                        color = Color.Black
                     )
                 }
                 Column(
@@ -275,48 +301,47 @@ fun HomePage(
                     ) {
                         item {
                             if (responseState){
-                                Text(text = response, fontSize = 12.sp)
+                                Text(text = response, fontSize = 20.sp,
+                                    color = Color.Black)
                             }
                         }
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
-                    Box(modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.BottomCenter) {
-                        Button(
-                            onClick = {
-                                if (state.isSpeaking) {
-                                    androidViewModel.stopListening()
-                                    Log.d("voiceToTextState", "Stop")
-                                } else {
-                                    androidViewModel.startListening()
-                                    Log.d("VoiceToTextState", "Start")
-                                    if (isFocus){
-                                        cameraViewModel.cancel()
-                                    }
-                                }
-                            },
-                            shape = CircleShape,
-                            colors = ButtonDefaults.buttonColors(Color(255, 0, 0)),
-                            elevation = ButtonDefaults.buttonElevation(4.dp),
-                            modifier = Modifier.size(96.dp)
-                        )
-                        {
-                            if (!state.isSpeaking) {
-                                Icon(
-                                    painter =
-                                    painterResource(id = R.drawable.mic_foreground),
-                                    contentDescription = "Start"
-                                )
+                    Button(
+                        onClick = {
+                            if (state.isSpeaking) {
+                                androidViewModel.stopListening()
+                                Log.d("voiceToTextState", "Stop")
                             } else {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.square_foreground),
-                                    contentDescription = "Stop"
-                                )
+                                androidViewModel.startListening()
+                                Log.d("VoiceToTextState", "Start")
+                                if (isFocus){
+                                    cameraViewModel.cancel()
+                                }
                             }
+                                  },
+                        shape = CircleShape,
+                        colors = ButtonDefaults.buttonColors(Color(255, 0, 0)),
+                        elevation = ButtonDefaults.buttonElevation(4.dp),
+                        modifier = Modifier.size(96.dp),
+                        enabled = buttonClick
+                    )
+                    {
+                        if (!state.isSpeaking) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.mic_foreground),
+                                contentDescription = "Start"
+                            )
+                        }
+                        else {
+                            Icon(
+                                painter = painterResource(id = R.drawable.square_foreground),
+                                contentDescription = "Stop"
+                            )
                         }
                     }
-                    Spacer(modifier =Modifier.padding(40.dp))
                 }
+                Spacer(modifier =Modifier.padding(40.dp))
             }
         }
     }

@@ -169,7 +169,7 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
             Text(text = stringResource(id = R.string.change_language),
                 fontSize = 32.sp)
             Spacer(modifier = Modifier.height(16.dp))
-            Column {
+            Column(modifier = Modifier.background(Color(242, 231, 220))) {
                 localeOptions.keys.forEach { selectionLocale ->
                     Box (modifier = Modifier
                         .clickable {
@@ -179,22 +179,14 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
                                     localeOptions[selectionLocale]
                                 )
                             )// Optionally, you can navigate back or perform other actions
+                            onClose()
                         }
                         .padding(20.dp)
                     )
                     {
                         Text(
                             text = selectionLocale,
-                            fontSize = 12.sp,
-                            modifier = Modifier
-                                .clickable {
-                                    // set app locale given the user's selected locale
-                                    AppCompatDelegate.setApplicationLocales(
-                                        LocaleListCompat.forLanguageTags(
-                                            localeOptions[selectionLocale]
-                                        )
-                                    )// Optionally, you can navigate back or perform other actions
-                            }
+                            fontSize = 20.sp
                         )
                     }
                 }
@@ -202,6 +194,7 @@ fun LanguageChangeScreen(onClose: () -> Unit) {
         }
     }
 }
+
 @Composable
 fun NameChangeScreen(
     viewModel: Setting,
@@ -214,7 +207,7 @@ fun NameChangeScreen(
             .width(320.dp)
             .height(400.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
+            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
             .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
             horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -233,7 +226,7 @@ fun NameChangeScreen(
             , modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
-                    .background(Color(169, 217, 108))
+                    .background(Color(170, 219, 182, 255))
             )
             Spacer(modifier = Modifier.padding(40.dp))
             Button(onClick = { viewModel.changeName(account,username) },
@@ -261,7 +254,7 @@ fun PasswordChangeScreen(
             .width(320.dp)
             .height(400.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
+            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
             .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
             horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -278,7 +271,7 @@ fun PasswordChangeScreen(
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
-                    .background(Color(169, 217, 108)))
+                    .background(Color(170, 219, 182, 255)))
             Spacer(modifier = Modifier.padding(8.dp))
             EditInputField2(label = R.string.input_new_password,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
@@ -287,7 +280,7 @@ fun PasswordChangeScreen(
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
-                    .background(Color(169, 217, 108)))
+                    .background(Color(170, 219, 182, 255)))
             Spacer(modifier = Modifier.padding(20.dp))
             Button(onClick = { viewModel.changePassword(account,oldp,newp) },
                 colors = ButtonDefaults.buttonColors(Color.Red),
@@ -312,7 +305,7 @@ fun EmailChangeScreen(
             .width(320.dp)
             .height(400.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
+            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
             .border(
                 width = 8.dp, color = Color(2, 115, 115),
                 shape = RoundedCornerShape(4.dp)
@@ -332,7 +325,7 @@ fun EmailChangeScreen(
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
-                    .background(Color(169, 217, 108)))
+                    .background(Color(170, 219, 182, 255)))
             Spacer(modifier = Modifier.padding(40.dp))
             Button(onClick = {viewModel.changeEmail(account,email)},
                 shape = RoundedCornerShape(12.dp),
@@ -355,7 +348,7 @@ fun ErrorMessageScreen(
             .width(320.dp)
             .height(240.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
+            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
             .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
             horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -373,34 +366,6 @@ fun ErrorMessageScreen(
     }
 }
 
-@Composable
-fun HelpScreen(
-    onClose: () -> Unit,
-) {
-    Dialog(onDismissRequest = {onClose() }) {
-        Column(modifier = Modifier
-            .width(320.dp)
-            .height(240.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220))
-            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
-            horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            Row {
-
-            }
-            Button(onClick = {onClose()},
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(Color.Red),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
-            {
-                Text(text = stringResource(id = R.string.confirm), color = Color.White)
-            }
-        }
-    }
-}
 @Composable
 fun SingleSelectCheckbox(
     isChecked: Boolean,

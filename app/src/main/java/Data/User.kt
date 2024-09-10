@@ -35,7 +35,9 @@ data class IdentifiedData(
 
 @Serializable
 data class IdentifiedResponse(
-    @SerializedName("T")
+    @SerializedName("status")
+    val status: String?,
+    @SerializedName("message")
     val ans:String?
 )
 

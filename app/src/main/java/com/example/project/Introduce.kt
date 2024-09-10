@@ -1,6 +1,8 @@
 package com.example.project
 
 
+import DataStore.LoginDataStore
+import DataStore.LoginState
 import ViewModels.TTS
 import android.app.Application
 import androidx.compose.foundation.background
@@ -24,6 +26,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,10 +64,18 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
     var isSpeaking4 by remember { mutableStateOf(false) }
     var isSpeaking5 by remember { mutableStateOf(false) }
     var isSpeaking6 by remember { mutableStateOf(false) }
+    var nav  by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         tts.setOnInitListener {
             tts.speak(firstIntroduce)
         }
+    }
+    LaunchedEffect(nav) {
+        if (nav){
+            navController.navigate("HomePage")
+        }
+        nav=false
     }
     Surface(
         modifier = Modifier
@@ -83,6 +95,8 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                     )
                 )
         ) {
+            Spacer(modifier = Modifier.padding(12.dp))
+            Text(stringResource(R.string.help ), fontSize = 20.sp, color = Color(2,115,115))
             Spacer(modifier = Modifier.padding(12.dp))
             Row (modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround){
@@ -281,7 +295,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                 .padding(end = 8.dp),
                 contentAlignment = Alignment.BottomEnd){
                 Button(
-                    onClick = { navController.navigate("HomePage") },
+                    onClick = { nav=true },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -299,6 +313,20 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
 
 @Composable
 fun IntroducePage_2(navController: NavController){
+    var back  by remember { mutableStateOf(false) }
+    var nav by remember { mutableStateOf(false) }
+    LaunchedEffect(nav) {
+        if (nav){
+            navController.navigate("HelpListPage")
+        }
+        nav=false
+    }
+    LaunchedEffect(back) {
+        if (back){
+            navController.navigate("LoginPage")
+        }
+        back=false
+    }
     Surface(
         modifier = Modifier
             .fillMaxSize()
@@ -336,14 +364,28 @@ fun IntroducePage_2(navController: NavController){
                     )
                 }
             }
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(end = 8.dp),
-                contentAlignment = Alignment.BottomEnd
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
                 Button(
-                    onClick = { navController.navigate("HelpListPage") },
+                    onClick = {back=true},
+                    colors = ButtonDefaults.buttonColors(Color(2, 115, 115)),
+                    elevation = ButtonDefaults.buttonElevation(12.dp),
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(96.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.arrowback_foreground),
+                        contentDescription = "go to login page",
+                        tint = Color.White
+                    )
+                }
+                Button(
+                    onClick = { nav=true },
                     colors = ButtonDefaults.buttonColors(Color(2, 115, 115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -370,6 +412,7 @@ fun Introduce_1Preview() {
 @Preview(showBackground = true)
 @Composable
 fun Introduce_2Preview() {
+    val loginDataStore=LoginDataStore(LocalContext.current)
     val navController= rememberNavController()
     IntroducePage_2(navController = navController)
 }

@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import assets.ApiService
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 sealed class HandleResult{
     data object Initial : HandleResult()
@@ -33,6 +36,7 @@ sealed class UploadState {
     data object Initial : UploadState()
     data class Success(val result: String?) : UploadState()
     data class Error(val message: String) : UploadState()
+    data object Loading:UploadState()
 }
 sealed class SendState {
     data object Initial : SendState()
@@ -46,7 +50,9 @@ sealed class PermissionState{
 class Identified(application: Application,
                  private val apiService: ApiService,
                  private val isPreview: Boolean = false
-                ) : AndroidViewModel(application) {
+                ) : AndroidViewModel(application)
+{
+    private var timerJob: Job? = null
 
     private val voiceToTextParse = VoiceToTextParse(application)
     private val _state = MutableStateFlow(VoiceToTextParseState())
@@ -127,6 +133,7 @@ class Identified(application: Application,
 
     private fun upLoad(text: String?) {
         viewModelScope.launch(Dispatchers.IO) {
+            _uploadState.value=UploadState.Loading
             try {
                 val response = apiService.identify(IdentifiedData(text))
                 if (response.isSuccessful) {
@@ -136,25 +143,54 @@ class Identified(application: Application,
                 }
                 }catch (e:Exception)
                 {
-                _uploadState.value=UploadState.Error( "Response body is null")
-                Log.e("HomeViewModel", "Response body is null")
+                _uploadState.value=UploadState.Error(e.message.toString())
+                Log.e("identified response", "$e")
                 }
         }
     }
 
-    private fun needHelp(text: String?){
-        viewModelScope.launch {
+    private fun focusUpLoad(text: String?) {
+        _uploadState.value=UploadState.Loading
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val response=apiService.sendRequest(IdentifiedData(text))
-                if (response.isSuccessful){
-                    val ans=response.body()?.ans
-                    _sendState.value=SendState.Success(ans)
+                val response = apiService.focusIdentify(IdentifiedData(text))
+                if (response.isSuccessful) {
+                    val ans= response.body()?.ans
+                    Log.d("identified response","$ans")
+                    _uploadState.value=UploadState.Success(ans)
                 }
-            }catch (e:Exception){
-                _sendState.value=SendState.Error(e.toString())
-                Log.e("HomeViewModel","send Help error :$e")
+            }catch (e:Exception)
+            {
+                _uploadState.value=UploadState.Error( "Response body is null")
+                Log.e("identified response", "Response body is null")
             }
         }
+    }
+
+    fun getUnity(interval:Long=1000L,duration:Long=10000L){
+        timerJob=
+        viewModelScope.launch (Dispatchers.IO){
+            val endTime=System.currentTimeMillis()+duration
+            while (isActive&&System.currentTimeMillis()<endTime){
+                try {
+                    val response=apiService.sendRequest()
+                    if (response.isSuccessful){
+                        val ans=response.body()?.ans
+                        _uploadState.value=UploadState.Success(ans)
+                    }
+                }catch (e:Exception)
+                {
+                    _uploadState.value=UploadState.Error( "identified response body is null")
+                    Log.e("identified response", "Response body is null")
+                }
+                delay(interval)
+            }
+            cancel()
+        }
+    }
+
+    fun cancel(){
+        timerJob?.cancel()
     }
 
     private fun processRecognizedText(text: String) {
@@ -215,7 +251,6 @@ class Identified(application: Application,
                         text.contains("도움이 필요하다", ignoreCase = true)
                 ->{
                     _handleResult.value=HandleResult.NeedHelp
-                    needHelp(text)
                     Log.d("HandleResult","NeedHelp")
                 }
                 text.contains("focus on", ignoreCase = true)||
@@ -225,7 +260,7 @@ class Identified(application: Application,
                         text.contains("에 집중하다", ignoreCase = true)
                 -> {
                     _handleResult.value=HandleResult.Focus
-                    upLoad(text)
+                    focusUpLoad(text)
                     Log.d("HandleResult","focus")
                 }
                 text.contains("distance", ignoreCase = true)||
