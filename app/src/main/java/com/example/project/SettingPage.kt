@@ -3,6 +3,7 @@ package com.example.project
 import DataStore.LoginDataStore
 import DataStore.LoginState
 import ViewModels.Setting
+import ViewModels.TTS
 import ViewModels.UpdateUiState
 import android.app.Activity
 import android.util.Log
@@ -49,12 +50,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
 
 @Composable
 fun SettingPage(viewModel:Setting,
                 loginDataStore: LoginDataStore,
                 onClose: () -> Unit,
+                tts: TTS,
                 navController: NavController)
 {
     val loginStateFlow = loginDataStore.loadLoginState()
@@ -62,37 +65,14 @@ fun SettingPage(viewModel:Setting,
     val updateState = viewModel.updateState.collectAsState().value
     val account = loginState.currentUser?.account
     val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
-    val route=if (isVisuallyImpaired == true) "Introduce1" else "Introduce2"
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var logOutScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    val distance=
-        if (isVisuallyImpaired==true) { "HomePage" }else { "HelpListPage" }
-
-    var nav by remember { mutableStateOf(false) }
-    LaunchedEffect(nav) {
-        Log.d("SettingPage", "LaunchedEffect triggered: $nav")
-        if (nav) {
-            try {
-                Log.d("SettingPage", "nav: $distance")
-                val currentDestination = navController.currentDestination
-                if (currentDestination == null) {
-                    Log.e("NavigationError", "Current destination is null")
-                } else {
-                    if (currentDestination.route != distance) {
-                        Log.d("SettingPage", "Navigating to: $distance from ${currentDestination.route}")
-                        navController.navigate(route = distance)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("NavigationError", "Navigation failed", e)
-            }
-            nav = false
-        }
-    }
+    var isShowIntroduce1 by remember { mutableStateOf(false) }
+    var isShowIntroduce2 by remember { mutableStateOf(false) }
 
     LaunchedEffect(updateState) {
         when(updateState){
@@ -122,16 +102,7 @@ fun SettingPage(viewModel:Setting,
             onClose = { nameChangeScreenVisible = false }
         )
     }
-    if (passwordChangeScreenVisible){
-    PasswordChangeScreen(viewModel = viewModel,
-        account=account,
-        onClose = {passwordChangeScreenVisible=false})
-    }
-    if (emailChangeScreenVisible){
-        EmailChangeScreen(viewModel = viewModel,
-            account=account,
-            onClose = {emailChangeScreenVisible=false})
-    }
+
     if (logOutScreenVisible){
         Dialog(onDismissRequest = {logOutScreenVisible=false}) {
             Column(modifier = Modifier
@@ -166,32 +137,51 @@ fun SettingPage(viewModel:Setting,
             }
         }
     }
+    if (isShowIntroduce1){
+        IntroducePage_1(
+            tts = tts,
+            onClose = {
+                isShowIntroduce1=false
+            }
+        )
+    }
+    if (isShowIntroduce2){
+        IntroducePage_2(
+            onClose =
+            {
+                isShowIntroduce2=false
+            }
+        )
+    }
     Dialog(onDismissRequest = {}) {
-        Surface(
-            modifier = Modifier.clip(RoundedCornerShape(4.dp))
+        Column(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
                 .border(width = 8.dp, color = Color(2, 115, 115),
                     shape = RoundedCornerShape(4.dp))
-                .fillMaxWidth()
-        )
-        {
+                .background(color = Color(242, 231, 220))
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Box(
-                modifier = Modifier
-                    .background(color = Color(242, 231, 220)),
-                contentAlignment = Alignment.TopEnd) {
-                IconButton(onClick = { onClose() })
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                IconButton(onClick = { onClose()})
                 {
                     Icon(
-                        painter = painterResource(R.drawable.close2_foreground)
-                        , contentDescription = stringResource(id = R.string.cancel))
+                        painter = painterResource(R.drawable.clear_foreground),
+                        contentDescription = stringResource(id = R.string.cancel),
+                        tint = Color(2, 115, 115),
+                        modifier = Modifier.size(100.dp)
+                    )
                 }
             }
             LazyColumn(
-                modifier = Modifier
-                    .background(color = Color(242, 231, 220)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
-                    Spacer(modifier = Modifier.padding(20.dp))
+                    Spacer(modifier = Modifier.padding(8.dp))
                     Text(
                         stringResource(id = R.string.user_setting),
                         fontSize = 28.sp,
@@ -201,9 +191,9 @@ fun SettingPage(viewModel:Setting,
                     Spacer(modifier = Modifier.padding(8.dp))
                     Button(shape = RoundedCornerShape(8.dp),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
                         modifier = Modifier.size(280.dp, 40.dp),
-                        onClick = {nameChangeScreenVisible=true})
+                        onClick = { nameChangeScreenVisible = true })
                     {
                         Text(
                             text = stringResource(id = R.string.change_user_name),
@@ -212,11 +202,11 @@ fun SettingPage(viewModel:Setting,
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
                             .size(280.dp, 44.dp),
-                        onClick = { passwordChangeScreenVisible=true})
+                        onClick = { passwordChangeScreenVisible = true })
                     {
                         Text(
                             text = stringResource(id = R.string.change_password),
@@ -225,11 +215,11 @@ fun SettingPage(viewModel:Setting,
                     }
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
                         modifier = Modifier
                             .size(280.dp, 44.dp),
-                        onClick = { emailChangeScreenVisible=true})
+                        onClick = { emailChangeScreenVisible = true })
                     {
                         Text(
                             text = stringResource(id = R.string.change_email),
@@ -246,9 +236,18 @@ fun SettingPage(viewModel:Setting,
                     Spacer(modifier = Modifier.padding(12.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { navController.navigate(route) },
+                        onClick = {
+                            if (isVisuallyImpaired==true)
+                            {
+                               isShowIntroduce1=true
+                            }
+                            else
+                            {
+                                isShowIntroduce2=true
+                            }
+                                  },
                         modifier = Modifier
                             .size(280.dp, 44.dp)
                     )
@@ -261,9 +260,9 @@ fun SettingPage(viewModel:Setting,
                     Spacer(modifier = Modifier.padding(24.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3,140,127)),
+                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
                         elevation = ButtonDefaults.buttonElevation(4.dp),
-                        onClick = { logOutScreenVisible=true },
+                        onClick = { logOutScreenVisible = true },
                         modifier = Modifier
                             .size(280.dp, 44.dp)
                     )

@@ -1,8 +1,6 @@
 package com.example.project
 
 
-import DataStore.LoginDataStore
-import DataStore.LoginState
 import ViewModels.TTS
 import android.app.Application
 import androidx.compose.foundation.background
@@ -13,20 +11,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material.Icon
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,19 +35,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.delay
+import androidx.compose.ui.window.Dialog
+
 
 
 @Composable
-fun IntroducePage_1(tts: TTS,navController: NavController){
+fun IntroducePage_1(tts: TTS,onClose:()->Unit){
     val i1=stringResource(id = R.string.introduce1)
     val i2=stringResource(id = R.string.introduce_isV2)
     val i3=stringResource(id = R.string.introduce_isV3)
@@ -64,28 +63,19 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
     var isSpeaking4 by remember { mutableStateOf(false) }
     var isSpeaking5 by remember { mutableStateOf(false) }
     var isSpeaking6 by remember { mutableStateOf(false) }
-    var nav  by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         tts.setOnInitListener {
             tts.speak(firstIntroduce)
         }
     }
-    LaunchedEffect(nav) {
-        if (nav){
-            navController.navigate("HomePage")
-        }
-        nav=false
-    }
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
+    Dialog(onDismissRequest = {}) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(12.dp))
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -96,7 +86,11 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                 )
         ) {
             Spacer(modifier = Modifier.padding(12.dp))
-            Text(stringResource(R.string.help ), fontSize = 20.sp, color = Color(2,115,115))
+            Text(stringResource(R.string.help ),
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontFamily = FontFamily.Serif
+            )
             Spacer(modifier = Modifier.padding(12.dp))
             Row (modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround){
@@ -109,7 +103,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                             tts.speak(introduce)
                             true
                         }
-                              },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -139,7 +133,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                                 tts.speak(i2)
                                 true
                             }
-                         },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -174,7 +168,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                                 tts.speak(i3)
                                 true
                             }
-                              },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -204,7 +198,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                                 tts.speak(i4)
                                 true
                             }
-                              },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -238,7 +232,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                                 tts.speak(i5)
                                 true
                             }
-                         },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -246,9 +240,9 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                         .size(80.dp)
                 ) {
                     if (isSpeaking5){
-                    androidx.compose.material3.Icon(
-                        painter = painterResource(id = R.drawable.square_foreground),
-                        contentDescription = "Stop")
+                        androidx.compose.material3.Icon(
+                            painter = painterResource(id = R.drawable.square_foreground),
+                            contentDescription = "Stop")
                     }
                     else{
                         Icon(
@@ -268,7 +262,7 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                                 tts.speak(i7)
                                 true
                             }
-                       },
+                    },
                     colors = ButtonDefaults.buttonColors(Color(2,115,115)),
                     elevation = ButtonDefaults.buttonElevation(12.dp),
                     shape = CircleShape,
@@ -290,52 +284,33 @@ fun IntroducePage_1(tts: TTS,navController: NavController){
                 }
             }
             Spacer(modifier = Modifier.padding(24.dp))
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .padding(end = 8.dp),
-                contentAlignment = Alignment.BottomEnd){
-                Button(
-                    onClick = { nav=true },
-                    colors = ButtonDefaults.buttonColors(Color(2,115,115)),
-                    elevation = ButtonDefaults.buttonElevation(12.dp),
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(96.dp)
-                ) {
-                    Icon(painter = painterResource(id = R.drawable.arrowforward_foreground),
-                        contentDescription = "go to home page",
-                        tint = Color.White)
-                }
+            Button(
+                onClick = { onClose() },
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(12.dp),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .width(100.dp).height(52.dp)
+            ) {
+                Text(stringResource(R.string.confirm),
+                    color = Color.White, fontSize = 20.sp)
             }
+            Spacer(modifier = Modifier.padding(24.dp))
         }
     }
 }
 
 @Composable
-fun IntroducePage_2(navController: NavController){
-    var back  by remember { mutableStateOf(false) }
-    var nav by remember { mutableStateOf(false) }
-    LaunchedEffect(nav) {
-        if (nav){
-            navController.navigate("HelpListPage")
-        }
-        nav=false
-    }
-    LaunchedEffect(back) {
-        if (back){
-            navController.navigate("LoginPage")
-        }
-        back=false
-    }
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
+fun IntroducePage_2( onClose:()->Unit){
+    Dialog (
+        onDismissRequest = {}
     ) {
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(12.dp))
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
@@ -345,7 +320,14 @@ fun IntroducePage_2(navController: NavController){
                     )
                 )
         ) {
-            LazyColumn {
+            Spacer(modifier = Modifier.padding(12.dp))
+            Text(stringResource(R.string.help ),
+                fontSize = 20.sp,
+                color = Color.Black,
+                fontFamily = FontFamily.Serif
+            )
+            Spacer(modifier = Modifier.padding(12.dp))
+            LazyColumn( modifier = Modifier.fillMaxWidth().height(400.dp)) {
                 item {
                     Text(
                         text = stringResource(id = R.string.introduce1),
@@ -364,41 +346,19 @@ fun IntroducePage_2(navController: NavController){
                     )
                 }
             }
-            Row(
+            Spacer(Modifier.padding(24.dp))
+            Button(
+                onClick = { onClose() },
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(12.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = 8.dp),
-                horizontalArrangement = Arrangement.SpaceAround
+                    .width(100.dp).height(52.dp)
             ) {
-                Button(
-                    onClick = {back=true},
-                    colors = ButtonDefaults.buttonColors(Color(2, 115, 115)),
-                    elevation = ButtonDefaults.buttonElevation(12.dp),
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(96.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.arrowback_foreground),
-                        contentDescription = "go to login page",
-                        tint = Color.White
-                    )
-                }
-                Button(
-                    onClick = { nav=true },
-                    colors = ButtonDefaults.buttonColors(Color(2, 115, 115)),
-                    elevation = ButtonDefaults.buttonElevation(12.dp),
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(96.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.arrowforward_foreground),
-                        contentDescription = "go to home page",
-                        tint = Color.White
-                    )
-                }
+                Text(stringResource(R.string.confirm),
+                    color = Color.White, fontSize = 20.sp)
             }
+            Spacer(modifier = Modifier.padding(24.dp))
         }
     }
 }
@@ -406,15 +366,12 @@ fun IntroducePage_2(navController: NavController){
 @Preview(showBackground = true)
 @Composable
 fun Introduce_1Preview() {
-    val navController= rememberNavController()
-    IntroducePage_1(tts = TTS(Application()), navController = navController)
+    IntroducePage_1(tts = TTS(Application()), onClose = {})
 }
 @Preview(showBackground = true)
 @Composable
 fun Introduce_2Preview() {
-    val loginDataStore=LoginDataStore(LocalContext.current)
-    val navController= rememberNavController()
-    IntroducePage_2(navController = navController)
+    IntroducePage_2(onClose = {})
 }
 
 

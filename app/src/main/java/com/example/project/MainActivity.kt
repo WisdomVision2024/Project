@@ -1,6 +1,7 @@
 package com.example.project
 
 import Class.CameraManager
+import Class.HelpRepository
 import Class.WebSocketManager
 import ViewModels.Signup
 import DataStore.LoginDataStore
@@ -54,7 +55,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         requestMultiplePermissions()
+        val navigateToHelpList = intent?.getBooleanExtra(
+            "navigate_to_help_list", false) ?: false
+
         setContent {
             val context = applicationContext
             val loginDataStore= remember { LoginDataStore(context)}
@@ -69,26 +74,26 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-
                     val cameraManager =
                         CameraManager(
                             context,
                             imageFormat = ImageFormat.JPEG,
                             apiService
                         )
-                    val webSocketManager=WebSocketManager(context)
                     Navigation(
-                        context=context,
+                        context = context,
                         activity = this@MainActivity,
                         cameraManager = cameraManager,
-                        webSocketManager = webSocketManager,
-                        loginState=loginState,
+                        loginState = loginState,
                         navController = navController,
-                        apiService=apiService,
+                        apiService = apiService,
                         arduinoApi = arduinoApi,
-                        loginDataStore=loginDataStore,
+                        loginDataStore = loginDataStore,
                         app = application
                     )
+                    if (navigateToHelpList) {
+                        navController.navigate("HelpListPage")
+                    }
                 }
             }
         }
@@ -122,7 +127,9 @@ class MainActivity : ComponentActivity() {
         val permissionsToRequest = mutableListOf(
             android.Manifest.permission.CAMERA,
             android.Manifest.permission.READ_MEDIA_VIDEO,
-            android.Manifest.permission.RECORD_AUDIO
+            android.Manifest.permission.RECORD_AUDIO,
+            android.Manifest.permission.READ_MEDIA_IMAGES,
+            android.Manifest.permission.POST_NOTIFICATIONS
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
             permissionsToRequest.addAll(
@@ -130,16 +137,6 @@ class MainActivity : ComponentActivity() {
                     android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
                 )
             )
-        }
-        else{
-            permissionsToRequest.addAll(
-                listOf(
-                    android.Manifest.permission.READ_MEDIA_VIDEO,
-                    android.Manifest.permission.RECORD_AUDIO,
-                    android.Manifest.permission.READ_MEDIA_IMAGES
-                )
-
-                )
         }
         multiplePermissions.launch(permissionsToRequest.toTypedArray())
     }
@@ -227,7 +224,7 @@ fun SignupPagePreview() {
     val loginDataStore = LoginDataStore(LocalContext.current)
     val navController = rememberNavController()
     SignupPage(viewModel = Signup(RetrofitInstance.apiService,
-        loginDataStore),navController)
+        loginDataStore), tts = TTS(Application()),navController)
 }
 
 @Preview(showBackground = true)
@@ -265,10 +262,11 @@ fun SettingPagePreview() {
     val context=LocalContext.current
     val navController = rememberNavController()
     val loginDataStore=LoginDataStore(context)
-    var isVisibility :Boolean=true
-    SettingPage(viewModel = Setting(RetrofitInstance.apiService,loginDataStore)
-        , onClose = {isVisibility=false},
+    SettingPage(
+        viewModel = Setting(RetrofitInstance.apiService,loginDataStore),
         loginDataStore = loginDataStore,
+        onClose = {},
+        tts = TTS(Application()),
         navController = navController
     )
 }
@@ -278,21 +276,19 @@ fun HelpListPagePreview(){
     val context = LocalContext.current
     val loginDataStore=LoginDataStore(context)
     val navController = rememberNavController()
-    HelpListPage(context,
-        viewModel = HelpList(RetrofitInstance.apiService,
-            WebSocketManager(context)),
-        MainActivity(),
+    HelpListPage(
+        context,
+        viewModel = HelpList(HelpRepository(apiService = RetrofitInstance.apiService)),
+        activity = MainActivity(),
         setting = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
         loginDataStore = loginDataStore,
+        tts = TTS(Application()),
         navController = navController)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun Introduce2Preview(){
-    val context=LocalContext.current
-    val loginDataStore=LoginDataStore(context)
-    val navController = rememberNavController()
-    IntroducePage_2(navController = navController)
+    IntroducePage_2(onClose = {})
 }
 

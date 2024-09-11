@@ -2,6 +2,7 @@ package com.example.project
 
 import ViewModels.Signup
 import ViewModels.SignupUiState
+import ViewModels.TTS
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,7 @@ import androidx.navigation.NavController
 @Composable
 fun SignupPage(
     viewModel: Signup,
+    tts: TTS,
     navController: NavController
 ) {
     var account by remember { mutableStateOf("") }
@@ -61,6 +63,11 @@ fun SignupPage(
     val isCorrect: Boolean = repeatPassword == password
     var errorMessageScreenVisible by remember { mutableStateOf(false) }
     var errorMessage by remember{ mutableStateOf("") }
+    var isShowIntroduce1 by remember { mutableStateOf(false) }
+    var isShowIntroduce2 by remember { mutableStateOf(false) }
+
+    var nav1 by remember { mutableStateOf(false) }
+    var nav2 by remember { mutableStateOf(false) }
 
     Surface(modifier = Modifier
         .fillMaxSize()
@@ -215,15 +222,15 @@ fun SignupPage(
     LaunchedEffect(state) {
         when (state) {
             is SignupUiState.Success -> {
-                val destination =
-                    if (isVisuallyImpaired) "Introduce1" else "Introduce2"
-                        navController.navigate(destination) {
-                            Log.d("SignupNavigation","success")
-                            popUpTo("LoginPage") {
-                                inclusive = true
-                            }
-                        }
-                    }
+                if (isVisuallyImpaired)
+                {
+                    isShowIntroduce1=true
+                }
+                else {
+                    isShowIntroduce2=true
+                }
+
+            }
             is SignupUiState.Error -> {
                 val message = (state as SignupUiState.Error).message
                 errorMessage=message
@@ -237,5 +244,39 @@ fun SignupPage(
     if (errorMessageScreenVisible){
         ErrorMessageScreen(errorMessage,
             onClose = {errorMessageScreenVisible=false})
+    }
+    if (isShowIntroduce1){
+        IntroducePage_1(
+            tts = tts,
+            onClose = {
+                isShowIntroduce1=false
+                nav1=true
+            }
+        )
+    }
+    if (isShowIntroduce2){
+        IntroducePage_2(
+            onClose =
+            {
+                isShowIntroduce2=false
+                nav2=true
+            }
+        )
+    }
+    LaunchedEffect(nav1) {
+        if (nav1){
+            navController.navigate("HomPage"){
+                popUpTo("LoginPage"){ inclusive = true }
+            }
+            nav1=false
+        }
+    }
+    LaunchedEffect(nav2) {
+        if (nav2){
+            navController.navigate("HelpListPage"){
+                popUpTo("LoginPage"){ inclusive = true }
+            }
+            nav2=false
+        }
     }
 }

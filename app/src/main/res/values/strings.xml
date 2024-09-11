@@ -79,4 +79,5 @@
     <string name="button_I">Home screen button functions</string>
     <string name="permission_request">permission request</string>
     <string name="introduce4">If you need to review the help again later, go to the Help button on the settings page and click it. Thank you for your detailed viewing.</string>
+    <string name="change_user_data">Change User Data</string>
 </resources>

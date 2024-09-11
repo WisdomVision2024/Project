@@ -2,6 +2,7 @@ package com.example.project
 
 
 import Class.CameraManager
+import Class.HelpRepository
 import Class.WebSocketManager
 import DataStore.LoginDataStore
 import DataStore.LoginState
@@ -35,7 +36,6 @@ fun Navigation(
     context: Context,
     activity: Activity,
     cameraManager: CameraManager,
-    webSocketManager: WebSocketManager,
     loginState: LoginState,
     navController: NavHostController,
     apiService: ApiService,
@@ -80,7 +80,9 @@ fun Navigation(
                 )
                 }
             )  {
-                SignupPage(viewModel = Signup(apiService,loginDataStore),
+                SignupPage(
+                    viewModel = Signup(apiService,loginDataStore),
+                    tts = TTS(app),
                     navController = navController)
             }
 
@@ -142,6 +144,7 @@ fun Navigation(
                 ),
                 loginDataStore,
                 onClose = {},
+                tts = TTS(app),
                 navController = navController
             )
         }
@@ -157,35 +160,12 @@ fun Navigation(
             }
         )  {
             HelpListPage(context,
-                viewModel = HelpList(apiService,webSocketManager),
+                viewModel = HelpList(HelpRepository(apiService)),
                 activity = activity,
                 setting = Setting(apiService, loginDataStore),
-                loginDataStore,
+                loginDataStore = loginDataStore,
+                tts = TTS(app),
                 navController = navController)
-        }
-        composable("Introduce1", enterTransition = {  slideInHorizontally(
-            initialOffsetX = { fullWidth -> fullWidth },
-            animationSpec = animationSpec
-        ) },
-            exitTransition = { slideOutHorizontally(
-                targetOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = animationSpec
-            )
-            }
-        )  {
-            IntroducePage_1(tts = TTS(app), navController = navController)
-        }
-        composable("Introduce2", enterTransition = {  slideInHorizontally(
-            initialOffsetX = { fullWidth -> fullWidth },
-            animationSpec = animationSpec
-        ) },
-            exitTransition = { slideOutHorizontally(
-                targetOffsetX = { fullWidth -> -fullWidth },
-                animationSpec = animationSpec
-            )
-            }
-        )  {
-            IntroducePage_2(navController = navController)
         }
     }
 }

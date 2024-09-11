@@ -67,4 +67,6 @@
     <string name="button_I">ホーム画面のボタン機能</string>
     <string name="permission_request">許可リクエスト</string>
     <string name="introduce4">後でもう一度ヘルプを確認する必要がある場合は、設定ページの [ヘルプ] ボタンに移動してクリックします。詳しくご覧いただきありがとうございます。</string>
+    <string name="change_user_data">ユーザーデータの変更</string>
+    <string name="change_user_data">ユーザーデータの変更</string>
 </resources>

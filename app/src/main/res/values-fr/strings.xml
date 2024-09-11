@@ -67,4 +67,5 @@
     <string name="button_I">Fonctions des boutons de l\'écran d\'accueil</string>
     <string name="permission_request">Demande d\'autorisation</string>
     <string name="introduce4">Si vous devez consulter à nouveau l\'aide ultérieurement, accédez au bouton Aide sur la page des paramètres et cliquez dessus. Merci pour votre visionnage détaillé.</string>
+    <string name="change_user_data">Modifier les données utilisateur</string>
 </resources>

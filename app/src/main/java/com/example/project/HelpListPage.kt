@@ -5,6 +5,7 @@ import DataStore.LoginDataStore
 import ViewModels.HelpList
 import ViewModels.HelpUiState
 import ViewModels.Setting
+import ViewModels.TTS
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -20,11 +21,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,15 +56,28 @@ fun HelpListPage(context: Context,
                  activity: Activity,
                  setting: Setting,
                  loginDataStore: LoginDataStore,
+                 tts: TTS,
                  navController: NavController) {
-    LaunchedEffect (Unit){
+    DisposableEffect (Unit){
         requestPermissionsIfNeeded(context, activity)
-        viewModel.startWebSocket()
+        setupWorkManager(context)
+        viewModel.fetchHelpData()
+        onDispose {
+        }
     }
     SuccessScreen(viewModel = viewModel,
         setting=setting,
         loginDataStore = loginDataStore,
+        tts = tts,
         navController =navController )
+}
+
+private fun setupWorkManager(context: Context) {
+    // 創建 PeriodicWorkRequest，設置為每分鐘檢查一次新數據
+    val workRequest = PeriodicWorkRequestBuilder<DataCheckWorker>(1, TimeUnit.MINUTES)
+        .build()
+    // 啟動 WorkManager 任務
+    WorkManager.getInstance(context).enqueue(workRequest)
 }
 
 private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
@@ -82,81 +98,99 @@ private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
 fun SuccessScreen(viewModel:HelpList,
                   setting: Setting,
                   loginDataStore: LoginDataStore,
+                  tts: TTS,
                   navController: NavController){
     var isSettingPageVisibility by remember { mutableStateOf(false) }
     val helpState = viewModel.helpListState.collectAsState().value
+    var isErrorScreenVisible by remember { mutableStateOf(false) }
 
     if (isSettingPageVisibility){
         SettingPage(viewModel = setting,
             loginDataStore,
-            onClose = {isSettingPageVisibility=false},navController )
+            onClose = {isSettingPageVisibility=false}, tts = tts,navController )
     }
-    Scaffold (modifier = Modifier.fillMaxSize(),
-        topBar ={
-            Box(modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(242, 231, 220)),
-                contentAlignment= Alignment.TopEnd)
-            {
-                IconButton(onClick = { isSettingPageVisibility=true }
-                ) {
-                    Icon(imageVector = Icons.Filled.Settings,
-                        contentDescription = stringResource(id = R.string.setting_page),
-                        tint = Color(2,115,115),
-                        modifier = Modifier.size(30.dp))
+    if (isErrorScreenVisible) {
+        // 當狀態切換時顯示 ErrorScreen
+        ErrorScreen(
+            viewModel = viewModel,
+            setting = setting,
+            loginDataStore = loginDataStore,
+            tts = tts,
+            navController = navController
+        )
+    } else{
+        Scaffold (modifier = Modifier.fillMaxSize(),
+            topBar ={
+                Box(modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(242, 231, 220)),
+                    contentAlignment= Alignment.TopEnd)
+                {
+                    IconButton(onClick = { isSettingPageVisibility=true }
+                    ) {
+                        Icon(imageVector = Icons.Filled.Settings,
+                            contentDescription = stringResource(id = R.string.setting_page),
+                            tint = Color(2,115,115),
+                            modifier = Modifier.size(30.dp))
+                    }
                 }
             }
-        }
-    )
-    {  padding ->
-        when (helpState) {
-            is HelpUiState.Success -> {
-                val name = (helpState as HelpUiState.Success).helpList?.name
-                val address =  (helpState as HelpUiState.Success).helpList?.address
-                val description =  (helpState as HelpUiState.Success).helpList?.description
-
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(242, 231, 220),
-                                    Color(255, 255, 255)
-                                )
-                            )
-                        ),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // 显示数据，如果非空
-                    name?.let { Text(text = it, fontSize = 12.sp) }
-                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
-                    address?.let { Text(text = it, fontSize = 12.sp) }
-                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
-                    description?.let { Text(text = it, fontSize = 12.sp) }
-                    Spacer(modifier = Modifier.padding(bottom = 8.dp))
+        )
+        {  padding ->
+            when (helpState) {
+                is HelpUiState.Success -> {
+                    isErrorScreenVisible=false
+                    val name = (helpState as HelpUiState.Success).helpResponse?.message.toString()
+                    val position=(helpState as HelpUiState.Success).helpResponse?.position.toString()
+                    Column(
+                        modifier = Modifier
+                            .padding(padding)
+                            .fillMaxSize()
+                            .background(
+                                color = Color(242, 231, 220)
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(text = name,
+                            fontSize = 24.sp,
+                            color = Color.Black)
+                        Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                        Text(text = position,
+                            fontSize = 24.sp,
+                            color = Color.Black)
+                        Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                        Button(
+                            onClick = {isErrorScreenVisible=true}
+                        ) { Text(stringResource(R.string.confirm)) }
+                    }
                 }
-            }
-            else->{
-                ErrorScreen(viewModel = viewModel,
-                    setting = setting,
-                    loginDataStore = loginDataStore,
-                    navController = navController)
+                else->{
+                    ErrorScreen(viewModel = viewModel,
+                        setting = setting,
+                        loginDataStore = loginDataStore,
+                        tts = tts,
+                        navController = navController)
+                }
             }
         }
     }
 }
+
 @Composable
 fun ErrorScreen(viewModel:HelpList,
                 setting: Setting,
                 loginDataStore: LoginDataStore,
+                tts: TTS,
                 navController: NavController){
     var isSettingPageVisibility by remember { mutableStateOf(false) }
 
     if (isSettingPageVisibility){
         SettingPage(viewModel = setting,
             loginDataStore,
-            onClose = {isSettingPageVisibility=false},navController )
+            onClose = {isSettingPageVisibility=false},
+            tts =tts ,
+            navController )
     }
 
     Scaffold (modifier = Modifier.fillMaxSize(),
@@ -198,7 +232,7 @@ fun ErrorScreen(viewModel:HelpList,
                 color = Color.Black,
                 modifier = Modifier.padding(12.dp)
             )
-            IconButton(onClick = { viewModel.getHelp() }) {
+            IconButton(onClick = { viewModel.fetchHelpData() }) {
                     Icon(imageVector = Icons.Filled.Refresh,
                         contentDescription = "refresh",
                         tint = Color.Black,

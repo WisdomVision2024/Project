@@ -9,7 +9,6 @@ import ViewModels.CameraViewModel
 import ViewModels.FocusState
 import ViewModels.HandleResult
 import ViewModels.Identified
-import ViewModels.SendState
 import ViewModels.Setting
 import ViewModels.TTS
 import ViewModels.UploadState
@@ -19,10 +18,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -83,7 +80,6 @@ fun HomePage(
     val loginState by loginStateFlow.collectAsState(initial = LoginState(isLoggedIn = true))
     val account = loginState.currentUser?.account
 
-    var isLanguageChangeScreenVisible by remember { mutableStateOf(false) }
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var passwordChangeScreenVisible by remember { mutableStateOf(false) }
     var emailChangeScreenVisible by remember { mutableStateOf(false) }
@@ -210,14 +206,15 @@ fun HomePage(
             Log.d("HomePage","needHelp true")
             cameraViewModel.helpTakingPhotos()
             tts.speak(wait)
-            androidViewModel.getUnity()
         }
     }
 
     if (isSettingPageVisibility){
         SettingPage(viewModel = viewModel,
             loginDataStore,
-            onClose = {isSettingPageVisibility=false},navController )
+            onClose = {isSettingPageVisibility=false},
+            tts,
+            navController )
     }
 
     if (errorScreen){
@@ -230,16 +227,6 @@ fun HomePage(
             account,
             onClose = { nameChangeScreenVisible = false }
         )
-    }
-    if (passwordChangeScreenVisible){
-        PasswordChangeScreen(viewModel = viewModel,
-            account,
-            onClose = {passwordChangeScreenVisible=false})
-    }
-    if (emailChangeScreenVisible){
-        EmailChangeScreen(viewModel = viewModel,
-            account,
-            onClose = {emailChangeScreenVisible=false})
     }
 
     Scaffold(modifier = Modifier.fillMaxSize(),
@@ -254,7 +241,7 @@ fun HomePage(
                     Icon(imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_page),
                         tint = Color(2,115,115),
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(100.dp)
                     )
                 }
             }

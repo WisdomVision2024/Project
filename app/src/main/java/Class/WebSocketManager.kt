@@ -3,6 +3,7 @@ package Class
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.project.R
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,16 +26,18 @@ class WebSocketManager (private val context: Context) {
         client = OkHttpClient()
 
         val request = Request.Builder()
-            .url("http://163.13.201.104:8080/getRequest") // 替換為你的 WebSocket URL
+            .url("http://163.13.201.104:8080/getunity") // 替換為你的 WebSocket URL
             .build()
 
         webSocket = client?.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
+                Log.d("webSocket","open")
                 // WebSocket 連接成功
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
                 // 當接收到伺服器的新消息時，處理並發送通知
+                Log.d("webSocket","get")
                 _messageFlow.value=text
                 handleIncomingMessage(text)
             }

@@ -67,4 +67,5 @@
     <string name="button_I">홈 화면 버튼 기능</string>
     <string name="permission_request">허가 요청</string>
     <string name="introduce4">나중에 도움말을 다시 검토해야 하는 경우 설정 페이지의 도움말 버튼으로 이동하여 클릭하세요. 자세히 봐주셔서 감사합니다.</string>
+    <string name="change_user_data">사용자 데이터 변경</string>
 </resources>

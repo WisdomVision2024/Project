@@ -46,7 +46,7 @@
     <string name="completed">委託人已確認委託完成</string>
     <string name="thank">感謝您的協助</string>
     <string name="hint1">將為您進行辨識，請靜止不動五秒</string>
-    <string name="hint2">請將鏡頭照向地靜止不動五秒</string>
+    <string name="hint2">請將鏡頭照向地面靜止不動五秒</string>
     <string name="wait">辨識中，請稍後</string>
     <string name="notification_title">有視障者需要協助</string>
     <string name="no_help">暫無視覺障礙障者需要協助</string>
@@ -66,5 +66,6 @@
     <string name="all_I">全部的介紹</string>
     <string name="button_I">主畫面按鈕功能</string>
     <string name="permission_request">權限請求</string>
-    <string name="introduce4">如果您稍後需要再次查看說明，請前往設定頁面中的「說明」按鈕，並點擊。感謝您的詳細觀看。</string>
+    <string name="introduce4">如果您稍後需要再次查看說明，請前往設定頁面中的「使用說明」按鈕，並點擊。感謝您的詳細觀看。</string>
+    <string name="change_user_data">更改用戶資料</string>
 </resources>

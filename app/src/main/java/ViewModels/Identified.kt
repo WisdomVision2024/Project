@@ -167,28 +167,6 @@ class Identified(application: Application,
         }
     }
 
-    fun getUnity(interval:Long=1000L,duration:Long=10000L){
-        timerJob=
-        viewModelScope.launch (Dispatchers.IO){
-            val endTime=System.currentTimeMillis()+duration
-            while (isActive&&System.currentTimeMillis()<endTime){
-                try {
-                    val response=apiService.sendRequest()
-                    if (response.isSuccessful){
-                        val ans=response.body()?.ans
-                        _uploadState.value=UploadState.Success(ans)
-                    }
-                }catch (e:Exception)
-                {
-                    _uploadState.value=UploadState.Error( "identified response body is null")
-                    Log.e("identified response", "Response body is null")
-                }
-                delay(interval)
-            }
-            cancel()
-        }
-    }
-
     fun cancel(){
         timerJob?.cancel()
     }

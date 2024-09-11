@@ -1,24 +1,36 @@
 package Data
 
-import android.os.Message
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
-import org.w3c.dom.Text
-import java.io.File
-import java.util.Objects
 
+@Serializable
 data class User(
     @SerializedName("Phone")
     val account: String,
-    @SerializedName("Password")
-    val password:String,
-    @SerializedName("Name")
-    val username: String,
-    @SerializedName("Email")
+    @SerializedName("newName")
+    val username: String?,
+    @SerializedName("newEmail")
     val email: String?,
-    @SerializedName("Identity")
-    val isVisuallyImpaired:Boolean
+    @SerializedName("oldPassword")
+    val oldPassword:String,
+    @SerializedName("newPassword")
+    val newPassword:String?
 )
+
+@Serializable
+data class UpdateResponse(
+    @SerializedName("success")
+    val success:Boolean,
+    @SerializedName("errorMessage")
+    val errorMessage:String,
+    @SerializedName("Phone")
+    val phone:String,
+    @SerializedName("Name")
+    val name:String,
+    @SerializedName("Email")
+    val email:String
+)
+
 @Serializable
 data class Savedata(
     @SerializedName("Phone")
@@ -49,8 +61,23 @@ data class HelpRequest(
 )
 
 data class HelpResponse(
-    val request: HelpRequest?,
-    val errorMessage: String?
+    @SerializedName("status")
+    val status: String?,
+    @SerializedName("player")
+    val  message: Name?,
+    @SerializedName("position")
+    val position:List<Position>?
+)
+
+data class Name(
+    @SerializedName("playerName")
+    val name:String?
+)
+data class Position(
+    @SerializedName("x")
+    val x:Float,
+    @SerializedName("y")
+    val y:Float
 )
 
 data class AcceptCommissionResponse(
@@ -108,25 +135,6 @@ data class LoginResponse(
 data class NameChangeRequest(
     @SerializedName("Name")
     val username: String,
-)
-
-data class PasswordChangeRequest(
-    @SerializedName("Password")
-    val password: String
-)
-
-data class GetOldPasswordResponse(
-    @SerializedName("Password")
-    val oldPassword: String
-)
-
-data class EmailChangeRequest(
-    @SerializedName("Email")
-    val email: String
-)
-data class UploadResponse(
-    val success: Boolean,
-    val errorMessage: String?
 )
 
 data class UploadImageResponse(

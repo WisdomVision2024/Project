@@ -93,7 +93,7 @@ fun EditInputField2(
 {
     TextField(
         value = value,
-        textStyle = TextStyle(fontSize = 12.sp),
+        textStyle = TextStyle(fontSize = 20.sp),
         onValueChange = onValueChanged,
         singleLine = true,
         keyboardOptions=keyboardOptions,
@@ -115,7 +115,7 @@ fun PasswordInputField(
     var passwordVisible by remember { mutableStateOf(false) }
     TextField(
         value = value,
-        textStyle = TextStyle(fontSize = 12.sp),
+        textStyle = TextStyle(fontSize = 20.sp),
         onValueChange = onValueChanged,
         singleLine = true,
         label = { Text(stringResource(label)) },
@@ -202,10 +202,13 @@ fun NameChangeScreen(
     onClose: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
+    var oldp by remember { mutableStateOf("") }
+    var newp by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     Dialog(onDismissRequest = { onClose() }) { // 添加 onClose 参数
         Column(modifier = Modifier
             .width(320.dp)
-            .height(400.dp)
+            .height(600.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
             .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
@@ -214,9 +217,9 @@ fun NameChangeScreen(
         )
         {
             Spacer(modifier = Modifier.padding(20.dp))
-            Text(text = stringResource(id = R.string.change_user_name),
-                fontSize = 32.sp)
-            Spacer(modifier = Modifier.padding(40.dp))
+            Text(text = stringResource(R.string.change_user_data),
+                fontSize = 24.sp, color = Color.Black)
+            Spacer(modifier = Modifier.padding(20.dp))
             EditInputField2(
                 label = R.string.input_new_username, // 修改为用户名的标签
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
@@ -228,46 +231,11 @@ fun NameChangeScreen(
                     .height(60.dp)
                     .background(Color(170, 219, 182, 255))
             )
-            Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = { viewModel.changeName(account,username) },
-                colors = ButtonDefaults.buttonColors(containerColor=Color.Red),
-                shape = RoundedCornerShape(12.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-            ) {
-                Text(text = stringResource(id = R.string.confirm),
-                    color = Color.White
-                )
-            }
-        }
-    }
-}
-@Composable
-fun PasswordChangeScreen(
-    viewModel: Setting,
-    account:String?,
-    onClose: () -> Unit
-) {
-    var oldp by remember { mutableStateOf("") }
-    var newp by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { onClose() }) {
-        Column(modifier = Modifier
-            .width(320.dp)
-            .height(400.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
-            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
-            horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            Spacer(modifier = Modifier.padding(20.dp))
-            Text(text = stringResource(id = R.string.change_password),
-                fontSize = 20.sp)
-            Spacer(modifier = Modifier.padding(20.dp))
-            EditInputField2(label = R.string.input_password,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next),
-                value = oldp, onValueChanged = {oldp=it},
+            Spacer(modifier = Modifier.padding(8.dp))
+            EditInputField2(label = R.string.change_email,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Done),
+                value = email, onValueChanged = {email=it},
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
@@ -281,58 +249,46 @@ fun PasswordChangeScreen(
                     .width(268.dp)
                     .height(60.dp)
                     .background(Color(170, 219, 182, 255)))
-            Spacer(modifier = Modifier.padding(20.dp))
-            Button(onClick = { viewModel.changePassword(account,oldp,newp) },
-                colors = ButtonDefaults.buttonColors(Color.Red),
-                shape = RoundedCornerShape(12.dp),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
-            {
-                Text(text = stringResource(id = R.string.confirm), color = Color.White)
-            }
-        }
-    }
-}
-
-@Composable
-fun EmailChangeScreen(
-    viewModel: Setting,
-    account:String?,
-    onClose: () -> Unit
-) {
-    var email by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = {onClose() }) {
-        Column(modifier = Modifier
-            .width(320.dp)
-            .height(400.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
-            .border(
-                width = 8.dp, color = Color(2, 115, 115),
-                shape = RoundedCornerShape(4.dp)
-            ),
-            horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            Spacer(modifier = Modifier.padding(20.dp))
-            Text(text = stringResource(id = R.string.change_email),
-                fontSize = 20.sp)
-            Spacer(modifier = Modifier.padding(40.dp))
-            EditInputField2(label = R.string.change_email,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email,
-                    imeAction = ImeAction.Done),
-                value = email, onValueChanged = {email=it},
+            Spacer(modifier = Modifier.padding(8.dp))
+            EditInputField2(label = R.string.input_password,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next),
+                value = oldp, onValueChanged = {oldp=it},
                 modifier = Modifier
                     .width(268.dp)
                     .height(60.dp)
                     .background(Color(170, 219, 182, 255)))
-            Spacer(modifier = Modifier.padding(40.dp))
-            Button(onClick = {viewModel.changeEmail(account,email)},
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(Color.Red),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
-            {
-                Text(text = stringResource(id = R.string.confirm), color = Color.White)
+            Spacer(modifier = Modifier.padding(20.dp))
+            Row(modifier = Modifier
+                .width(320.dp).padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                Button(
+                    onClick = { onClose() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.cancel),
+                        color = Color.White
+                    )
+                }
+                Button(
+                    onClick = {
+                        if (account != null) {
+                            viewModel.changeName(account, username, email, newp, oldp)
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.confirm),
+                        color = Color.White
+                    )
+                }
             }
         }
     }
