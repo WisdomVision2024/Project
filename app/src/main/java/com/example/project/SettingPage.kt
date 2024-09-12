@@ -66,19 +66,22 @@ fun SettingPage(viewModel:Setting,
     val account = loginState.currentUser?.account
     val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
-    var passwordChangeScreenVisible by remember { mutableStateOf(false) }
-    var emailChangeScreenVisible by remember { mutableStateOf(false) }
+
     var logOutScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var isShowIntroduce1 by remember { mutableStateOf(false) }
     var isShowIntroduce2 by remember { mutableStateOf(false) }
+    var isSuccessScreen by remember { mutableStateOf(false) }
 
     LaunchedEffect(updateState) {
         when(updateState){
             is UpdateUiState.Error->{
                 message=(updateState as UpdateUiState.Error).message
                 errorScreen=true
+            }
+            is UpdateUiState.Success->{
+                isSuccessScreen=true
             }
             else->{Unit}
         }
@@ -92,7 +95,7 @@ fun SettingPage(viewModel:Setting,
         }
     }
     if (errorScreen){
-        ErrorMessageScreen(message) { errorScreen=false}
+        ErrorMessageScreen(message,tts) { errorScreen=false}
     }
 
     if (nameChangeScreenVisible){
@@ -101,6 +104,9 @@ fun SettingPage(viewModel:Setting,
             account=account,
             onClose = { nameChangeScreenVisible = false }
         )
+    }
+    if (isSuccessScreen){
+        FinishScreen(tts, onClose = { isSuccessScreen=false})
     }
 
     if (logOutScreenVisible){
@@ -196,33 +202,7 @@ fun SettingPage(viewModel:Setting,
                         onClick = { nameChangeScreenVisible = true })
                     {
                         Text(
-                            text = stringResource(id = R.string.change_user_name),
-                            fontSize = 18.sp, color = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier
-                            .size(280.dp, 44.dp),
-                        onClick = { passwordChangeScreenVisible = true })
-                    {
-                        Text(
-                            text = stringResource(id = R.string.change_password),
-                            fontSize = 18.sp, color = Color.White
-                        )
-                    }
-                    Spacer(modifier = Modifier.padding(12.dp))
-                    Button(shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),
-                        elevation = ButtonDefaults.buttonElevation(4.dp),
-                        modifier = Modifier
-                            .size(280.dp, 44.dp),
-                        onClick = { emailChangeScreenVisible = true })
-                    {
-                        Text(
-                            text = stringResource(id = R.string.change_email),
+                            text = stringResource(id = R.string.change_user_data),
                             fontSize = 18.sp, color = Color.White
                         )
                     }

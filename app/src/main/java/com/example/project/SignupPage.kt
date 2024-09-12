@@ -242,7 +242,7 @@ fun SignupPage(
         }
     }
     if (errorMessageScreenVisible){
-        ErrorMessageScreen(errorMessage,
+        ErrorMessageScreen(errorMessage,tts,
             onClose = {errorMessageScreenVisible=false})
     }
     if (isShowIntroduce1){

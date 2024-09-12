@@ -48,10 +48,10 @@
     <string name="hint1">We will identify it for you, please stay still for five seconds.</string>
     <string name="hint2">Please point the camera towards the ground and remain still for five seconds.</string>
     <string name="wait">Recognizing, please wait</string>
-    <string name="notification_title">Visually impaired people need assistance</string>
+    <string name="notification_title">Find out if anyone with visual impairment needs assistance</string>
     <string name="no_help">There are currently no visually impaired persons in need of assistance.</string>
     <string name="introduce1">Hello and welcome to Wisdom Vision! Next, I will give you a brief introduction to how to use the APP.</string>
-    <string name="introduce_isV2">On the main screen, you will see two main buttons: one is located in the upper right corner, click to enter the settings page; the other is located in the lower center of the screen, click to activate the voice recognition function. After activation, you can ask questions on your phone and we will provide assistance based on your questions. The voice recognition function will automatically stop after 30 seconds, so you don\'t have to worry about it while listening to your voice. In addition, after finishing speaking the question, you can also press the recognition button again to end the voice recognition immediately.</string>
+    <string name="introduce_isV2">On the main screen, you will see two main buttons: one is located in the upper right corner, click to enter the settings page; the other is located in the lower center of the screen, click to activate the voice recognition function. After activation, you can ask questions on your phone and we will provide assistance based on your questions. The voice recognition function will automatically stop after the recognition result is obtained, so you don\'t need to worry about it keeping listening to your voice. In addition, after finishing speaking the question, you can also press the recognition button again to end the voice recognition immediately.</string>
     <string name="introduce_isV3">"General identification function You can ask questions, such as: \"Is there a pen in front of you?\" The APP will activate the camera for identification. To ensure recognition accuracy, please keep your phone steady for about 5 seconds to allow the camera to capture the image. The recognition results will be played by voice and displayed in the answer box above the recognition button. "</string>
     <string name="introduce_isV4">"Continuous recognition function When the question contains the keyword \"Follow\" (such as \"I want to pay attention to whether the pen is in sight?\"), The app will continue to turn on the camera to identify whether there are items or people you are paying attention to until you ask again or exit the APP. The identification results are presented in the same way as general identification. "</string>
     <string name="introduce2">When your mobile phone receives a notification, it means that a visually impaired person needs help, and you are the nearest helper. Enter the APP to know the name and location of the visually impaired person. Please also try to reach the non-visually impaired person as quickly as possible. location and provide assistance.</string>
@@ -68,4 +68,6 @@
     <string name="permission_request">Permission request</string>
     <string name="introduce4">If you need to review the help again later, go to the Help button on the settings page and click it. Thank you for your detailed viewing.</string>
     <string name="change_user_data">Change User Data</string>
+    <string name="success">Change sucess!</string>
+    <string name="input_password_required">Input old password (required)</string>
 </resources>

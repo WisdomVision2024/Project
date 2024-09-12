@@ -66,6 +66,7 @@ fun Navigation(
                         apiService,
                         loginDataStore
                     ),
+                    tts = TTS(app),
                     navController = navController,
                 )
             }

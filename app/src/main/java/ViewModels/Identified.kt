@@ -23,7 +23,6 @@ import kotlinx.coroutines.isActive
 sealed class HandleResult{
     data object Initial : HandleResult()
     data object Loading:HandleResult()
-    data object LanguageChange:HandleResult()
     data object NameChange:HandleResult()
     data object PasswordChange:HandleResult()
     data object EmailChange:HandleResult()
@@ -208,17 +207,6 @@ class Identified(application: Application,
                 {
                     _handleResult.value = HandleResult.EmailChange
                     Log.d("HandleResult","EmailChange")
-                }
-                text.contains("change language",ignoreCase = true)||(
-                        (text.contains("更改", ignoreCase = true)||text.contains("更換", ignoreCase = true))&&
-                                text.contains("語言", ignoreCase = true))||
-                        text.contains("Changer de boîte aux lettres ", ignoreCase = true)||
-                        text.contains("アカウントのメールアドレスを変更する", ignoreCase = true)||
-                        text.contains("사서함 변경", ignoreCase = true)
-                ->
-                {
-                    _handleResult.value=HandleResult.LanguageChange
-                    Log.d("HandleResult","LanguageChange")
                 }
                 text.contains("send request", ignoreCase = true) ||
                         text.contains("need help", ignoreCase = true)||

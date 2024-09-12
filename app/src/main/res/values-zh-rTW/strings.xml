@@ -49,16 +49,16 @@
     <string name="hint2">請將鏡頭照向地面靜止不動五秒</string>
     <string name="wait">辨識中，請稍後</string>
     <string name="notification_title">有視障者需要協助</string>
-    <string name="no_help">暫無視覺障礙障者需要協助</string>
+    <string name="no_help">尋找是否有視覺障礙障者\\n需要協助</string>
     <string name="introduce1">您好，歡迎使用Wisdom Vision！接下來為您簡單介紹APP的使用方法。</string>
-    <string name="introduce_isV2">在主畫面，您會看到兩個主要按鈕：一個位於右上角，點擊即可進入設定頁面；另一個位於畫面中下方，點擊後可啟動語音辨識功能。啟動後，您可以對手機提問，我們會根據您的問題提供協助。語音辨識功能會自動在30秒後停止，您無需擔心它會一直監聽您的聲音。此外，說完問題後，您也可以再次按下辨識按鈕，立即結束語音辨識。</string>
+    <string name="introduce_isV2">在主畫面，您會看到兩個主要按鈕：一個位於右上角，點擊即可進入設定頁面；另一個位於畫面中下方，點擊後可啟動語音辨識功能。啟動後，您可以對手機提問，我們會根據您的問題提供協助。語音辨識功能會自動在辨識出結果後停止，您無需擔心它會一直監聽您的聲音。此外，說完問題後，您也可以再次按下辨識按鈕，立即結束語音辨識。</string>
     <string name="introduce_isV3">"一般辨識功能: 您可以提出問題，例如：「前面有筆嗎？」APP將啟動相機進行辨識。為了確保辨識準確性，請保持手機穩定約5秒鐘，以便相機捕捉畫面。辨識結果將以語音播放，並顯示在辨識按鈕上方的回答框中。 "</string>
     <string name="introduce_isV4">"持續辨識功能 當問題包含「關注」這個關鍵字（如「我想關注筆是否在視線內？」），APP將持續開啟相機辨識是否存在您關注的物品或人，直到您再次提問或退出APP。辨識結果的呈現方式與一般辨識相同。 "</string>
     <string name="introduce2">當您的手機收到通知時，代表有視障者需要幫助，且您是距離最近的協助者，進入APP即可知道視障者的姓名與所在地，還請您盡量迅速地到達非視障者的所在地並提供協助。</string>
     <string name="introduce_isV5">"緊急協助功能 當問題中包含「需要幫助」這個關鍵字（如「我需要幫助，我迷路了」），APP將啟動相機辨識您的位置。請將手機鏡頭對準地面並保持穩定約5秒。我們將會把您的需求和所在位置發送給最近的協助者。當確認有協助者即將前來時，APP會以語音告知「xxx即將前往並提供協助，請稍候」，同時結果也會顯示在回答框中。 "</string>
     <string name="introduce_isV6">說明到此為止，您可以點擊右下角按鈕進入主頁面開始使用APP。</string>
     <string name="introduce_isV7">如有功能疑問，可點擊畫面中的按鈕再次聆聽說明。若之後需要重複聆聽說明，請前往設定頁中的幫助按鈕。感謝您的詳細聆聽。</string>
-    <string name="introduce3">您好，歡迎使用Wisdom Vision！在本頁面中有7個按鈕，分別是全部的介紹、主畫面按鈕功能介紹、一般辨識功能介紹、持續辨識功能介紹、緊急協助功能介紹和功能疑問介紹，您可根據自己的時間選擇聆聽適合您的介紹。如果您對說明不感興趣或已知道Wisdom Vision使用方法，可以點擊右下角按鈕進入主頁面開始使用APP。</string>
+    <string name="introduce3">您好，歡迎使用Wisdom Vision！在本頁面中有7個按鈕，分別是全部的介紹、主畫面按鈕功能介紹、一般辨識功能介紹、持續辨識功能介紹、緊急協助功能介紹、功能疑問介紹和關閉按鈕，您可根據自己的時間選擇聆聽適合您的介紹。如果您對說明不感興趣或已知道Wisdom Vision使用方法，可以點擊下方關閉按鈕進入主頁面開始使用APP。</string>
     <string name="common_I">一般辨識功能</string>
     <string name="continue_I">持續辨識功能</string>
     <string name="emergency_I">緊急協助功能</string>
@@ -68,4 +68,7 @@
     <string name="permission_request">權限請求</string>
     <string name="introduce4">如果您稍後需要再次查看說明，請前往設定頁面中的「使用說明」按鈕，並點擊。感謝您的詳細觀看。</string>
     <string name="change_user_data">更改用戶資料</string>
+    <string name="success">更改成功!</string>
+    <string name="input_password_required">輸入舊密碼(必填)</string>
+    <string name="input_password_required">輸入舊密碼(必填)</string>
 </resources>

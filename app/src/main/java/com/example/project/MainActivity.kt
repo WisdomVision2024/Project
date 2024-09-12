@@ -2,7 +2,6 @@ package com.example.project
 
 import Class.CameraManager
 import Class.HelpRepository
-import Class.WebSocketManager
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
@@ -80,17 +79,9 @@ class MainActivity : ComponentActivity() {
                             imageFormat = ImageFormat.JPEG,
                             apiService
                         )
-                    Navigation(
-                        context = context,
-                        activity = this@MainActivity,
-                        cameraManager = cameraManager,
-                        loginState = loginState,
-                        navController = navController,
-                        apiService = apiService,
-                        arduinoApi = arduinoApi,
-                        loginDataStore = loginDataStore,
-                        app = application
-                    )
+                    val account=loginState.currentUser?.account
+                    NameChangeScreen(viewModel = Setting(apiService,loginDataStore),
+                        account, onClose = {})
                     if (navigateToHelpList) {
                         navController.navigate("HelpListPage")
                     }
@@ -215,7 +206,7 @@ fun LoginPagePreview(){
     val navController = rememberNavController()
     LoginPage(viewModel = Login(
         RetrofitInstance.apiService,loginDataStore
-    ), navController = navController)
+    ), TTS(Application()),navController = navController)
 }
 
 @Preview(showBackground = true)

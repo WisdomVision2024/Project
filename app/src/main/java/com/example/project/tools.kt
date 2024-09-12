@@ -2,6 +2,7 @@ package com.example.project
 
 import Data.BottomNavItem
 import ViewModels.Setting
+import ViewModels.TTS
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,7 +24,6 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
@@ -36,6 +37,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -205,21 +208,22 @@ fun NameChangeScreen(
     var oldp by remember { mutableStateOf("") }
     var newp by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { onClose() }) { // 添加 onClose 参数
+    Dialog(onDismissRequest = { }) { // 添加 onClose 参数
         Column(modifier = Modifier
-            .width(320.dp)
+            .fillMaxWidth()
             .height(600.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
-            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            .border(width = 8.dp, color = Color(2, 115, 115),
+                shape = RoundedCornerShape(4.dp)),
             horizontalAlignment=Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         )
         {
-            Spacer(modifier = Modifier.padding(20.dp))
+            Spacer(modifier = Modifier.padding(8.dp))
             Text(text = stringResource(R.string.change_user_data),
                 fontSize = 24.sp, color = Color.Black)
-            Spacer(modifier = Modifier.padding(20.dp))
+            Spacer(modifier = Modifier.padding(8.dp))
             EditInputField2(
                 label = R.string.input_new_username, // 修改为用户名的标签
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
@@ -232,7 +236,7 @@ fun NameChangeScreen(
                     .background(Color(170, 219, 182, 255))
             )
             Spacer(modifier = Modifier.padding(8.dp))
-            EditInputField2(label = R.string.change_email,
+            EditInputField2(label = R.string.input_new_email,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done),
                 value = email, onValueChanged = {email=it},
@@ -250,7 +254,7 @@ fun NameChangeScreen(
                     .height(60.dp)
                     .background(Color(170, 219, 182, 255)))
             Spacer(modifier = Modifier.padding(8.dp))
-            EditInputField2(label = R.string.input_password,
+            EditInputField2(label = R.string.input_password_required,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next),
                 value = oldp, onValueChanged = {oldp=it},
@@ -260,12 +264,13 @@ fun NameChangeScreen(
                     .background(Color(170, 219, 182, 255)))
             Spacer(modifier = Modifier.padding(20.dp))
             Row(modifier = Modifier
-                .width(320.dp).padding(8.dp),
+                .fillMaxWidth().padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceAround
                 ) {
                 Button(
                     onClick = { onClose() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(2, 115, 115)),
                     shape = RoundedCornerShape(12.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
@@ -297,9 +302,16 @@ fun NameChangeScreen(
 @Composable
 fun ErrorMessageScreen(
     errorMessage: String,
+    tts: TTS,
     onClose: () -> Unit
 ) {
-    Dialog(onDismissRequest = {onClose() }) {
+    DisposableEffect(Unit) {
+        tts.speak(errorMessage)
+        onDispose {
+            tts.stop()
+        }
+    }
+    Dialog(onDismissRequest = { }) {
         Column(modifier = Modifier
             .width(320.dp)
             .height(240.dp)
@@ -310,13 +322,54 @@ fun ErrorMessageScreen(
             verticalArrangement = Arrangement.Center
         )
         {
-            Text(text = errorMessage, fontSize = 20.sp, color = Color.White)
+            Text(text = errorMessage, fontSize = 24.sp, color = Color.Black)
             Button(onClick = {onClose()},
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp))
             {
-                Text(text = stringResource(id = R.string.confirm), color = Color.White)
+                Text(text = stringResource(id = R.string.confirm)
+                    , color = Color.White, fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif)
+            }
+        }
+    }
+}
+
+@Composable
+fun FinishScreen(
+    tts: TTS,
+    onClose: () -> Unit
+) {
+    val text= stringResource(R.string.success)
+    DisposableEffect (Unit) {
+        tts.speak(text)
+        onDispose {
+            tts.stop()
+        }
+    }
+    Dialog(onDismissRequest = { }) {
+        Column(modifier = Modifier
+            .width(320.dp)
+            .height(240.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(242, 231, 220), shape = RoundedCornerShape(20.dp))
+            .border(width = 8.dp, color = Color(2, 115, 115), shape = RoundedCornerShape(4.dp)),
+            horizontalAlignment=Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        )
+        {
+            Text(text = text, fontSize = 24.sp, color = Color.Black)
+            Spacer(Modifier.padding(12.dp))
+            Button(onClick = {onClose()},
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(Color.Red),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                modifier = Modifier.height(40.dp))
+            {
+                Text(text = stringResource(id = R.string.confirm),
+                    color = Color.White, fontSize = 16.sp,
+                    fontFamily = FontFamily.Serif)
             }
         }
     }

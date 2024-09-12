@@ -2,6 +2,7 @@ package com.example.project
 
 import ViewModels.Login
 import ViewModels.LoginUiState
+import ViewModels.TTS
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
-fun LoginPage(viewModel: Login,
+fun LoginPage(viewModel: Login,tts: TTS,
               navController: NavController
 ) {
     var account by remember { mutableStateOf("") }
@@ -101,6 +102,7 @@ fun LoginPage(viewModel: Login,
     }
     if (errorMessageScreenVisible){
         ErrorMessageScreen(errorMessage =errorMessage,
+            tts,
             onClose = {errorMessageScreenVisible=false}
         )
     }

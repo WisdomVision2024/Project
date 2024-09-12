@@ -81,8 +81,6 @@ fun HomePage(
     val account = loginState.currentUser?.account
 
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
-    var passwordChangeScreenVisible by remember { mutableStateOf(false) }
-    var emailChangeScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
 
     var isFocus by remember { mutableStateOf(false) }
@@ -124,8 +122,8 @@ fun HomePage(
     LaunchedEffect(handleState) {
         when (handleState) {
             is HandleResult.NameChange -> nameChangeScreenVisible = true
-            is HandleResult.PasswordChange -> passwordChangeScreenVisible = true
-            is HandleResult.EmailChange -> emailChangeScreenVisible = true
+            is HandleResult.PasswordChange -> nameChangeScreenVisible = true
+            is HandleResult.EmailChange -> nameChangeScreenVisible = true
             is HandleResult.Focus->{
                 isFocus=true
             }
@@ -218,7 +216,8 @@ fun HomePage(
     }
 
     if (errorScreen){
-        ErrorMessageScreen(errorMessage = response, onClose = {errorScreen=false})
+        ErrorMessageScreen(errorMessage = response, tts
+            ,onClose = {errorScreen=false})
     }
 
     if (nameChangeScreenVisible){
