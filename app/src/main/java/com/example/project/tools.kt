@@ -100,7 +100,7 @@ fun EditInputField2(
         onValueChange = onValueChanged,
         singleLine = true,
         keyboardOptions=keyboardOptions,
-        label = { Text(stringResource(label)) },
+        label = { Text(stringResource(label), color = Color.Black) },
         modifier= modifier
             .height(64.dp)
             .width(320.dp)
@@ -141,61 +141,6 @@ fun PasswordInputField(
             }
         }
     )
-}
-
-@Composable
-fun LanguageChangeScreen(onClose: () -> Unit) {
-    val localeOptions = mapOf(
-        R.string.english to "en-rUS",
-        R.string.french to "fr",
-        R.string.chinese to "zh-rTW",
-        R.string.japanese to "ja",
-        R.string.korean to "ko-rKR"
-    ).mapKeys { stringResource(it.key) }
-    Dialog(onDismissRequest = {onClose()}) {
-        Column(
-            modifier = Modifier
-                .width(320.dp)
-                .height(400.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(Color(255, 255, 255))
-                .border(
-                    width = 8.dp,
-                    color = Color(2, 115, 115),
-                    shape = RoundedCornerShape(4.dp)
-                ),
-            horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        )
-        {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = stringResource(id = R.string.change_language),
-                fontSize = 32.sp)
-            Spacer(modifier = Modifier.height(16.dp))
-            Column(modifier = Modifier.background(Color(242, 231, 220))) {
-                localeOptions.keys.forEach { selectionLocale ->
-                    Box (modifier = Modifier
-                        .clickable {
-                            // set app locale given the user's selected locale
-                            AppCompatDelegate.setApplicationLocales(
-                                LocaleListCompat.forLanguageTags(
-                                    localeOptions[selectionLocale]
-                                )
-                            )// Optionally, you can navigate back or perform other actions
-                            onClose()
-                        }
-                        .padding(20.dp)
-                    )
-                    {
-                        Text(
-                            text = selectionLocale,
-                            fontSize = 20.sp
-                        )
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable
@@ -256,7 +201,7 @@ fun NameChangeScreen(
             Spacer(modifier = Modifier.padding(8.dp))
             EditInputField2(label = R.string.input_password_required,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next),
+                    imeAction = ImeAction.Done),
                 value = oldp, onValueChanged = {oldp=it},
                 modifier = Modifier
                     .width(268.dp)
@@ -284,6 +229,7 @@ fun NameChangeScreen(
                         if (account != null) {
                             viewModel.changeName(account, username, email, newp, oldp)
                         }
+                        onClose()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                     shape = RoundedCornerShape(12.dp),
@@ -396,106 +342,3 @@ fun SingleSelectCheckbox(
     }
 }
 
-
-@Composable
-fun Navigationbar(
-    current:Int,
-    navController: NavController,
-){
-    var currentSelect by remember {
-        mutableIntStateOf(current)
-    }
-    val menuData = listOf(
-        BottomNavItem(
-            stringResource(R.string.Route_HomePage),
-            stringResource(R.string.home_page),
-            Icons.Filled.Home) ,
-        BottomNavItem(
-            stringResource(R.string.Route_RequestPage),
-            stringResource(R.string.request),
-            Icons.Filled.Person)
-    )
-    NavigationBar(containerColor = Color(3, 140, 127),
-        contentColor = Color(0, 0, 0),
-        tonalElevation = 12.dp) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
-        menuData.forEachIndexed { index, bottomItemData ->
-            NavigationBarItem(
-                colors= NavigationBarItemDefaults.colors(Color(255,255,255)),
-                selected = currentDestination?.hierarchy?.any {
-                    it.route == bottomItemData.route
-                } == true,
-                icon = {
-                    Icon(
-                        imageVector = bottomItemData.icon,
-                        contentDescription = "click",
-                        tint = Color(0,0,0)
-                    )
-                },
-                onClick = {
-                    currentSelect = index // 更新当前选中索引
-                    navController.navigate(bottomItemData.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
-        }
-    }
-}
-
-@Composable
-fun Navigationbar2(
-    current:Int,
-    navController: NavController,
-){
-    var currentSelect by remember {
-        mutableIntStateOf(current)
-    }
-    val menuData = listOf(
-        BottomNavItem(
-            "HelpListPage",
-            stringResource(R.string.list),
-            Icons.Filled.Menu)
-        ,
-        BottomNavItem(
-            stringResource( R.string.Route_SettingPage),
-            stringResource(R.string.setting_page),
-            Icons.Filled.Settings)
-    )
-    NavigationBar(containerColor = Color(3, 140, 127),
-        contentColor = Color(0, 0, 0),
-        tonalElevation = 12.dp) {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
-        menuData.forEachIndexed { index, bottomItemData ->
-            NavigationBarItem(
-                colors= NavigationBarItemDefaults.colors(Color(255,255,255)),
-                selected = currentDestination?.hierarchy?.any {
-                    it.route == bottomItemData.route
-                } == true,
-                icon = {
-                    Icon(
-                        imageVector = bottomItemData.icon,
-                        contentDescription = "點選按鈕",
-                        tint = Color(0,0,0)
-                    )
-                },
-                onClick = {
-                    currentSelect = index // 更新当前选中索引
-                    navController.navigate(bottomItemData.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                }
-            )
-        }
-    }
-}

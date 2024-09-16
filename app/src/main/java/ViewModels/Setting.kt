@@ -19,12 +19,19 @@ sealed class UpdateUiState {
     data class Success(val updateResponse:UpdateResponse?) : UpdateUiState()
     data class Error(val message: String) : UpdateUiState()
 }
+sealed class LogOutState {
+    data object Initial : LogOutState()
+    data class Success(val updateResponse:UpdateResponse?) : LogOutState()
+    data class Error(val message: String) : LogOutState()
+}
 class Setting(private val apiService: ApiService,private val loginDataStore: LoginDataStore
 ) : ViewModel()
 {
     private val _updateUiState = MutableStateFlow<UpdateUiState>(UpdateUiState.Initial)
     val updateState: StateFlow<UpdateUiState> = _updateUiState
 
+    private val _logOutState = MutableStateFlow<LogOutState>(LogOutState.Initial)
+    val logOutState: StateFlow<LogOutState> = _logOutState
 
     fun changeName(account:String,
                    name:String?,
@@ -60,10 +67,10 @@ class Setting(private val apiService: ApiService,private val loginDataStore: Log
             try {
                 loginDataStore.saveLoginState(LoginState(isLoggedIn = false))
                 Log.d("Log Out","Log Out Success")
-                _updateUiState.value=UpdateUiState.Success(null)
+                _logOutState.value=LogOutState.Success(null)
             }catch (e:Exception){
                 Log.d("Log Out","Log Out Failed")
-                _updateUiState.value=UpdateUiState.Error("Unknown Error")
+                _logOutState.value=LogOutState.Error("Unknown Error")
             }
         }
     }

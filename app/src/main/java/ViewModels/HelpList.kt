@@ -1,7 +1,6 @@
 package ViewModels
 
 import Class.HelpRepository
-import Class.WebSocketManager
 import Data.HelpRequest
 import Data.HelpResponse
 import android.util.Log
@@ -39,6 +38,8 @@ class HelpList(private val helpRepository: HelpRepository) :ViewModel()
                 val helpData = helpRepository.fetchHelpData()
                 if (helpData != null) {
                     _helpListState.value = HelpUiState.Success(helpData)
+                    val position=(helpData as HelpResponse).position?.toString()
+                    Log.d("HelpList","$position")
                 } else {
                     _helpListState.value = HelpUiState.Error("No data")
                 }

@@ -10,19 +10,23 @@ import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -37,15 +41,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -62,7 +70,6 @@ fun HelpListPage(context: Context,
     DisposableEffect (Unit){
         requestPermissionsIfNeeded(context, activity)
         setupWorkManager(context)
-        viewModel.fetchHelpData()
         onDispose {
         }
     }
@@ -104,6 +111,8 @@ fun SuccessScreen(viewModel:HelpList,
     var isSettingPageVisibility by remember { mutableStateOf(false) }
     val helpState = viewModel.helpListState.collectAsState().value
     var isErrorScreenVisible by remember { mutableStateOf(false) }
+    var errorScreen by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
 
     if (isSettingPageVisibility){
         SettingPage(viewModel = setting,
@@ -141,7 +150,6 @@ fun SuccessScreen(viewModel:HelpList,
             when (helpState) {
                 is HelpUiState.Success -> {
                     isErrorScreenVisible=false
-                    val name = (helpState as HelpUiState.Success).helpResponse?.message.toString()
                     val position=(helpState as HelpUiState.Success).helpResponse?.position.toString()
                     Column(
                         modifier = Modifier
@@ -153,18 +161,43 @@ fun SuccessScreen(viewModel:HelpList,
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(text = name,
-                            fontSize = 24.sp,
-                            color = Color.Black)
-                        Spacer(modifier = Modifier.padding(bottom = 8.dp))
-                        Text(text = position,
-                            fontSize = 24.sp,
-                            color = Color.Black)
-                        Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                        Column(
+                            modifier = Modifier
+                                .background(Color.White)
+                                .clip(shape = RoundedCornerShape(24.dp)),
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            Spacer(Modifier.padding(20.dp))
+                            Text(text = stringResource(R.string.Location),
+                                fontSize = 24.sp,
+                                color = Color.Black,
+                                modifier = Modifier.padding(8.dp))
+                            Spacer(modifier = Modifier.padding(bottom = 8.dp))
+                            Text(text = position,
+                                fontSize = 24.sp,
+                                color = Color.Black,
+                                modifier = Modifier.padding(8.dp))
+                            Spacer(Modifier.padding(20.dp))
+                        }
+                        Spacer(modifier = Modifier.padding(bottom = 40.dp))
                         Button(
-                            onClick = {isErrorScreenVisible=true}
-                        ) { Text(stringResource(R.string.confirm)) }
+                            onClick = {isErrorScreenVisible=true}, 
+                            colors = ButtonDefaults.buttonColors(Color(2,115,115)),
+                            modifier = Modifier.align(Alignment.CenterHorizontally).height(50.dp)
+                        ) { Text(stringResource(R.string.completed),
+                            fontSize = 24.sp,
+                            color = Color.White) }
+
                     }
+                }
+                is HelpUiState.Error->{
+                    ErrorScreen(viewModel = viewModel,
+                        setting = setting,
+                        loginDataStore = loginDataStore,
+                        tts = tts,
+                        navController = navController)
+                    message=helpState.message.toString()
+                    errorScreen=true
                 }
                 else->{
                     ErrorScreen(viewModel = viewModel,
@@ -227,19 +260,16 @@ fun ErrorScreen(viewModel:HelpList,
             verticalArrangement = Arrangement.Center)
         {
             Text(text = stringResource(id = R.string.no_help),
-                fontSize = 24.sp,
+                fontSize = 30.sp,
                 fontFamily = FontFamily.Serif,
                 fontStyle = FontStyle.Normal,
                 color = Color.Black,
                 modifier = Modifier.padding(12.dp)
+                    .clickable { viewModel.fetchHelpData() },
+                style = TextStyle(
+                    textDecoration = TextDecoration.Underline
+                )
             )
-            IconButton(onClick = { viewModel.fetchHelpData() }) {
-                    Icon(imageVector = Icons.Filled.Search,
-                        contentDescription = "refresh",
-                        tint = Color.Black,
-                        modifier = Modifier.size(50.dp)
-                    )
-            }
         }
     }
 }

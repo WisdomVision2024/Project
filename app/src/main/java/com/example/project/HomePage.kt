@@ -84,7 +84,7 @@ fun HomePage(
     var errorScreen by remember { mutableStateOf(false) }
 
     var isFocus by remember { mutableStateOf(false) }
-    val common by remember { mutableStateOf(false) }
+    var common by remember { mutableStateOf(false) }
     var needHelp by remember { mutableStateOf(false) }
     var responseState by remember { mutableStateOf(false) }
     var buttonClick by remember { mutableStateOf(true) }
@@ -108,9 +108,13 @@ fun HomePage(
         }
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED){
+            Log.e("CameraManager", "Camera permission not granted")
             ActivityCompat.requestPermissions(activity, // 当前的活动
                 arrayOf(Manifest.permission.RECORD_AUDIO), // 要请求的权限列表
                 1)}
+        else{
+            Log.d("CameraManager", "Camera permission granted")
+        }
         onDispose {
             if (isFocus){
                 cameraViewModel.stopTakingPhotos()
@@ -133,6 +137,9 @@ fun HomePage(
             }
             is HandleResult.NeedHelp->{
                 tts.speak(hint2)
+                cameraViewModel.helpTakingPhotos()
+                androidViewModel.getName()
+                Log.d("HomePage","help true")
                 needHelp=true
             }
             is HandleResult.Arduino->{
@@ -195,15 +202,14 @@ fun HomePage(
     LaunchedEffect (common){
         if (common){
             Log.d("HomePage","Common true")
+            common=false
         }
     }
 
     LaunchedEffect (needHelp){
         if (needHelp){
-            tts.speak(hint2)
             Log.d("HomePage","needHelp true")
-            cameraViewModel.helpTakingPhotos()
-            tts.speak(wait)
+            needHelp=false
         }
     }
 
@@ -240,7 +246,7 @@ fun HomePage(
                     Icon(imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_page),
                         tint = Color(2,115,115),
-                        modifier = Modifier.size(100.dp)
+                        modifier = Modifier.size(100.dp).padding(8.dp)
                     )
                 }
             }
@@ -272,17 +278,18 @@ fun HomePage(
                         color = Color.Black
                     )
                 }
+                Spacer(Modifier.padding(12.dp))
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .width(320.dp)
-                        .height(440.dp)
+                        .height(600.dp)
                 )
                 {
                     LazyColumn(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .size(320.dp, 360.dp)
+                            .size(320.dp, 400.dp)
                             .background(color = Color(242, 231, 220))
                     ) {
                         item {
@@ -316,13 +323,13 @@ fun HomePage(
                         if (!state.isSpeaking) {
                             Icon(
                                 painter = painterResource(id = R.drawable.mic_foreground),
-                                contentDescription = "Start"
+                                contentDescription = stringResource(R.string.start)
                             )
                         }
                         else {
                             Icon(
                                 painter = painterResource(id = R.drawable.square_foreground),
-                                contentDescription = "Stop"
+                                contentDescription = stringResource(R.string.stop)
                             )
                         }
                     }

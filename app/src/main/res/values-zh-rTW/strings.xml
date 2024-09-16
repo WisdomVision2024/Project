@@ -42,14 +42,14 @@
     <string name="check_of_Log_out">確認是否登出？</string>
     <string name="Client">委託人</string>
     <string name="Description">詳細說明</string>
-    <string name="Location">位置</string>
-    <string name="completed">委託人已確認委託完成</string>
+    <string name="Location">視障者位置：</string>
+    <string name="completed">完成</string>
     <string name="thank">感謝您的協助</string>
     <string name="hint1">將為您進行辨識，請靜止不動五秒</string>
     <string name="hint2">請將鏡頭照向地面靜止不動五秒</string>
     <string name="wait">辨識中，請稍後</string>
     <string name="notification_title">有視障者需要協助</string>
-    <string name="no_help">尋找是否有視覺障礙障者\\n需要協助</string>
+    <string name="no_help">接收視障障者協助請求</string>
     <string name="introduce1">您好，歡迎使用Wisdom Vision！接下來為您簡單介紹APP的使用方法。</string>
     <string name="introduce_isV2">在主畫面，您會看到兩個主要按鈕：一個位於右上角，點擊即可進入設定頁面；另一個位於畫面中下方，點擊後可啟動語音辨識功能。啟動後，您可以對手機提問，我們會根據您的問題提供協助。語音辨識功能會自動在辨識出結果後停止，您無需擔心它會一直監聽您的聲音。此外，說完問題後，您也可以再次按下辨識按鈕，立即結束語音辨識。</string>
     <string name="introduce_isV3">"一般辨識功能: 您可以提出問題，例如：「前面有筆嗎？」APP將啟動相機進行辨識。為了確保辨識準確性，請保持手機穩定約5秒鐘，以便相機捕捉畫面。辨識結果將以語音播放，並顯示在辨識按鈕上方的回答框中。 "</string>
@@ -70,5 +70,6 @@
     <string name="change_user_data">更改用戶資料</string>
     <string name="success">更改成功!</string>
     <string name="input_password_required">輸入舊密碼(必填)</string>
-    <string name="input_password_required">輸入舊密碼(必填)</string>
+    <string name="start">開始辨識</string>
+    <string name="stop">停止辨識</string>
 </resources>

@@ -166,6 +166,22 @@ class Identified(application: Application,
         }
     }
 
+    fun getName(){
+        viewModelScope.launch {
+            val response=apiService.sendRequire()
+            try {
+                if (response.isSuccessful){
+                    val name=response.body()?.message?.name.toString()
+                    _uploadState.value=UploadState.Success("協助者${name}即將前往協助您")
+                    Log.d("help", name)
+                }
+            }catch (e:Exception){
+                _uploadState.value=UploadState.Error(e.message.toString())
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun cancel(){
         timerJob?.cancel()
     }
@@ -210,8 +226,10 @@ class Identified(application: Application,
                 }
                 text.contains("send request", ignoreCase = true) ||
                         text.contains("need help", ignoreCase = true)||
-                        text.contains("發送請求", ignoreCase = true)||
-                        text.contains("需要幫助", ignoreCase = true)||
+                        (text.contains("需要", ignoreCase = true)&&
+                                (text.contains("幫助", ignoreCase = true)||
+                                        text.contains("協助", ignoreCase = true) )
+                                )||
                         text.contains("Besoin d'aide", ignoreCase = true)||
                         text.contains("助けが必要", ignoreCase = true)||
                         text.contains("도움이 필요하다", ignoreCase = true)

@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHost
 import androidx.navigation.compose.rememberNavController
 import assets.ArduinoInstance
 import assets.RetrofitInstance
@@ -76,14 +78,23 @@ class MainActivity : ComponentActivity() {
                     val cameraManager =
                         CameraManager(
                             context,
-                            imageFormat = ImageFormat.JPEG,
-                            apiService
+                            imageFormat = ImageFormat.JPEG
                         )
-                    val account=loginState.currentUser?.account
-                    NameChangeScreen(viewModel = Setting(apiService,loginDataStore),
-                        account, onClose = {})
-                    if (navigateToHelpList) {
-                        navController.navigate("HelpListPage")
+                    Navigation(
+                        context=context,
+                        activity=this@MainActivity,
+                        cameraManager=cameraManager,
+                        loginState=loginState,
+                        navController=navController,
+                        apiService=apiService,
+                        arduinoApi=arduinoApi,
+                        loginDataStore=loginDataStore,
+                        app=application
+                    )
+                    LaunchedEffect(navigateToHelpList) {
+                        if (navigateToHelpList) {
+                            navController.navigate("HelpListPage")
+                        }
                     }
                 }
             }
@@ -122,13 +133,6 @@ class MainActivity : ComponentActivity() {
             android.Manifest.permission.READ_MEDIA_IMAGES,
             android.Manifest.permission.POST_NOTIFICATIONS
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE){
-            permissionsToRequest.addAll(
-                listOf(
-                    android.Manifest.permission.READ_MEDIA_VISUAL_USER_SELECTED
-                )
-            )
-        }
         multiplePermissions.launch(permissionsToRequest.toTypedArray())
     }
 
@@ -230,8 +234,7 @@ fun HomePagePreview() {
     val cameraManager =
         CameraManager(
             context,
-            imageFormat = ImageFormat.JPEG,
-            apiService
+            imageFormat = ImageFormat.JPEG
         )
     val application=Application()
     HomePage(

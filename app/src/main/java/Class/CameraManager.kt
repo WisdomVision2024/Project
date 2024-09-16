@@ -1,6 +1,9 @@
 package Class
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -11,6 +14,7 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.TotalCaptureResult
 import android.hardware.camera2.params.OutputConfiguration
 import android.hardware.camera2.params.SessionConfiguration
+import android.hardware.display.DisplayManager
 import android.icu.text.SimpleDateFormat
 import android.media.Image
 import android.media.ImageReader
@@ -18,8 +22,10 @@ import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
+import android.view.Display
 import android.view.Surface
-import assets.ApiService
+import android.view.WindowManager
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.Date
@@ -31,7 +37,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class CameraManager(private val context: Context,
                     private val imageFormat: Int,
-                    private val apiService: ApiService) {
+                    ) {
 
     private val cameraManager: CameraManager by lazy {
         context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
@@ -153,14 +159,15 @@ class CameraManager(private val context: Context,
         }
     }
 
-
     private suspend fun takePhoto(): File = suspendCoroutine { cont ->
 
         try {
             Log.d("CameraManager", "Taking photo")
             // 清空 ImageReader 的緩衝區
-            while (imageReader.acquireNextImage() != null) {
-                imageReader.acquireNextImage().close()
+            var image1 = imageReader.acquireNextImage()
+            while (image1 != null) {
+                image1.close()
+                image1 = imageReader.acquireNextImage()
             }
 
             // 創建一個新的圖像隊列
@@ -169,7 +176,7 @@ class CameraManager(private val context: Context,
                 val image = reader.acquireNextImage()
                 imageQueue.add(image)
                 Log.d("CameraManager", "Image available")
-            }, cameraHandler)
+            }, imageReaderHandler)
 
             // 創建捕獲請求，用來捕獲靜態圖像
             val captureRequest =
@@ -229,7 +236,45 @@ class CameraManager(private val context: Context,
         imageReaderThread.quitSafely()
     }
 
+
+    private fun rotateImageIfRequired(image: ByteArray): ByteArray {
+        val matrix = Matrix()
+
+        // 获取相机的传感器方向
+        val sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
+
+        val rotation =getDeviceRotation()
+
+        val deviceRotation = when (rotation) {
+            Surface.ROTATION_0 -> 0
+            Surface.ROTATION_90 -> 90
+            Surface.ROTATION_180 -> 180
+            Surface.ROTATION_270 -> 270
+            else -> 0
+        }
+
+        // 计算需要的旋转角度
+        val rotationInDegrees = (sensorOrientation - deviceRotation + 360) % 360
+        matrix.postRotate(rotationInDegrees.toFloat())
+
+        // 使用 BitmapFactory 读取图像并应用旋转
+        val bitmap = BitmapFactory.decodeByteArray(image, 0, image.size)
+        val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+
+        // 将旋转后的图像转换为字节数组并返回
+        val outputStream = ByteArrayOutputStream()
+        rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+        return outputStream.toByteArray()
+    }
+
+    private fun getDeviceRotation(): Int {
+        val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val display = displayManager.getDisplay(Display.DEFAULT_DISPLAY)
+        return display?.rotation ?: Surface.ROTATION_0
+    }
+
     private fun saveImage(bytes: ByteArray) :File{
+        val rotatedBytes = rotateImageIfRequired(bytes)
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmm_ss", Locale.US).format(Date())
         val storageDir: File = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)!!
         val file=File.createTempFile(
@@ -237,7 +282,7 @@ class CameraManager(private val context: Context,
             ".jpg",
             storageDir
         )
-        FileOutputStream(file).use { it.write(bytes) }
+        FileOutputStream(file).use { it.write(rotatedBytes) }
         Log.d("CameraManager", "Image saved: ${file.absolutePath}")
         return file
     }

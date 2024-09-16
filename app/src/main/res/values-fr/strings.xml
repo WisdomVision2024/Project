@@ -42,14 +42,14 @@
     <string name="check_of_Log_out">Êtes-vous sûr de vous déconnecter ?</string>
     <string name="Client">Client</string>
     <string name="Description">Description détaillée</string>
-    <string name="Location">Emplacement</string>
-    <string name="completed">Le client a confirmé que la commission est terminée.</string>
+    <string name="Location">Lieu pour malvoyants :</string>
+    <string name="completed">complété</string>
     <string name="thank">Merci pour ton aide</string>
     <string name="hint1">Nous allons l\'identifier pour vous, veuillez rester immobile pendant cinq secondes.</string>
     <string name="hint2">Veuillez pointer la caméra vers le sol et rester immobile pendant cinq secondes.</string>
     <string name="wait">Reconnaissance, veuillez patienter</string>
     <string name="notification_title">Les personnes malvoyantes ont besoin d\'aide</string>
-    <string name="no_help">Découvrez si une personne ayant une déficience visuelle a besoin d\'aide</string>
+    <string name="no_help">Recevoir les demandes d\'assistance des personnes malvoyantes</string>
     <string name="introduce1">Bonjour et bienvenue chez Wisdom Vision ! Ensuite, je vais vous donner une brève introduction sur la façon d\'utiliser l\'APP.</string>
     <string name="introduce_isV2">Sur l\'écran principal, vous verrez deux boutons principaux : l\'un est situé dans le coin supérieur droit, cliquez pour accéder à la page des paramètres ; l\'autre est situé en bas au centre de l\'écran, cliquez pour activer la fonction de reconnaissance vocale. Après l\'activation, vous pouvez poser des questions sur votre téléphone et nous vous fournirons une assistance en fonction de vos questions. La fonction de reconnaissance vocale s\'arrêtera automatiquement une fois le résultat de la reconnaissance obtenu, vous n\'avez donc pas à vous soucier de continuer à écouter votre voix. De plus, après avoir fini de prononcer la question, vous pouvez également appuyer à nouveau sur le bouton de reconnaissance pour mettre immédiatement fin à la reconnaissance vocale.</string>
     <string name="introduce_isV3">"Fonction d'identification générale Vous pouvez poser des questions telles que : « Y a-t-il un stylo devant vous ? » L'APP activera la caméra pour l'identification. Pour garantir la précision de la reconnaissance, veuillez maintenir votre téléphone stable pendant environ 5 secondes pour permettre à l'appareil photo de capturer l'image. Les résultats de la reconnaissance seront lus vocalement et affichés dans la zone de réponse au-dessus du bouton de reconnaissance. "</string>
@@ -70,4 +70,6 @@
     <string name="change_user_data">Modifier les données utilisateur</string>
     <string name="success">Changer le succès !</string>
     <string name="input_password_required">Entrez l\'ancien mot de passe (obligatoire)</string>
+    <string name="start">Commencer à identifier</string>
+    <string name="stop">Arrêtez-vous pour identifier</string>
 </resources>

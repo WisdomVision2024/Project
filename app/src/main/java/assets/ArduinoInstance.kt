@@ -16,7 +16,7 @@ private val client = OkHttpClient.Builder()
 private val retrofit=
     Retrofit.Builder()
         .addConverterFactory(ScalarsConverterFactory.create())
-        .baseUrl("http://192.168.95.79:80") // 這裡放你的ip
+        .baseUrl("http://192.168.1.184:80") // 這裡放你的ip
         .client(client)
         .build()
 object ArduinoInstance {

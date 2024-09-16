@@ -54,17 +54,11 @@ data class IdentifiedResponse(
 )
 
 data class HelpRequest(
-    val id:String,
-    val name:String,
-    val description:String?,
-    val address:String
+    @SerializedName("player")
+    val  message: Name?
 )
 
 data class HelpResponse(
-    @SerializedName("status")
-    val status: String?,
-    @SerializedName("player")
-    val  message: Name?,
     @SerializedName("position")
     val position:List<Position>?
 )

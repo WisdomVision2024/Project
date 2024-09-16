@@ -12,6 +12,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import assets.RetrofitInstance.apiService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,9 +41,6 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
 
     private var timerJob: Job? = null
 
-    private val _imageUri = MutableLiveData<Uri?>()
-    val imageUri: LiveData<Uri?> = _imageUri
-
     private val _uploadState = MutableStateFlow<FocusState>(FocusState.Initial)
     val uploadState: StateFlow<FocusState> = _uploadState
 
@@ -68,6 +66,7 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
                     Log.d("CameraViewModel","focus")
                 } catch (e: Exception) {
                     Log.e("CameraViewModel", "Error during photo capture/upload: $e")
+                    e.printStackTrace()
                 }
                 delay(interval)
             }
@@ -94,6 +93,7 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
                 // 每秒拍照並上傳
                 val photo = cameraManager.photo()
                 helpUploadPhoto(photo, context)
+                Log.d("CameraViewModel","help")
             }
             catch (e: Exception) {
                 Log.e("CameraViewModel", "Error during photo capture/upload: $e")
@@ -108,7 +108,14 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
         }
     }
 
+    fun closeCamera(){
+        viewModelScope.launch {
+            cameraManager.closeCamera()
+        }
+    }
+
     fun cancel(){
+        Log.d("CameraViewModel","cancel Success")
         timerJob?.cancel()
     }
 
@@ -194,11 +201,7 @@ class CameraViewModel(val app: Application,private val loginState: LoginState,
                 try {
                     val response = apiService.uploadHelpImage(part)
                     if (response.isSuccessful) {
-                        val status=response.body()?.status
-                        val error=response.body()?.errorMessage
-                        val result=response.body()?.results
-                        val count=response.body()?.counts
-                        Log.d("upload","$status,$error,$result,$count")
+                        Log.d("upload","success")
                         // 上传成功，删除本地文件
                         file.delete()
                     }

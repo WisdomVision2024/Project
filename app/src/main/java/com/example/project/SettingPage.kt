@@ -2,6 +2,7 @@ package com.example.project
 
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import ViewModels.LogOutState
 import ViewModels.Setting
 import ViewModels.TTS
 import ViewModels.UpdateUiState
@@ -63,6 +64,7 @@ fun SettingPage(viewModel:Setting,
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
     val updateState = viewModel.updateState.collectAsState().value
+    val logOutState=viewModel.logOutState.collectAsState().value
     val account = loginState.currentUser?.account
     val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
@@ -82,6 +84,16 @@ fun SettingPage(viewModel:Setting,
             }
             is UpdateUiState.Success->{
                 isSuccessScreen=true
+            }
+            else->{Unit}
+        }
+    }
+
+    LaunchedEffect(logOutState) {
+        when(logOutState){
+            is LogOutState.Error->{
+                message=(logOutState as LogOutState.Error).message
+                errorScreen=true
             }
             else->{Unit}
         }
@@ -206,14 +218,14 @@ fun SettingPage(viewModel:Setting,
                             fontSize = 18.sp, color = Color.White
                         )
                     }
-                    Spacer(modifier = Modifier.padding(30.dp))
+                    Spacer(modifier = Modifier.padding(12.dp))
                     Text(
                         stringResource(id = R.string.other_set),
                         fontSize = 28.sp,
                         textAlign = TextAlign.Start,
                         color = Color.Black
                     )
-                    Spacer(modifier = Modifier.padding(12.dp))
+                    Spacer(modifier = Modifier.padding(8.dp))
                     Button(
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(Color(3, 140, 127)),

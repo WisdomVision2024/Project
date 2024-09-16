@@ -1,6 +1,6 @@
 package assets
 
-import Data.AcceptCommissionResponse
+import Data.HelpRequest
 import Data.HelpResponse
 import Data.IdentifiedData
 import Data.IdentifiedResponse
@@ -16,9 +16,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Part
-import retrofit2.http.Query
 
 interface ApiService {
     @POST("login/")
@@ -31,8 +29,10 @@ interface ApiService {
     suspend fun identify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
     @POST("focus/")
     suspend fun focusIdentify(@Body identifiedData: IdentifiedData):Response<IdentifiedResponse>
-    @GET("getunity/")
+    @GET("getunity2/")
     suspend fun getRequire():Response<HelpResponse>
+    @GET("getunity1/")
+    suspend fun sendRequire():Response<HelpRequest>
     @Multipart
     @POST("object/")
     suspend fun uploadImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
