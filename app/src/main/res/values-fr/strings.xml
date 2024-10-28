@@ -72,4 +72,6 @@
     <string name="input_password_required">Entrez l\'ancien mot de passe (obligatoire)</string>
     <string name="start">Commencer à identifier</string>
     <string name="stop">Arrêtez-vous pour identifier</string>
+    <string name="name_1">nom</string>
+    <string name="close">fermer</string>
 </resources>

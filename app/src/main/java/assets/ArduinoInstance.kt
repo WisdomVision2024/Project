@@ -1,9 +1,7 @@
 package assets
 
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +14,7 @@ private val client = OkHttpClient.Builder()
 private val retrofit=
     Retrofit.Builder()
         .addConverterFactory(ScalarsConverterFactory.create())
-        .baseUrl("http://192.168.1.184:80") // 這裡放你的ip
+        .baseUrl("http://192.168.149.88:80") // 這裡放你的ip
         .client(client)
         .build()
 object ArduinoInstance {

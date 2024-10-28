@@ -3,6 +3,7 @@ package com.example.project
 
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import DataStore.SpeedStore
 import ViewModels.Arduino
 import ViewModels.ArduinoUi
 import ViewModels.CameraViewModel
@@ -18,8 +19,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +33,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -65,6 +69,7 @@ fun HomePage(
     activity: Activity,
     androidViewModel: Identified,
     loginDataStore:LoginDataStore,
+    speedStore: SpeedStore,
     arduino: Arduino,
     tts:TTS,
     viewModel: Setting,
@@ -81,6 +86,7 @@ fun HomePage(
     val account = loginState.currentUser?.account
 
     var nameChangeScreenVisible by remember { mutableStateOf(false) }
+    var addScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
 
     var isFocus by remember { mutableStateOf(false) }
@@ -98,6 +104,7 @@ fun HomePage(
     val text=state.spokenText.ifEmpty { "" }
 
     DisposableEffect(Unit) {
+        arduino.continuedGet()
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED){
             ActivityCompat.requestPermissions(activity, // 当前的活动
@@ -120,6 +127,7 @@ fun HomePage(
                 cameraViewModel.stopTakingPhotos()
                 isFocus=false
             }
+            arduino.stop()
         }
     }
 
@@ -216,9 +224,19 @@ fun HomePage(
     if (isSettingPageVisibility){
         SettingPage(viewModel = viewModel,
             loginDataStore,
+            speedStore,
             onClose = {isSettingPageVisibility=false},
             tts,
             navController )
+    }
+
+    if (addScreenVisible){
+        AddScreen(
+            context,
+            tts,
+            cameraViewModel,
+            onClose = {addScreenVisible=false}
+        )
     }
 
     if (errorScreen){
@@ -236,17 +254,28 @@ fun HomePage(
 
     Scaffold(modifier = Modifier.fillMaxSize(),
         topBar ={
-            Box(modifier = Modifier
+            Row(modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(255, 255, 255)),
-                contentAlignment= Alignment.TopEnd)
+                horizontalArrangement = Arrangement.SpaceBetween)
             {
+                IconButton(onClick = { addScreenVisible = true }) {
+                    Icon(imageVector = Icons.Filled.Add,
+                        contentDescription = "",
+                        tint = Color(2,115,115),
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(8.dp)
+                    )
+                }
                 IconButton(onClick = { isSettingPageVisibility=true })
                 {
                     Icon(imageVector = Icons.Filled.Settings,
                         contentDescription = stringResource(id = R.string.setting_page),
                         tint = Color(2,115,115),
-                        modifier = Modifier.size(100.dp).padding(8.dp)
+                        modifier = Modifier
+                            .size(100.dp)
+                            .padding(8.dp)
                     )
                 }
             }

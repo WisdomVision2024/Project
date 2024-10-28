@@ -53,6 +53,12 @@ data class IdentifiedResponse(
     val ans:String?
 )
 
+@Serializable
+data class ImportResponse(
+    @SerializedName("status")
+    val status: String?,
+)
+
 data class HelpRequest(
     @SerializedName("player")
     val  message: Name?

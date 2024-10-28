@@ -56,8 +56,8 @@ class CameraManager(private val context: Context,
     }
 
     private lateinit var imageReader: ImageReader
-    private val cameraThread = HandlerThread("CameraThread").apply { start() }
-    private val cameraHandler = Handler(cameraThread.looper)
+    private var cameraThread = HandlerThread("CameraThread").apply { start() }
+    private var cameraHandler = Handler(cameraThread.looper)
 
     private lateinit var camera: CameraDevice
     private lateinit var session: CameraCaptureSession
@@ -65,9 +65,16 @@ class CameraManager(private val context: Context,
     private val imageReaderThread = HandlerThread("imageReaderThread").apply { start() }
     private val imageReaderHandler = Handler(imageReaderThread.looper)
 
+    private var previewSurface: Surface? = null
+    private var isPreviewEnabled = false
+
     suspend fun initializeCamera() {
         Log.d("CameraManager", "Initializing camera")
         // 打開後置相機
+
+        cameraThread = HandlerThread("CameraThread").apply { start() }
+        cameraHandler = Handler(cameraThread.looper)
+
         camera = openCamera(cameraManager, cameraId, cameraHandler)
         Log.d("CameraManager", "Camera opened: $cameraId")
 
@@ -232,6 +239,7 @@ class CameraManager(private val context: Context,
 
     fun closeCamera() {
         camera.close()
+        session.close()
         cameraThread.quitSafely()
         imageReaderThread.quitSafely()
     }

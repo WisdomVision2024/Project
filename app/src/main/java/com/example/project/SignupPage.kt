@@ -1,5 +1,6 @@
 package com.example.project
 
+import DataStore.SpeedStore
 import ViewModels.Signup
 import ViewModels.SignupUiState
 import ViewModels.TTS
@@ -51,6 +52,7 @@ import androidx.navigation.NavController
 fun SignupPage(
     viewModel: Signup,
     tts: TTS,
+    speedStore: SpeedStore,
     navController: NavController
 ) {
     var account by remember { mutableStateOf("") }
@@ -248,6 +250,7 @@ fun SignupPage(
     if (isShowIntroduce1){
         IntroducePage_1(
             tts = tts,
+            speedStore = speedStore,
             onClose = {
                 isShowIntroduce1=false
                 nav1=true

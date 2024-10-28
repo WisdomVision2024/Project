@@ -5,6 +5,7 @@ import Class.HelpRepository
 import ViewModels.Signup
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import DataStore.SpeedStore
 import ViewModels.Arduino
 import ViewModels.CameraViewModel
 import ViewModels.HelpList
@@ -67,6 +68,9 @@ class MainActivity : ComponentActivity() {
             val loginStateFlow = loginDataStore.loadLoginState()
             val loginState by loginStateFlow.collectAsState(
                 initial = LoginState(false, null))
+
+            val speedStore= remember { SpeedStore(context) }
+
             val navController = rememberNavController()
 
             ProjectTheme {
@@ -89,6 +93,7 @@ class MainActivity : ComponentActivity() {
                         apiService=apiService,
                         arduinoApi=arduinoApi,
                         loginDataStore=loginDataStore,
+                        speedStore = speedStore,
                         app=application
                     )
                     LaunchedEffect(navigateToHelpList) {
@@ -206,20 +211,26 @@ fun StartPreview() {
 @Preview(showBackground = true)
 @Composable
 fun LoginPagePreview(){
-    val loginDataStore = LoginDataStore(LocalContext.current)
+    val context = LocalContext.current
+    val loginDataStore = LoginDataStore(context)
+    val speedStore=SpeedStore(context)
     val navController = rememberNavController()
     LoginPage(viewModel = Login(
         RetrofitInstance.apiService,loginDataStore
-    ), TTS(Application()),navController = navController)
+    ), TTS(Application(),speedStore),navController = navController)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun SignupPagePreview() {
-    val loginDataStore = LoginDataStore(LocalContext.current)
+    val context = LocalContext.current
+    val loginDataStore = LoginDataStore(context)
+    val speedStore=SpeedStore(context)
     val navController = rememberNavController()
     SignupPage(viewModel = Signup(RetrofitInstance.apiService,
-        loginDataStore), tts = TTS(Application()),navController)
+        loginDataStore), tts = TTS(Application(), speedStore ),
+        speedStore = speedStore,
+        navController)
 }
 
 @Preview(showBackground = true)
@@ -230,6 +241,7 @@ fun HomePagePreview() {
     val loginDataStore=LoginDataStore(context)
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
+    val speedStore=SpeedStore(context)
     val apiService=RetrofitInstance.apiService
     val cameraManager =
         CameraManager(
@@ -243,9 +255,10 @@ fun HomePagePreview() {
         androidViewModel = Identified(application = Application(),
             apiService = RetrofitInstance.apiService),
         loginDataStore = loginDataStore,
-        viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
-        arduino = Arduino(ArduinoInstance.arduinoApi),
-        tts = TTS(Application()),
+        speedStore = speedStore,
+        viewModel = Setting(apiService = RetrofitInstance.apiService,loginDataStore,speedStore),
+        arduino = Arduino(ArduinoInstance.arduinoApi, TTS(Application(),speedStore)),
+        tts = TTS(Application(),speedStore),
         cameraViewModel = CameraViewModel(application,loginState,cameraManager),
         navController = navController )
 }
@@ -256,11 +269,13 @@ fun SettingPagePreview() {
     val context=LocalContext.current
     val navController = rememberNavController()
     val loginDataStore=LoginDataStore(context)
+    val speedStore=SpeedStore(context)
     SettingPage(
-        viewModel = Setting(RetrofitInstance.apiService,loginDataStore),
+        viewModel = Setting(RetrofitInstance.apiService,loginDataStore,speedStore),
         loginDataStore = loginDataStore,
         onClose = {},
-        tts = TTS(Application()),
+        tts = TTS(Application(),speedStore),
+        speedStore =speedStore,
         navController = navController
     )
 }
@@ -269,14 +284,16 @@ fun SettingPagePreview() {
 fun HelpListPagePreview(){
     val context = LocalContext.current
     val loginDataStore=LoginDataStore(context)
+    val speedStore=SpeedStore(context)
     val navController = rememberNavController()
     HelpListPage(
         context,
         viewModel = HelpList(HelpRepository(apiService = RetrofitInstance.apiService)),
         activity = MainActivity(),
-        setting = Setting(apiService = RetrofitInstance.apiService,loginDataStore),
+        setting = Setting(apiService = RetrofitInstance.apiService,loginDataStore,speedStore),
         loginDataStore = loginDataStore,
-        tts = TTS(Application()),
+        speedStore = speedStore,
+        tts = TTS(Application(),speedStore),
         navController = navController)
 }
 

@@ -72,4 +72,6 @@
     <string name="input_password_required">古いパスワードを入力してください（必須）</string>
     <string name="start">識別を開始する</string>
     <string name="stop">立ち止まって特定する</string>
+    <string name="name_1">名前</string>
+    <string name="close">閉じる</string>
 </resources>

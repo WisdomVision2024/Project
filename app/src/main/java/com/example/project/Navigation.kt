@@ -5,6 +5,7 @@ import Class.CameraManager
 import Class.HelpRepository
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import DataStore.SpeedStore
 import ViewModels.Arduino
 import ViewModels.CameraViewModel
 import ViewModels.HelpList
@@ -40,6 +41,7 @@ fun Navigation(
     apiService: ApiService,
     arduinoApi: ArduinoApi,
     loginDataStore: LoginDataStore,
+    speedStore: SpeedStore,
     app: Application
 ) {
     val animationSpec: FiniteAnimationSpec<IntOffset> = spring(
@@ -65,7 +67,7 @@ fun Navigation(
                         apiService,
                         loginDataStore
                     ),
-                    tts = TTS(app),
+                    tts = TTS(app,speedStore),
                     navController = navController,
                 )
             }
@@ -82,7 +84,8 @@ fun Navigation(
             )  {
                 SignupPage(
                     viewModel = Signup(apiService,loginDataStore),
-                    tts = TTS(app),
+                    tts = TTS(app,speedStore),
+                    speedStore = speedStore,
                     navController = navController)
             }
 
@@ -118,10 +121,11 @@ fun Navigation(
                 context = context,
                 activity=activity,
                 androidViewModel = Identified(app,apiService),
-                viewModel = Setting(apiService,loginDataStore),
+                viewModel = Setting(apiService,loginDataStore,speedStore),
                 loginDataStore = loginDataStore,
-                tts =TTS(app),
-                arduino = Arduino(arduinoApi),
+                speedStore = speedStore,
+                tts =TTS(app,speedStore),
+                arduino = Arduino(arduinoApi,TTS(app,speedStore)),
                 cameraViewModel = CameraViewModel(app,loginState,cameraManager),
                 navController = navController
             )
@@ -140,11 +144,12 @@ fun Navigation(
         {
             SettingPage(
                 viewModel = Setting(
-                    apiService,loginDataStore
+                    apiService,loginDataStore,speedStore
                 ),
                 loginDataStore,
                 onClose = {},
-                tts = TTS(app),
+                tts = TTS(app,speedStore),
+                speedStore = speedStore,
                 navController = navController
             )
         }
@@ -162,9 +167,10 @@ fun Navigation(
             HelpListPage(context,
                 viewModel = HelpList(HelpRepository(apiService)),
                 activity = activity,
-                setting = Setting(apiService, loginDataStore),
+                setting = Setting(apiService, loginDataStore,speedStore),
                 loginDataStore = loginDataStore,
-                tts = TTS(app),
+                speedStore = speedStore,
+                tts = TTS(app,speedStore),
                 navController = navController)
         }
     }

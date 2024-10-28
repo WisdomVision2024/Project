@@ -72,4 +72,6 @@
     <string name="input_password_required">輸入舊密碼(必填)</string>
     <string name="start">開始辨識</string>
     <string name="stop">停止辨識</string>
+    <string name="name_1">名字</string>
+    <string name="close">關閉</string>
 </resources>

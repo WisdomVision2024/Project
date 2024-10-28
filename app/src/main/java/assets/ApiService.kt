@@ -4,12 +4,14 @@ import Data.HelpRequest
 import Data.HelpResponse
 import Data.IdentifiedData
 import Data.IdentifiedResponse
+import Data.ImportResponse
 import Data.LoginRequest
 import Data.SignupRequest
 import Data.UpdateResponse
 import Data.UploadImageResponse
 import Data.User
 import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -42,5 +44,9 @@ interface ApiService {
     @Multipart
     @POST("help/")
     suspend fun uploadHelpImage(@Part image: MultipartBody.Part): Response<UploadImageResponse?>
+
+    @Multipart
+    @POST("updateimg/")
+    suspend fun importImage(@Part("filename")filename:RequestBody,@Part image: MultipartBody.Part): Response<ImportResponse?>
 }
 

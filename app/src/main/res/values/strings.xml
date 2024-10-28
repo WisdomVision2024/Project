@@ -84,4 +84,6 @@
     <string name="input_password_required">Input old password (required)</string>
     <string name="start">Start to Identify</string>
     <string name="stop">Stop to Identify</string>
+    <string name="name_1">Name</string>
+    <string name="close">Close</string>
 </resources>

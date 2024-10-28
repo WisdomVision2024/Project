@@ -2,6 +2,7 @@ package com.example.project
 
 import Class.DataCheckWorker
 import DataStore.LoginDataStore
+import DataStore.SpeedStore
 import ViewModels.HelpList
 import ViewModels.HelpUiState
 import ViewModels.Setting
@@ -65,6 +66,7 @@ fun HelpListPage(context: Context,
                  activity: Activity,
                  setting: Setting,
                  loginDataStore: LoginDataStore,
+                 speedStore: SpeedStore,
                  tts: TTS,
                  navController: NavController) {
     DisposableEffect (Unit){
@@ -76,6 +78,7 @@ fun HelpListPage(context: Context,
     SuccessScreen(viewModel = viewModel,
         setting=setting,
         loginDataStore = loginDataStore,
+        speedStore = speedStore,
         tts = tts,
         navController =navController )
 }
@@ -106,6 +109,7 @@ private fun requestPermissionsIfNeeded(context: Context, activity: Activity) {
 fun SuccessScreen(viewModel:HelpList,
                   setting: Setting,
                   loginDataStore: LoginDataStore,
+                  speedStore: SpeedStore,
                   tts: TTS,
                   navController: NavController){
     var isSettingPageVisibility by remember { mutableStateOf(false) }
@@ -116,8 +120,11 @@ fun SuccessScreen(viewModel:HelpList,
 
     if (isSettingPageVisibility){
         SettingPage(viewModel = setting,
-            loginDataStore,
-            onClose = {isSettingPageVisibility=false}, tts = tts,navController )
+            loginDataStore = loginDataStore,
+            speedStore = speedStore,
+            onClose = {isSettingPageVisibility=false}, tts = tts,
+            navController = navController
+        )
     }
     if (isErrorScreenVisible) {
         // 當狀態切換時顯示 ErrorScreen
@@ -125,6 +132,7 @@ fun SuccessScreen(viewModel:HelpList,
             viewModel = viewModel,
             setting = setting,
             loginDataStore = loginDataStore,
+            speedStore = speedStore,
             tts = tts,
             navController = navController
         )
@@ -194,6 +202,7 @@ fun SuccessScreen(viewModel:HelpList,
                     ErrorScreen(viewModel = viewModel,
                         setting = setting,
                         loginDataStore = loginDataStore,
+                        speedStore = speedStore,
                         tts = tts,
                         navController = navController)
                     message=helpState.message.toString()
@@ -203,6 +212,7 @@ fun SuccessScreen(viewModel:HelpList,
                     ErrorScreen(viewModel = viewModel,
                         setting = setting,
                         loginDataStore = loginDataStore,
+                        speedStore = speedStore,
                         tts = tts,
                         navController = navController)
                 }
@@ -215,6 +225,7 @@ fun SuccessScreen(viewModel:HelpList,
 fun ErrorScreen(viewModel:HelpList,
                 setting: Setting,
                 loginDataStore: LoginDataStore,
+                speedStore: SpeedStore,
                 tts: TTS,
                 navController: NavController){
     var isSettingPageVisibility by remember { mutableStateOf(false) }
@@ -222,6 +233,7 @@ fun ErrorScreen(viewModel:HelpList,
     if (isSettingPageVisibility){
         SettingPage(viewModel = setting,
             loginDataStore,
+            speedStore,
             onClose = {isSettingPageVisibility=false},
             tts =tts ,
             navController )

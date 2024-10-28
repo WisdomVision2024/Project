@@ -12,6 +12,8 @@ import kotlinx.coroutines.launch
 import Data.User
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import DataStore.Speed
+import DataStore.SpeedStore
 import android.util.Log
 
 sealed class UpdateUiState {
@@ -24,7 +26,9 @@ sealed class LogOutState {
     data class Success(val updateResponse:UpdateResponse?) : LogOutState()
     data class Error(val message: String) : LogOutState()
 }
-class Setting(private val apiService: ApiService,private val loginDataStore: LoginDataStore
+class Setting(private val apiService: ApiService,
+              private val loginDataStore: LoginDataStore,
+              private val speedStore: SpeedStore
 ) : ViewModel()
 {
     private val _updateUiState = MutableStateFlow<UpdateUiState>(UpdateUiState.Initial)

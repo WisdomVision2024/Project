@@ -2,6 +2,8 @@ package com.example.project
 
 import DataStore.LoginDataStore
 import DataStore.LoginState
+import DataStore.Speed
+import DataStore.SpeedStore
 import ViewModels.LogOutState
 import ViewModels.Setting
 import ViewModels.TTS
@@ -31,12 +33,14 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,24 +61,38 @@ import androidx.navigation.NavController
 @Composable
 fun SettingPage(viewModel:Setting,
                 loginDataStore: LoginDataStore,
+                speedStore: SpeedStore,
                 onClose: () -> Unit,
                 tts: TTS,
                 navController: NavController)
 {
     val loginStateFlow = loginDataStore.loadLoginState()
     val loginState by loginStateFlow.collectAsState(initial = LoginState(true))
+
     val updateState = viewModel.updateState.collectAsState().value
     val logOutState=viewModel.logOutState.collectAsState().value
     val account = loginState.currentUser?.account
     val isVisuallyImpaired=loginState.currentUser?.isVisuallyImpaired
-    var nameChangeScreenVisible by remember { mutableStateOf(false) }
 
+    val speedFlow = speedStore.loadSpeedState().collectAsState(initial = Speed(1.0f))
+    val savedSpeed = speedFlow.value.ttsSpeed ?: 1.0f
+
+    var speechRate by remember { mutableFloatStateOf(savedSpeed) } // 使用加载的语速
+    var sliderPosition by remember { mutableFloatStateOf(savedSpeed) }
+
+    var nameChangeScreenVisible by remember { mutableStateOf(false) }
     var logOutScreenVisible by remember { mutableStateOf(false) }
     var errorScreen by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     var isShowIntroduce1 by remember { mutableStateOf(false) }
     var isShowIntroduce2 by remember { mutableStateOf(false) }
     var isSuccessScreen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(savedSpeed) {
+        speechRate = savedSpeed
+        sliderPosition = savedSpeed
+        tts.tts?.setSpeechRate(speechRate)
+    }
 
     LaunchedEffect(updateState) {
         when(updateState){
@@ -158,6 +176,7 @@ fun SettingPage(viewModel:Setting,
     if (isShowIntroduce1){
         IntroducePage_1(
             tts = tts,
+            speedStore = speedStore,
             onClose = {
                 isShowIntroduce1=false
             }
@@ -189,7 +208,7 @@ fun SettingPage(viewModel:Setting,
                 {
                     Icon(
                         painter = painterResource(R.drawable.clear_foreground),
-                        contentDescription = stringResource(id = R.string.cancel),
+                        contentDescription = stringResource(id = R.string.close),
                         tint = Color(2, 115, 115),
                         modifier = Modifier.size(100.dp)
                     )
@@ -199,6 +218,25 @@ fun SettingPage(viewModel:Setting,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Text(
+                        text = "調整語音撥放速度",
+                        fontSize = 28.sp,
+                        textAlign = TextAlign.Start,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Slider(
+                        value = sliderPosition,
+                        onValueChange = { newValue ->
+                            sliderPosition = newValue
+                            speechRate = sliderPosition
+                            tts.saveSpeed(newValue)// 保存调整后的语速
+                            tts.speak("當前語速是 $speechRate 倍") // 播放调整后的语速
+                        },
+                        valueRange = 0.1f..2.0f, // 可调整范围为 0.1 到 2.0
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                     Spacer(modifier = Modifier.padding(8.dp))
                     Text(
                         stringResource(id = R.string.user_setting),

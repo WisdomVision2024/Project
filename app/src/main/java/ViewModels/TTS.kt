@@ -1,15 +1,24 @@
 package ViewModels
 
+import DataStore.Speed
+import DataStore.SpeedStore
 import android.app.Application
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class TTS(application: Application) : AndroidViewModel(application), TextToSpeech.OnInitListener {
-    private var tts: TextToSpeech? = null
+class TTS(application: Application,
+          private val speedStore: SpeedStore) :
+    AndroidViewModel(application), TextToSpeech.OnInitListener {
+
+    var tts: TextToSpeech? = null
     private var onInitListener: (() -> Unit)? = null
+
+
 
     init {
         tts = TextToSpeech(application, this)
@@ -21,6 +30,7 @@ class TTS(application: Application) : AndroidViewModel(application), TextToSpeec
         if (status == TextToSpeech.SUCCESS) {
             tts?.language = systemLocale
             onInitListener?.invoke()
+            observeSpeed()
         }
     }
 
@@ -36,6 +46,24 @@ class TTS(application: Application) : AndroidViewModel(application), TextToSpeec
 
     fun stop() {
         tts?.stop()
+    }
+
+    private fun observeSpeed() {
+        viewModelScope.launch {
+            speedStore.loadSpeedState().collect { speed ->
+                tts?.setSpeechRate(speed.ttsSpeed ?: 1.0f) // 根据 speedStore 设置语速
+            }
+        }
+    }
+
+    fun saveSpeed(speed:Float){
+        viewModelScope.launch (Dispatchers.IO){
+            try {
+                speedStore.saveSpeedState(Speed(speed))
+            }catch (e:Exception){
+                Log.e("Speed",e.message.toString())
+            }
+        }
     }
 
     override fun onCleared() {
